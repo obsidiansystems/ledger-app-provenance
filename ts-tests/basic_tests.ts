@@ -3,9 +3,9 @@ import { describe, it } from 'mocha';
 import SpeculosTransport from '@ledgerhq/hw-transport-node-speculos';
 import Axios from 'axios';
 import Transport from "./common";
-import Pokt from "hw-app-pokt";
+import Provenance from "hw-app-hash";
 
-let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Pokt 0.2.0"]
+let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.2.0"]
 
 let setAcceptAutomationRules = async function() {
     await Axios.post("http://localhost:5000/automation", {
@@ -50,7 +50,7 @@ let sendCommandAndAccept = async function(command : any, prompts : any) {
     await Axios.delete("http://localhost:5000/events");
 
     let transport = await Transport.open("http://localhost:5000/apdu");
-    let kda = new Pokt(transport);
+    let kda = new Provenance(transport);
     
     //await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -77,7 +77,7 @@ describe('basic tests', () => {
 
   it('provides a public key', async () => {
 
-    await sendCommandAndAccept(async (pokt : Pokt) => {
+    await sendCommandAndAccept(async (pokt : Provenance) => {
       console.log("Started pubkey get");
       let rv = await pokt.getPublicKey("0");
       console.log("Reached Pubkey Got");
@@ -94,7 +94,7 @@ describe('basic tests', () => {
   });
   
   it('provides a public key', async () => {
-  await sendCommandAndAccept(async (kda : Pokt) => {
+  await sendCommandAndAccept(async (kda : Provenance) => {
       console.log("Started pubkey get");
       let rv = await kda.getPublicKey("0");
       console.log("Reached Pubkey Got");
@@ -115,7 +115,7 @@ describe('basic tests', () => {
 function testTransaction(path: string, txn: string, prompts: any[]) {
      return async () => {
        await sendCommandAndAccept(
-         async (kda : Pokt) => {
+         async (kda : Provenance) => {
            console.log("Started pubkey get");
            let rv = await kda.signTransaction(path, Buffer.from(txn, "utf-8").toString("hex"));
          }, prompts);

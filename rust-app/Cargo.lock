@@ -114,19 +114,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0744126afe1a6dd7f394cb50a716dbe086cb06e255e53d8d0185d82828358fb5"
 
 [[package]]
-name = "pocket"
-version = "0.2.0"
-dependencies = [
- "arrayvec",
- "ledger-log",
- "ledger-parser-combinators",
- "nanos_sdk",
- "nanos_ui",
- "prompts-ui",
- "testmacro",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -144,6 +131,19 @@ dependencies = [
  "ledger-log",
  "nanos_sdk",
  "nanos_ui",
+]
+
+[[package]]
+name = "provenance"
+version = "0.2.0"
+dependencies = [
+ "arrayvec",
+ "ledger-log",
+ "ledger-parser-combinators",
+ "nanos_sdk",
+ "nanos_ui",
+ "prompts-ui",
+ "testmacro",
 ]
 
 [[package]]

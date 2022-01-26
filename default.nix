@@ -12,7 +12,7 @@ rec {
     buildRustCrateForPkgs = pkgs: let
       fun = (buildRustCrateForPkgsLedger pkgs).override {
         defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-          pocket = attrs: let
+          provenance = attrs: let
             sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
           in {
             preHook = ledger-platform.gccLibsPreHook;
@@ -52,21 +52,21 @@ rec {
     mkdir src
     touch src/main.rs
 
-    cargo-ledger --use-prebuilt ${rootCrate}/bin/pocket --hex-next-to-json
+    cargo-ledger --use-prebuilt ${rootCrate}/bin/provenance --hex-next-to-json
 
-    mkdir -p $out/pocket
-    cp app.json app.hex $out/pocket
-    cp ${./tarball-default.nix} $out/pocket/default.nix
-    cp ${./rust-app/pocket.gif} $out/pocket/pocket.gif
+    mkdir -p $out/provenance
+    cp app.json app.hex $out/provenance
+    cp ${./tarball-default.nix} $out/provenance/default.nix
+    cp ${./rust-app/provenance.gif} $out/provenance/provenance.gif
   '');
 
   tarball = pkgs.runCommandNoCC "app-tarball.tar.gz" { } ''
-    tar -czvhf $out -C ${tarSrc} pocket
+    tar -czvhf $out -C ${tarSrc} provenance
   '';
 
   testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
 
-  runTests = { appExe ? rootCrate + "/bin/pocket" }: pkgs.runCommandNoCC "run-tests" {
+  runTests = { appExe ? rootCrate + "/bin/provenance" }: pkgs.runCommandNoCC "run-tests" {
     nativeBuildInputs = [
       pkgs.wget ledger-platform.speculos.speculos pkgs.coreutils testPackage pkgs.nodejs-12_x
     ];
@@ -94,11 +94,11 @@ rec {
 
   inherit (pkgs.nodePackages) node2nix;
 
-  pocket-core = pkgs.buildGoModule {
-    name = "pocket-core";
+  provenance-core = pkgs.buildGoModule {
+    name = "provenance-core";
     src = pkgs.fetchFromGitHub {
       owner = "pokt-network";
-      repo = "pocket-core";
+      repo = "provenance-core";
       rev = "27edab249a2a370c2b084b96daeda084261fcd0d";
       sha256 = "1gqpp16bxjcm2v27yxgsz7wa4l1mqagici76npg30z8fr7l66xa4";
     };

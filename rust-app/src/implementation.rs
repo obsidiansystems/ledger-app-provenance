@@ -135,7 +135,7 @@ pub const SIGN_IMPL: SignImplT = Action(
             ObserveLengthedBytes(
                 Hasher::new,
                 Hasher::update,
-                Json(PoktCmdInterp {
+                Json(ProvenanceCmdInterp {
                     field_chain_id: DropInterp,
                     field_entropy: DropInterp,
                     field_fee: DropInterp,
@@ -419,7 +419,7 @@ impl <SendInterp: JsonInterp<SendValueSchema>,
   }
 }
 
-pokt_cmd_definition!{}
+provenance_cmd_definition!{}
 
 #[inline(never)]
 pub fn get_get_address_state(

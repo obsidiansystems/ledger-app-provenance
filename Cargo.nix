@@ -31,7 +31,7 @@ rec {
   #
 
   rootCrate = rec {
-    packageId = "pocket";
+    packageId = "provenance";
 
     # Use this attribute to refer to the derivation building your root crate package.
     # You can override the features with rootCrate.build.override { features = [ "default" "feature1" ... ]; }.
@@ -47,10 +47,10 @@ rec {
   # You can override the features with
   # workspaceMembers."${crateName}".build.override { features = [ "default" "feature1" ... ]; }.
   workspaceMembers = {
-    "pocket" = rec {
-      packageId = "pocket";
+    "provenance" = rec {
+      packageId = "provenance";
       build = internal.buildRustCrateWithFeatures {
-        packageId = "pocket";
+        packageId = "provenance";
       };
 
       # Debug support which might change between releases.
@@ -368,12 +368,65 @@ rec {
         ];
 
       };
-      "pocket" = rec {
-        crateName = "pocket";
+      "proc-macro2" = rec {
+        crateName = "proc-macro2";
+        version = "1.0.36";
+        edition = "2018";
+        sha256 = "0adh6gvs31x6pfwmygypmzrv1jc7kjq568vsqcfaxk7vhdc2sd67";
+        authors = [
+          "David Tolnay <dtolnay@gmail.com>"
+          "Alex Crichton <alex@alexcrichton.com>"
+        ];
+        dependencies = [
+          {
+            name = "unicode-xid";
+            packageId = "unicode-xid";
+          }
+        ];
+        features = {
+          "default" = [ "proc-macro" ];
+        };
+        resolvedDefaultFeatures = [ "proc-macro" ];
+      };
+      "prompts-ui" = rec {
+        crateName = "prompts-ui";
+        version = "0.1.0";
+        edition = "2018";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/obsidiansystems/ledger-platform";
+          rev = "b3bc1db9c8a793bd20e76a4a19666f09a80c4e95";
+          sha256 = "1g0vmjw2bnjgm439a3373hajvkjnfq536x857w5ngdnfvm0687vf";
+        };
+        dependencies = [
+          {
+            name = "arrayvec";
+            packageId = "arrayvec";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "ledger-log";
+            packageId = "ledger-log";
+          }
+          {
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+          }
+          {
+            name = "nanos_ui";
+            packageId = "nanos_ui";
+          }
+        ];
+        features = {
+          "speculos" = [ "nanos_sdk/speculos" ];
+        };
+      };
+      "provenance" = rec {
+        crateName = "provenance";
         version = "0.2.0";
         edition = "2018";
         crateBin = [
-          { name = "pocket"; path = "bin-src/main.rs"; }
+          { name = "provenance"; path = "bin-src/main.rs"; }
         ];
         src = lib.cleanSourceWith { filter = sourceFilter;  src = ./rust-app; };
         authors = [
@@ -427,59 +480,6 @@ rec {
           "speculos" = [ "nanos_sdk/speculos" "ledger-log/speculos" "ledger-log/log_error" "ledger-parser-combinators/logging" ];
         };
         resolvedDefaultFeatures = [ "default" "extra_debug" "speculos" ];
-      };
-      "proc-macro2" = rec {
-        crateName = "proc-macro2";
-        version = "1.0.36";
-        edition = "2018";
-        sha256 = "0adh6gvs31x6pfwmygypmzrv1jc7kjq568vsqcfaxk7vhdc2sd67";
-        authors = [
-          "David Tolnay <dtolnay@gmail.com>"
-          "Alex Crichton <alex@alexcrichton.com>"
-        ];
-        dependencies = [
-          {
-            name = "unicode-xid";
-            packageId = "unicode-xid";
-          }
-        ];
-        features = {
-          "default" = [ "proc-macro" ];
-        };
-        resolvedDefaultFeatures = [ "proc-macro" ];
-      };
-      "prompts-ui" = rec {
-        crateName = "prompts-ui";
-        version = "0.1.0";
-        edition = "2018";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/obsidiansystems/ledger-platform";
-          rev = "b3bc1db9c8a793bd20e76a4a19666f09a80c4e95";
-          sha256 = "1g0vmjw2bnjgm439a3373hajvkjnfq536x857w5ngdnfvm0687vf";
-        };
-        dependencies = [
-          {
-            name = "arrayvec";
-            packageId = "arrayvec";
-            usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-log";
-            packageId = "ledger-log";
-          }
-          {
-            name = "nanos_sdk";
-            packageId = "nanos_sdk";
-          }
-          {
-            name = "nanos_ui";
-            packageId = "nanos_ui";
-          }
-        ];
-        features = {
-          "speculos" = [ "nanos_sdk/speculos" ];
-        };
       };
       "quote" = rec {
         crateName = "quote";

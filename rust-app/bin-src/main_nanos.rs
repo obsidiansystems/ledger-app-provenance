@@ -1,7 +1,7 @@
-use pocket::crypto_helpers::*;
-use pocket::implementation::*;
-use pocket::interface::*;
-use pocket::utils;
+use provenance::crypto_helpers::*;
+use provenance::implementation::*;
+use provenance::interface::*;
+use provenance::utils;
 
 use core::str::from_utf8;
 use nanos_sdk::io;
@@ -52,7 +52,7 @@ fn menu_example() {
 }
 
 use ledger_parser_combinators::interp_parser::OOB;
-use pocket::*;
+use provenance::*;
 
 #[cfg(not(test))]
 #[no_mangle]
