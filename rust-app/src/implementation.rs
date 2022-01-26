@@ -140,10 +140,12 @@ pub const SIGN_IMPL: SignImplT = Action(
                     field_entropy: DropInterp,
                     field_fee: DropInterp,
                     field_memo: DropInterp,
-                    field_msg: Message {send_message: SEND_MESSAGE_ACTION,
-                                        unjail_message: DropInterp,
-                                        stake_message: STAKE_MESSAGE_ACTION,
-                                        unstake_message: UNSTAKE_MESSAGE_ACTION},
+                    field_msgs: SubInterp(Message {
+                        send_message: SEND_MESSAGE_ACTION,
+                        unjail_message: DropInterp,
+                        stake_message: STAKE_MESSAGE_ACTION,
+                        unstake_message: UNSTAKE_MESSAGE_ACTION,
+                    }),
                 }),
                 true,
             ),
@@ -314,16 +316,16 @@ impl <SendInterp: JsonInterp<SendValueSchema>,
       MessageState::Type(ref mut temp_string_state, ref mut temp_string_return) => {
         call_str::<64>(temp_string_state, token, temp_string_return)?;
         match temp_string_return.as_ref().unwrap().as_slice() {
-          b"pos/Send" =>  {
+          b"cosmos-sdk/Send" =>  {
             set_from_thunk(state, ||MessageState::ValueSep(MessageType::SendMessage));
           }
-          b"pos/MsgUnjail" =>  {
+          b"cosmos-sdk/MsgUnjail" =>  {
             set_from_thunk(state, ||MessageState::ValueSep(MessageType::UnjailMessage));
           }
-          b"pos/MsgStake" =>  {
+          b"cosmos-sdk/MsgStake" =>  {
             set_from_thunk(state, ||MessageState::ValueSep(MessageType::StakeMessage));
           }
-          b"pos/MsgBeginUnstake" =>  {
+          b"cosmos-sdk/MsgBeginUnstake" =>  {
             set_from_thunk(state, ||MessageState::ValueSep(MessageType::UnstakeMessage));
           }
           _ => return Err(Some(OOB::Reject)),

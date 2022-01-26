@@ -67,7 +67,7 @@ define_json_struct! { ProvenanceCmd 16 {
   entropy: JsonString,
   fee: JsonArray<AmountTypeSchema>,
   memo: JsonString,
-  msg: MessageSchema
+  msgs: JsonArray<MessageSchema>
 }}
 
 // Payload for a signature request, content-agnostic.

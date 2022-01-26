@@ -134,14 +134,16 @@ let exampleSend = {
         }
     ],
     "memo": "Fourth transaction",
-    "msg": {
-        "type": "pos/Send",
+    "msgs": [
+      {
+        "type": "cosmos-sdk/Send",
         "value": {
             "amount": "1000000",
             "from_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
             "to_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
         }
-    }
+      }
+    ]
 }
 
 let exampleUnjail = {
@@ -154,12 +156,14 @@ let exampleUnjail = {
     }
   ],
   "memo": "",
-  "msg": {
-    "type": "pos/MsgUnjail",
+  "msgs": [
+   {
+    "type": "cosmos-sdk/MsgUnjail",
     "value": {
       "address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
     }
-  }
+   }
+  ]
 }
 
 let exampleStake =
@@ -173,8 +177,9 @@ let exampleStake =
       }
     ],
     "memo": "",
-    "msg": {
-      "type": "pos/MsgStake",
+    "msgs": [
+     {
+      "type": "cosmos-sdk/MsgStake",
       "value": {
         "chains": [
           "0034"
@@ -186,7 +191,8 @@ let exampleStake =
         "service_url": "https://serviceURI.com:3000",
         "value": "1000000"
       }
-    }
+     }
+    ]
   }
 
 let exampleUnstake =
@@ -200,12 +206,14 @@ let exampleUnstake =
       }
     ],
     "memo": "",
-    "msg": {
-      "type": "pos/MsgBeginUnstake",
+    "msgs": [
+     {
+      "type": "cosmos-sdk/MsgBeginUnstake",
       "value": {
         "validator_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
       }
-    }
+     }
+    ]
   }
 
 describe("Signing tests", function() {
@@ -232,7 +240,7 @@ describe("Signing tests", function() {
          },
          {
         "header": "Sign Hash?",
-        "prompt": "D9779BB631C0BA7A991D5E6166B6419F5557CB423FD137079121986607856D92",
+        "prompt": "8596AE17444A83FADC3DD318BF0836574B84D742810972F5364DA73ED11EDC70",
          },
          {
         "header": "With PKH",
@@ -252,7 +260,7 @@ describe("Signing tests", function() {
        [
          {
         "header": "Sign Hash?",
-        "prompt": "FF11A8FD314B73EE4EB15D7097F2CAB8E0A4896427E5384254A47B3F1AB022FD",
+        "prompt": "1B361618B766571BBD469E32A1224038C2F0C3A0E89C252B96B7CE9C0BC7C1F7",
          },
          {
         "header": "With PKH",
@@ -293,7 +301,7 @@ describe("Signing tests", function() {
          },
          {
         "header": "Sign Hash?",
-        "prompt": "9BF2A5EAAECA8A5FAD5C2C4CA0C2D3FFEABC28A2AF2FE337343136DBEFF4437F",
+        "prompt": "9D86E0CC1E31DE40C6AC0C5F69E7A7D8990F17DE8A808ED93AE49F2797F0534F",
          },
          {
         "header": "With PKH",
