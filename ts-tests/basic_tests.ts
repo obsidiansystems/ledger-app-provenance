@@ -125,26 +125,26 @@ function testTransaction(path: string, txn: string, prompts: any[]) {
 // These tests have been extracted interacting with the testnet via the cli.
 
 let exampleSend = {
-    "chain_id": "testnet",
-    "entropy": "-7780543831205109370",
-    "fee": [
-        {
-            "amount": "10000",
-            "denom": "upokt"
-        }
-    ],
-    "memo": "Fourth transaction",
-    "msgs": [
-      {
-        "type": "cosmos-sdk/Send",
-        "value": {
-            "amount": "1000000",
-            "from_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
-            "to_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
-        }
+  "chain_id": "testnet",
+  "entropy": "-7780543831205109370",
+  "fee": [
+    {
+      "amount": "10000",
+      "denom": "upokt"
+    }
+  ],
+  "memo": "Fourth transaction",
+  "msgs": [
+    {
+      "type": "cosmos-sdk/Send",
+      "value": {
+        "amount": "1000000",
+        "from_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
+        "to_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
       }
-    ]
-}
+    }
+  ]
+};
 
 let exampleUnjail = {
   "chain_id": "testnet",
@@ -157,28 +157,27 @@ let exampleUnjail = {
   ],
   "memo": "",
   "msgs": [
-   {
-    "type": "cosmos-sdk/MsgUnjail",
-    "value": {
-      "address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
-    }
-   }
-  ]
-}
-
-let exampleStake =
-  {
-    "chain_id": "testnet",
-    "entropy": "2417661502575469960",
-    "fee": [
-      {
-        "amount": "10000",
-        "denom": "upokt"
+    {
+      "type": "cosmos-sdk/MsgUnjail",
+      "value": {
+        "address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
       }
-    ],
-    "memo": "",
-    "msgs": [
-     {
+    }
+  ]
+};
+
+let exampleStake = {
+  "chain_id": "testnet",
+  "entropy": "2417661502575469960",
+  "fee": [
+    {
+      "amount": "10000",
+      "denom": "upokt"
+    }
+  ],
+  "memo": "",
+  "msgs": [
+    {
       "type": "cosmos-sdk/MsgStake",
       "value": {
         "chains": [
@@ -191,30 +190,29 @@ let exampleStake =
         "service_url": "https://serviceURI.com:3000",
         "value": "1000000"
       }
-     }
-    ]
-  }
+    }
+  ]
+};
 
-let exampleUnstake =
-  {
-    "chain_id": "testnet",
-    "entropy": "-1105361304155186876",
-    "fee": [
-      {
-        "amount": "10000",
-        "denom": "upokt"
-      }
-    ],
-    "memo": "",
-    "msgs": [
-     {
-      "type": "cosmos-sdk/MsgBeginUnstake",
-      "value": {
-        "validator_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
-      }
-     }
-    ]
-  }
+let exampleUnstake = {
+  "chain_id": "testnet",
+  "entropy": "-1105361304155186876",
+  "fee": [
+    {
+      "amount": "10000",
+      "denom": "upokt"
+    }
+  ],
+  "memo": "",
+  "msgs": [
+   {
+    "type": "cosmos-sdk/MsgBeginUnstake",
+    "value": {
+      "validator_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
+    }
+   }
+  ]
+};
 
 describe("Signing tests", function() {
   it("can sign a simple transfer",
