@@ -144,82 +144,14 @@ let exampleSend = {
       }
     }
   ]
-};
-
-let exampleUnjail = {
-  "chain_id": "testnet",
-  "entropy": "-8051161335943327787",
-  "fee": [
-    {
-      "amount": "10000",
-      "denom": "upokt"
-    }
-  ],
-  "memo": "",
-  "msgs": [
-    {
-      "type": "cosmos-sdk/MsgUnjail",
-      "value": {
-        "address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
-      }
-    }
-  ]
-};
-
-let exampleStake = {
-  "chain_id": "testnet",
-  "entropy": "2417661502575469960",
-  "fee": [
-    {
-      "amount": "10000",
-      "denom": "upokt"
-    }
-  ],
-  "memo": "",
-  "msgs": [
-    {
-      "type": "cosmos-sdk/MsgStake",
-      "value": {
-        "chains": [
-          "0034"
-        ],
-        "public_key": {
-          "type": "crypto/ed25519_public_key",
-          "value": "6b62a590bab42ea01383d3209fa719254977fb83624fbd6755d102264ba1adc0"
-        },
-        "service_url": "https://serviceURI.com:3000",
-        "value": "1000000"
-      }
-    }
-  ]
-};
-
-let exampleUnstake = {
-  "chain_id": "testnet",
-  "entropy": "-1105361304155186876",
-  "fee": [
-    {
-      "amount": "10000",
-      "denom": "upokt"
-    }
-  ],
-  "memo": "",
-  "msgs": [
-   {
-    "type": "cosmos-sdk/MsgBeginUnstake",
-    "value": {
-      "validator_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
-    }
-   }
-  ]
-};
+}
 
 describe("Signing tests", function() {
   it("can sign a simple transfer",
      testTransaction(
        "0/0",
        JSON.stringify(exampleSend),
-[
+       [
          {
         "header": "Send",
         "prompt": "Transaction",
@@ -249,75 +181,6 @@ describe("Signing tests", function() {
            "x": 43,
            "y": 11,
          }
-]
-     ));
-  it("can sign a simple unjail",
-     testTransaction(
-       "0/0",
-       JSON.stringify(exampleUnjail),
-       [
-         {
-        "header": "Sign Hash?",
-        "prompt": "1B361618B766571BBD469E32A1224038C2F0C3A0E89C252B96B7CE9C0BC7C1F7",
-         },
-         {
-        "header": "With PKH",
-        "prompt": "pkh-493E8E5DBDF933EDD1495A4E304EC8B8155312BBBE66A1783A03DF9F6B5500C7",
-         },
-         {
-           "text": "Confirm",
-           "x": 43,
-           "y": 11,
-         }
        ]
-       ));
-
-  it("can sign a simple stake",
-     testTransaction(
-       "0/0",
-       JSON.stringify(exampleStake),
-       [
-         {
-        "header": "Stake",
-        "prompt": "Transaction",
-         },
-         {
-        "header": "Chain",
-        "prompt": "0034",
-         },
-         {
-        "header": "Public Key",
-        "prompt": "6b62a590bab42ea01383d3209fa719254977fb83624fbd6755d102264ba1adc0 (crypto/ed25519_public_key)",
-         },
-         {
-        "header": "Service URL",
-        "prompt": "https://serviceURI.com:3000",
-         },
-         {
-        "header": "Value",
-        "prompt": "1000000",
-         },
-         {
-        "header": "Sign Hash?",
-        "prompt": "9D86E0CC1E31DE40C6AC0C5F69E7A7D8990F17DE8A808ED93AE49F2797F0534F",
-         },
-         {
-        "header": "With PKH",
-        "prompt": "pkh-493E8E5DBDF933EDD1495A4E304EC8B8155312BBBE66A1783A03DF9F6B5500C7",
-         },
-         {
-           "text": "Confirm",
-           "x": 43,
-           "y": 11,
-         },
-       ]
-
-     ));
-
-  it("can sign a simple unstake",
-     testTransaction(
-       "0/0",
-       JSON.stringify(exampleUnstake),
-       []
      ));
 });
