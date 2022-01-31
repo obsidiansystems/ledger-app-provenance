@@ -77,14 +77,14 @@ describe('basic tests', () => {
 
   it('provides a public key', async () => {
 
-    await sendCommandAndAccept(async (pokt : Provenance) => {
+    await sendCommandAndAccept(async (hash_token : Provenance) => {
       console.log("Started pubkey get");
-      let rv = await pokt.getPublicKey("0");
+      let rv = await hash_token.getPublicKey("0");
       console.log("Reached Pubkey Got");
       expect(rv.publicKey).to.equal("026f760e57383e3b5900f7c23b78a424e74bebbe9b7b46316da7c0b4b9c2c9301c");
       return;
     }, [
-      { "header": "Provide Public Key", "prompt": "pkh-09CB550E56C3B91B1AB9F7836288641BC99A3C2B647470768B86C8D85863480F" },
+      { "header": "Provide Public Key", "prompt": "For Address     ABF20C51EFFB2152DFE06C2F7B96138CABD69AD1" },
       {
         "text": "Confirm",
         "x": 43,
@@ -102,7 +102,7 @@ describe('basic tests', () => {
       return;
     },
     [
-      { "header": "Provide Public Key", "prompt": "pkh-09CB550E56C3B91B1AB9F7836288641BC99A3C2B647470768B86C8D85863480F" },
+      { "header": "Provide Public Key", "prompt": "For Address     ABF20C51EFFB2152DFE06C2F7B96138CABD69AD1" },
       {
         "text": "Confirm",
         "x": 43,
@@ -131,7 +131,7 @@ let exampleSend = {
   "fee": [
     {
       "amount": "10000",
-      "denom": "upokt"
+      "denom": "uhash_token"
     }
   ],
   "memo": "Fourth transaction",
@@ -174,8 +174,8 @@ describe("Signing tests", function() {
         "prompt": "8596AE17444A83FADC3DD318BF0836574B84D742810972F5364DA73ED11EDC70",
          },
          {
-        "header": "With PKH",
-        "prompt": "pkh-493E8E5DBDF933EDD1495A4E304EC8B8155312BBBE66A1783A03DF9F6B5500C7",
+        "header": "For Account",
+        "prompt": "2E27FC80E710265D4CD47A4A44D3C1AE4F88DAAA"
          },
          {
            "text": "Confirm",

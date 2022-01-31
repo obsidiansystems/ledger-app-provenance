@@ -1,5 +1,5 @@
 {
-  "name": "pokt-ledger-tests",
+  "name": "hash-ledger-tests",
   "version": "0.1.0",
   "src": "hw-app-avalanche/src",
   "scripts": {
