@@ -423,7 +423,7 @@ rec {
       };
       "provenance" = rec {
         crateName = "provenance";
-        version = "0.2.0";
+        version = "0.0.1";
         edition = "2018";
         crateBin = [
           { name = "provenance"; path = "bin-src/main.rs"; }

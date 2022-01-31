@@ -5,7 +5,7 @@ import Axios from 'axios';
 import Transport from "./common";
 import Provenance from "hw-app-hash";
 
-let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.2.0"]
+let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
 
 let setAcceptAutomationRules = async function() {
     await Axios.post("http://localhost:5000/automation", {
@@ -97,7 +97,7 @@ describe('basic tests', () => {
   await sendCommandAndAccept(async (kda : Provenance) => {
       console.log("Started pubkey get");
       let rv = await kda.getPublicKey("0");
-      console.log("Reached Pubkey Got");
+      console.log("Reached Pubkey Got, " + JSON.stringify(rv));
       expect(rv.publicKey).to.equal("026f760e57383e3b5900f7c23b78a424e74bebbe9b7b46316da7c0b4b9c2c9301c");
       return;
     },
@@ -118,6 +118,7 @@ function testTransaction(path: string, txn: string, prompts: any[]) {
          async (kda : Provenance) => {
            console.log("Started pubkey get");
            let rv = await kda.signTransaction(path, Buffer.from(txn, "utf-8").toString("hex"));
+           expect(rv.signature.length).to.equal(128);
          }, prompts);
      }
 }

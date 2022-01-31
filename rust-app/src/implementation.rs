@@ -25,10 +25,10 @@ const fn mkvfn<A,C>(q: fn(&A,&mut Option<()>)->C) -> fn(&A,&mut Option<()>)->C {
   q
 }
 
-pub type GetAddressImplT = impl InterpParser<Bip32Key, Returning = ArrayVec<u8, 260>>;
+pub type GetAddressImplT = impl InterpParser<Bip32Key, Returning = ArrayVec<u8, 128>>;
 
 pub const GET_ADDRESS_IMPL: GetAddressImplT =
-    Action(SubInterp(DefaultInterp), mkfn(|path: &ArrayVec<u32, 10>, destination: &mut Option<ArrayVec<u8, 260>>| -> Option<()> {
+    Action(SubInterp(DefaultInterp), mkfn(|path: &ArrayVec<u32, 10>, destination: &mut Option<ArrayVec<u8, 128>>| -> Option<()> {
         let key = get_pubkey(path).ok()?;
 
         let pkh = get_pkh(key);
@@ -87,7 +87,7 @@ const VALUE_ACTION: Action<JsonStringAccumulate<64>,
           Some(())
         });
 
-pub type SignImplT = impl InterpParser<SignParameters, Returning = ArrayVec<u8, 260>>;
+pub type SignImplT = impl InterpParser<SignParameters, Returning = ArrayVec<u8, 128>>;
 
 pub const SIGN_IMPL: SignImplT = Action(
     (
@@ -130,11 +130,11 @@ pub const SIGN_IMPL: SignImplT = Action(
             }),
         ),
     ),
-    mkfn(|(hash, key): &(Option<[u8; 32]>, Option<_>), destination: &mut Option<ArrayVec<u8, 260>>| {
+    mkfn(|(hash, key): &(Option<[u8; 32]>, Option<_>), destination: &mut Option<ArrayVec<u8, 128>>| {
         // By the time we get here, we've approved and just need to do the signature.
         final_accept_prompt(&[])?;
         let sig = detecdsa_sign(hash.as_ref()?, key.as_ref()?)?;
-        let mut rv = ArrayVec::<u8, 260>::new();
+        let mut rv = ArrayVec::<u8, 128>::new();
         rv.try_extend_from_slice(&sig).ok()?;
         *destination = Some(rv);
         Some(())
@@ -150,6 +150,9 @@ pub enum ParsersState {
     SignState(<SignImplT as InterpParser<SignParameters>>::State),
 }
 
+pub fn reset_parsers_state(state: &mut ParsersState) {
+    *state = ParsersState::NoState;
+}
 
 meta_definition!{}
 signer_definition!{}
