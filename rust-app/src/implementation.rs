@@ -116,10 +116,9 @@ pub const SIGN_IMPL: SignImplT = Action(
     mkfn(|(hash, key): &(Option<[u8; 32]>, Option<_>), destination: &mut Option<ArrayVec<u8, 128>>| {
         // By the time we get here, we've approved and just need to do the signature.
         final_accept_prompt(&[])?;
+        let rv = destination.insert(ArrayVec::<u8, 128>::new());
         let sig = detecdsa_sign(hash.as_ref()?, key.as_ref()?)?;
-        let mut rv = ArrayVec::<u8, 128>::new();
         rv.try_extend_from_slice(&sig).ok()?;
-        *destination = Some(rv);
         Some(())
     }),
 );
@@ -242,17 +241,21 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
       MessageState::KeySep2(msg_type) if token == JsonToken::ValueSeparator => {
         match msg_type {
           MessageType::SendMessage => {
-            let mut temp0 = None;
-            warn!("asdf");
-            let mut temp1 = self.send_message.init();
-            let _res = self.send_message.parse(&mut temp1, JsonToken::BeginObject, &mut temp0);
+            let r0 = destination.insert(MessageReturn::SendMessageReturn(None));
+            let r = match *r0 {
+                MessageReturn::SendMessageReturn(ref mut r) => r,
+                // OK because we just set above
+                _ => unsafe { core::hint::unreachable_unchecked() },
+            };
+            set_from_thunk(state, ||MessageState::SendMessageState(self.send_message.init()));
+            let s = match *state {
+                MessageState::SendMessageState(ref mut s) => s,
+                // OK because we just set above
+                _ => unsafe { core::hint::unreachable_unchecked() },
+            };
+            let _res = self.send_message.parse(s, JsonToken::BeginObject, r);
             // One `{` should be valid but not enough input.
             assert_eq!(_res, Err(None));
-            set_from_thunk(state, || {
-                warn!("asdf 3");
-                MessageState::SendMessageState(temp1)
-            });
-            *destination = Some(MessageReturn::SendMessageReturn(temp0));
           }
         }
       }

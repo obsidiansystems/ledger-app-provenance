@@ -22,7 +22,7 @@ extern "C" fn sample_main() {
     let mut idle_menu = RootMenu::new([ concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit" ]);
     let mut busy_menu = RootMenu::new([ "Working...", "Cancel" ]);
 
-    info!("Kadena app {}", env!("CARGO_PKG_VERSION"));
+    info!("Provenance app {}", env!("CARGO_PKG_VERSION"));
 
     loop {
         // Draw some 'welcome' screen
