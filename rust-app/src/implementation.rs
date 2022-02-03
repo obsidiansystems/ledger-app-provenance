@@ -43,8 +43,7 @@ pub const GET_ADDRESS_IMPL: GetAddressImplT =
         Some(())
     }));
 
-const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> = //Action<JsonStringAccumulate<64>,
-                                  //fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
+const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
   Action(JsonStringAccumulate::<64>,
         mkvfn(| from_address: &ArrayVec<u8, 64>, destination | {
           write_scroller("Transfer from", |w| Ok(write!(w, "{}", from_utf8(from_address.as_slice())?)?))?;
@@ -52,40 +51,28 @@ const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> = //Action<
           Some(())
         }));
 
-const TO_ADDRESS_ACTION: Action<JsonStringAccumulate<64>,
-                                  fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
+const TO_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
   Action(JsonStringAccumulate::<64>,
-        | to_address, destination | {
+        mkvfn(| to_address: &ArrayVec<u8, 64>, destination | {
             write_scroller("Transfer To", |w| Ok(write!(w, "{}", from_utf8(to_address.as_slice())?)?))?;
             *destination = Some(());
             Some(())
-        });
+        }));
 
-/* This would be used to show fees; not currently used.
-const AMOUNT_ACTION: Action<AmountType<JsonStringAccumulate<64>, JsonStringAccumulate<64>>,
-                                  fn(& AmountType<Option<ArrayVec<u8, 64>>, Option<ArrayVec<u8, 64>>>, &mut Option<()>) -> Option<()>> =
-  Action(AmountType{field_amount: JsonStringAccumulate::<64>, field_denom: JsonStringAccumulate::<64>},
-        | AmountType{field_amount: amount, field_denom: denom}, destination | {
+const AMOUNT_ACTION: impl JsonInterp<AmountTypeSchema, State: Debug> =
+  Action(AmountTypeInterp { field_amount: JsonStringAccumulate::<64>, field_denom: JsonStringAccumulate::<64> },
+        mkvfn(| &AmountType { field_amount: ref amount, field_denom: ref denom }: &AmountType<Option<ArrayVec<u8, 64>>, Option<ArrayVec<u8, 64>>>,
+                destination | {
           write_scroller("Amount:", |w| Ok(write!(w, "{} ({})", from_utf8(amount.as_ref()?)?, from_utf8(denom.as_ref()?)?)?))?;
           *destination = Some(());
           Some(())
-        });
-*/
+        }));
 
 const SEND_MESSAGE_ACTION: impl JsonInterp<SendValueSchema, State: Debug> =
   Preaction(|| { write_scroller("Send", |w| Ok(write!(w, "Transaction")?)) },
-  SendValueInterp{field_amount: VALUE_ACTION,
+  SendValueInterp{field_amount: AMOUNT_ACTION,
             field_from_address: FROM_ADDRESS_ACTION,
             field_to_address: TO_ADDRESS_ACTION});
-
-const VALUE_ACTION: Action<JsonStringAccumulate<64>,
-                                 fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
-  Action(JsonStringAccumulate::<64>,
-        | value, destination | {
-          write_scroller("Value", |w| Ok(write!(w, "{}", from_utf8(value.as_ref())?)?))?;
-          *destination = Some(());
-          Some(())
-        });
 
 pub type SignImplT = impl InterpParser<SignParameters, Returning = ArrayVec<u8, 128>>;
 
@@ -97,11 +84,7 @@ pub const SIGN_IMPL: SignImplT = Action(
                 Hasher::new,
                 Hasher::update,
                 Json(ProvenanceCmdInterp {
-                    field_chain_id: DropInterp,
-                    field_entropy: DropInterp,
-                    field_fee: DropInterp,
-                    field_memo: DropInterp,
-                    field_msgs: SubInterp(Message {
+                    field_messages: SubInterp(Message {
                         send_message: SEND_MESSAGE_ACTION,
                     }),
                 }),
@@ -178,14 +161,17 @@ pub struct Message<
 type TemporaryStringState<const N: usize>  = <JsonStringAccumulate<N> as JsonInterp<JsonString>>::State;
 type TemporaryStringReturn<const N: usize> = Option<<JsonStringAccumulate<N> as JsonInterp<JsonString>>::Returning>;
 
+
+const TYPE_LEN: usize = 5;
+
+const TYPE: [u8; 5] = *b"@type";
+
 #[derive(Debug)]
 pub enum MessageState<SendMessageState> {
   Start,
-  TypeLabel(TemporaryStringState<4>, TemporaryStringReturn<4>),
+  TypeLabel(TemporaryStringState<TYPE_LEN>, TemporaryStringReturn<TYPE_LEN>),
   KeySep1,
   Type(TemporaryStringState<64>, TemporaryStringReturn<64>),
-  ValueSep(MessageType),
-  ValueLabel(MessageType, TemporaryStringState<5>, TemporaryStringReturn<5>),
   KeySep2(MessageType),
   SendMessageState(SendMessageState),
   End,
@@ -231,14 +217,14 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
                -> Result<(), Option<OOB>> {
     match state {
       MessageState::Start if token == JsonToken::BeginObject => {
-        set_from_thunk(state, ||MessageState::TypeLabel(init_str::<4>(), None));
+        set_from_thunk(state, ||MessageState::TypeLabel(init_str::<TYPE_LEN>(), None));
       }
       MessageState::TypeLabel(ref mut temp_string_state, ref mut temp_string_return) => {
-        call_str::<4>(temp_string_state, token, temp_string_return)?;
-        if temp_string_return.as_ref().unwrap().as_slice() == b"type" {
+        call_str::<TYPE_LEN>(temp_string_state, token, temp_string_return)?;
+        if temp_string_return.as_ref().unwrap().as_slice() == &TYPE {
           set_from_thunk(state, ||MessageState::KeySep1);
         } else {
-          return Err(Some(OOB::Reject));
+          return Err(Some(OOB::Reject))
         }
       }
       MessageState::KeySep1 if token == JsonToken::NameSeparator => {
@@ -247,30 +233,26 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
       MessageState::Type(ref mut temp_string_state, ref mut temp_string_return) => {
         call_str::<64>(temp_string_state, token, temp_string_return)?;
         match temp_string_return.as_ref().unwrap().as_slice() {
-          b"cosmos-sdk/Send" =>  {
-            set_from_thunk(state, ||MessageState::ValueSep(MessageType::SendMessage));
+          b"/cosmos.bank.v1beta1.MsgSend" =>  {
+            set_from_thunk(state, ||MessageState::KeySep2(MessageType::SendMessage));
           }
           _ => return Err(Some(OOB::Reject)),
         }
       }
-      MessageState::ValueSep(msg_type) if token == JsonToken::ValueSeparator => {
-        let new_msg_type = *msg_type;
-        set_from_thunk(state, ||MessageState::ValueLabel(new_msg_type, init_str::<5>(), None));
-      }
-      MessageState::ValueLabel(msg_type, temp_string_state, temp_string_return) => {
-        call_str::<5>(temp_string_state, token, temp_string_return)?;
-        if temp_string_return.as_ref().unwrap().as_slice() == b"value" {
-          let new_msg_type = *msg_type;
-          set_from_thunk(state, ||MessageState::KeySep2(new_msg_type));
-        } else {
-          return Err(Some(OOB::Reject));
-        }
-      }
-      MessageState::KeySep2(msg_type) if token == JsonToken::NameSeparator => {
+      MessageState::KeySep2(msg_type) if token == JsonToken::ValueSeparator => {
         match msg_type {
           MessageType::SendMessage => {
-            *destination = Some(MessageReturn::SendMessageReturn(None));
-            set_from_thunk(state, ||MessageState::SendMessageState(self.send_message.init()));
+            let mut temp0 = None;
+            warn!("asdf");
+            let mut temp1 = self.send_message.init();
+            let _res = self.send_message.parse(&mut temp1, JsonToken::BeginObject, &mut temp0);
+            // One `{` should be valid but not enough input.
+            assert_eq!(_res, Err(None));
+            set_from_thunk(state, || {
+                warn!("asdf 3");
+                MessageState::SendMessageState(temp1)
+            });
+            *destination = Some(MessageReturn::SendMessageReturn(temp0));
           }
         }
       }
@@ -279,7 +261,7 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
         match sub_destination {
           MessageReturn::SendMessageReturn(send_message_return) => {
             self.send_message.parse(send_message_state, token, send_message_return)?;
-            set_from_thunk(state, ||MessageState::End);
+            return Ok(())
           }
           _ => {
             return Err(Some(OOB::Reject))
@@ -287,7 +269,6 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
         }
       }
       MessageState::End if token == JsonToken::EndObject => {
-          return Ok(())
       }
       _ => return Err(Some(OOB::Reject)),
     };

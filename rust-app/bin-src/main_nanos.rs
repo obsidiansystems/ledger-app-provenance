@@ -19,7 +19,7 @@ extern "C" fn sample_main() {
     let mut comm = io::Comm::new();
     let mut states = ParsersState::NoState;
 
-    let mut idle_menu = RootMenu::new([ concat!("Pocket ", env!("CARGO_PKG_VERSION")), "Exit" ]);
+    let mut idle_menu = RootMenu::new([ concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit" ]);
     let mut busy_menu = RootMenu::new([ "Working...", "Cancel" ]);
 
     info!("Kadena app {}", env!("CARGO_PKG_VERSION"));

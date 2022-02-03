@@ -35,9 +35,9 @@ define_json_struct! { Fee 16 {
 }}
 
 define_json_struct! { SendValue 16 {
-  amount: JsonString,
-  from_address: JsonString,
-  to_address: JsonString
+  amount: AmountTypeSchema,
+  fromAddress: JsonString,
+  toAddress: JsonString
 }}
 
 define_json_struct! { UnjailValue 16 {
@@ -63,11 +63,7 @@ define_json_struct! { UnstakeValue 17 {
 pub struct MessageSchema;
 
 define_json_struct! { ProvenanceCmd 16 {
-  chain_id: JsonString,
-  entropy: JsonString,
-  fee: JsonArray<AmountTypeSchema>,
-  memo: JsonString,
-  msgs: JsonArray<MessageSchema>
+  messages: JsonArray<MessageSchema>
 }}
 
 // Payload for a signature request, content-agnostic.

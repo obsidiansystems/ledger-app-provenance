@@ -126,22 +126,14 @@ function testTransaction(path: string, txn: string, prompts: any[]) {
 // These tests have been extracted interacting with the testnet via the cli.
 
 let exampleSend = {
-  "chain_id": "testnet",
-  "entropy": "-7780543831205109370",
-  "fee": [
+  "messages": [
     {
-      "amount": "10000",
-      "denom": "uhash_token"
-    }
-  ],
-  "memo": "Fourth transaction",
-  "msgs": [
-    {
-      "type": "cosmos-sdk/Send",
-      "value": {
-        "amount": "1000000",
-        "from_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
-        "to_address": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba"
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "fromAddress": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
+      "toAddress": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
+      "amount": {
+        "denom": "nhash",
+        "amount": "1800000000"
       }
     }
   ]
@@ -158,10 +150,6 @@ describe("Signing tests", function() {
         "prompt": "Transaction",
          },
          {
-        "header": "Value",
-        "prompt": "1000000",
-         },
-         {
         "header": "Transfer from",
         "prompt": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
          },
@@ -170,8 +158,12 @@ describe("Signing tests", function() {
         "prompt": "db987ccfa2a71b2ec9a56c88c77a7cf66d01d8ba",
          },
          {
+        "header": "Amount:",
+        "prompt": "1800000000 (nhash)",
+         },
+         {
         "header": "Sign Hash?",
-        "prompt": "8596AE17444A83FADC3DD318BF0836574B84D742810972F5364DA73ED11EDC70",
+        "prompt": "2CED638C75995AE175D9AD51749509EE26E9B3A8FCDC0E7B5DC68C64ED3C3C58",
          },
          {
         "header": "For Account",
