@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cargo-ledger --hex-next-to-json
-tar -czvf release.tar.gz --transform 's,.*/,,;s,tarball-,,;s,^,pocket/,' app.json app.hex ../tarball-default.nix pocket.gif --mtime=0
+tar -czvf release.tar.gz --transform 's,.*/,,;s,tarball-,,;s,^,provenance/,' app.json app.hex ../tarball-default.nix provenance.gif --mtime=0
 
 echo
 echo "==== Release hashes for release.tar.gz ===="

@@ -141,7 +141,7 @@ fn handle_apdu(comm: &mut io::Comm, ins: Ins, parser: &mut ParsersState) -> Resu
     match ins {
         Ins::GetVersion => {
             comm.append(&[env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap(), env!("CARGO_PKG_VERSION_MINOR").parse().unwrap(), env!("CARGO_PKG_VERSION_PATCH").parse().unwrap()]);
-            comm.append(b"Kadena");
+            comm.append(b"Provenance");
         }
         Ins::GetPubkey => {
             run_parser_apdu::<_, Bip32Key>(parser, get_get_address_state, &GET_ADDRESS_IMPL, comm)?
@@ -150,7 +150,7 @@ fn handle_apdu(comm: &mut io::Comm, ins: Ins, parser: &mut ParsersState) -> Resu
             run_parser_apdu::<_, SignParameters>(parser, get_sign_state, &SIGN_IMPL, comm)?
         }
         Ins::GetVersionStr => {
-            comm.append(concat!("Kadena ", env!("CARGO_PKG_VERSION")).as_ref());
+            comm.append(concat!("Provenance ", env!("CARGO_PKG_VERSION")).as_ref());
         }
         Ins::Exit => nanos_sdk::exit_app(0),
     }
