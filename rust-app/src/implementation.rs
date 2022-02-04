@@ -206,7 +206,6 @@ pub enum MessageState<SendMessageState, DelegateMessageState, UndelegateMessageS
   SendMessageState(SendMessageState),
   DelegateMessageState(DelegateMessageState),
   UndelegateMessageState(UndelegateMessageState),
-  End,
 }
 
 fn init_str<const N: usize>() -> <JsonStringAccumulate<N> as JsonInterp<JsonString>>::State {
@@ -338,8 +337,7 @@ impl <SendInterp: JsonInterp<SendValueSchema>,
         let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
         match sub_destination {
           MessageReturn::SendMessageReturn(send_message_return) => {
-            self.send_message.parse(send_message_state, token, send_message_return)?;
-            return Ok(())
+            return self.send_message.parse(send_message_state, token, send_message_return);
           }
           _ => {
             return Err(Some(OOB::Reject))
@@ -350,8 +348,7 @@ impl <SendInterp: JsonInterp<SendValueSchema>,
         let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
         match sub_destination {
           MessageReturn::DelegateMessageReturn(delegate_message_return) => {
-            self.delegate_message.parse(delegate_message_state, token, delegate_message_return)?;
-            return Ok(())
+            return self.delegate_message.parse(delegate_message_state, token, delegate_message_return);
           }
           _ => {
             return Err(Some(OOB::Reject))
@@ -362,15 +359,12 @@ impl <SendInterp: JsonInterp<SendValueSchema>,
         let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
         match sub_destination {
           MessageReturn::UndelegateMessageReturn(undelegate_message_return) => {
-            self.undelegate_message.parse(undelegate_message_state, token, undelegate_message_return)?;
-            return Ok(())
+            return self.undelegate_message.parse(undelegate_message_state, token, undelegate_message_return);
           }
           _ => {
             return Err(Some(OOB::Reject))
           }
         }
-      }
-      MessageState::End if token == JsonToken::EndObject => {
       }
       _ => return Err(Some(OOB::Reject)),
     };
