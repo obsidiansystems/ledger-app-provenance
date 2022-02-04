@@ -37,9 +37,9 @@ pub const GET_ADDRESS_IMPL: GetAddressImplT =
 
         final_accept_prompt(&[])?;
 
-        *destination=Some(ArrayVec::new());
-        destination.as_mut()?.try_push(u8::try_from(33).ok()?).ok()?;
-        destination.as_mut()?.try_extend_from_slice(&key).ok()?;
+        let rv = destination.insert(ArrayVec::new());
+        rv.try_push(u8::try_from(key.len()).ok()?).ok()?;
+        rv.try_extend_from_slice(&key).ok()?;
         Some(())
     }));
 
@@ -116,8 +116,8 @@ pub const SIGN_IMPL: SignImplT = Action(
     mkfn(|(hash, key): &(Option<[u8; 32]>, Option<_>), destination: &mut Option<ArrayVec<u8, 128>>| {
         // By the time we get here, we've approved and just need to do the signature.
         final_accept_prompt(&[])?;
-        let rv = destination.insert(ArrayVec::<u8, 128>::new());
         let sig = detecdsa_sign(hash.as_ref()?, key.as_ref()?)?;
+        let rv = destination.insert(ArrayVec::new());
         rv.try_extend_from_slice(&sig).ok()?;
         Some(())
     }),

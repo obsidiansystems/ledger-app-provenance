@@ -2776,24 +2776,24 @@ let
         sha512 = "EC2utToWl4RKfs5zd36Mxq7nzHHBuomZboI0yYL6Y0RmBgT7Sgkq4rQ0ezFTYoIsSs7Tm9SJe+o2FcAg6GBhGA==";
       };
     };
-    "hw-app-hash-git+https://github.com/obsidiansystems/hw-app-hash.git#a92c4aacaf13bba9bc62b6d4701a5fd724419f14" = {
+    "hw-app-hash-git+https://git@github.com/obsidiansystems/hw-app-hash.git#a92c4aacaf13bba9bc62b6d4701a5fd724419f14" = {
       name = "hw-app-hash";
       packageName = "hw-app-hash";
       version = "0.0.0";
       src = fetchgit {
-        url = "https://github.com/obsidiansystems/hw-app-hash.git";
+        url = "https://git@github.com/obsidiansystems/hw-app-hash.git";
         rev = "a92c4aacaf13bba9bc62b6d4701a5fd724419f14";
         sha256 = "3a696bca10eff835e2e68b8d635a3c2489a4fd14ddef607cf26cb78aaf5de0c4";
       };
     };
-    "hw-app-obsidian-common-git+http://github.com/obsidiansystems/hw-app-obsidian-common#d221085eff93bce7efd731ec919e4c5c7a5f30ad" = {
+    "hw-app-obsidian-common-git+https://git@github.com/obsidiansystems/hw-app-obsidian-common.git#9fd33f6218f34c0e3a7da96b63656a2b3ae76e95" = {
       name = "hw-app-obsidian-common";
       packageName = "hw-app-obsidian-common";
       version = "0.0.1";
       src = fetchgit {
-        url = "http://github.com/obsidiansystems/hw-app-obsidian-common";
-        rev = "d221085eff93bce7efd731ec919e4c5c7a5f30ad";
-        sha256 = "2e977b4ac351016972315d09cebd303b251e1fc1f8e1adea3d4d39494ecaed0a";
+        url = "https://git@github.com/obsidiansystems/hw-app-obsidian-common.git";
+        rev = "9fd33f6218f34c0e3a7da96b63656a2b3ae76e95";
+        sha256 = "1f376864ec95fbbe1a8c121f61254578f784e972c1ed7d920e8b6f642b801808";
       };
     };
     "indent-string-4.0.0" = {
@@ -7164,8 +7164,11 @@ let
       sources."html-void-elements-1.0.5"
       sources."http-parser-js-0.5.5"
       sources."http2-client-1.3.5"
-      sources."hw-app-hash-git+https://github.com/obsidiansystems/hw-app-hash.git#a92c4aacaf13bba9bc62b6d4701a5fd724419f14"
-      sources."hw-app-obsidian-common-git+http://github.com/obsidiansystems/hw-app-obsidian-common#d221085eff93bce7efd731ec919e4c5c7a5f30ad"
+      (sources."hw-app-hash-git+https://git@github.com/obsidiansystems/hw-app-hash.git#a92c4aacaf13bba9bc62b6d4701a5fd724419f14" // {
+        dependencies = [
+          sources."hw-app-obsidian-common-git+https://git@github.com/obsidiansystems/hw-app-obsidian-common.git#9fd33f6218f34c0e3a7da96b63656a2b3ae76e95"
+        ];
+      })
       sources."indent-string-4.0.0"
       sources."inflight-1.0.6"
       sources."inherits-2.0.4"
