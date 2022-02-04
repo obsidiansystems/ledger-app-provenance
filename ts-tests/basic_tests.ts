@@ -137,7 +137,35 @@ let exampleSend = {
       }
     }
   ]
-}
+};
+
+let exampleDelegate = {
+  "messages": [
+    {
+      "@type": "/cosmos.staking.v1beta1.MsgDelegate",
+      "delegatorAddress": "pb19d2r0hvuare48azxtgdlnmzj9wyckdu0cssrnv",
+      "validatorAddress": "pbvaloper1d7yum2cxwkhmmuxa096prlv5gawjxw0gc2sykq",
+      "amount": {
+        "denom": "nhash",
+        "amount": "10000000000000"
+      }
+    }
+  ]
+};
+
+let exampleUndelegate = {
+  "messages": [
+    {
+      "@type": "/cosmos.staking.v1beta1.MsgUndelegate",
+      "delegatorAddress": "pb126pd84746dnjaj64v5klnjzscq5fpwvjhxs4qp",
+      "validatorAddress": "pbvaloper16xt2xdmunjmye2y2yjrxmc05s7r2yzhtycg3jd",
+      "amount": {
+        "denom": "nhash",
+        "amount": "18000000000000"
+      }
+    }
+  ]
+};
 
 describe("Signing tests", function() {
   it("can sign a simple transfer",
@@ -174,6 +202,81 @@ describe("Signing tests", function() {
            "x": 43,
            "y": 11,
          }
+       ]
+     ));
+
+  it("can sign a simple delegate",
+     testTransaction(
+       "0/0",
+       JSON.stringify(exampleDelegate),
+       [
+         {
+        "header": "Delegate",
+        "prompt": "Transaction",
+         },
+         {
+        "header": "Delegator",
+        "prompt": "pb19d2r0hvuare48azxtgdlnmzj9wyckdu0cssrnv",
+         },
+         {
+        "header": "Validator",
+        "prompt": "pbvaloper1d7yum2cxwkhmmuxa096prlv5gawjxw0gc2sykq",
+         },
+         {
+        "header": "Amount:",
+        "prompt": "10000000000000 (nhash)",
+         },
+         {
+        "header": "Sign Hash?",
+        "prompt": "649B59A5C80201BF78822062F97C5F0952A989A6A1D4EE09FAB82C2F3A4797CA",
+         },
+         {
+        "header": "For Account",
+        "prompt": "2E27FC80E710265D4CD47A4A44D3C1AE4F88DAAA"
+         },
+         {
+           "text": "Confirm",
+           "x": 43,
+           "y": 11,
+         },
+       ]
+
+     ));
+
+  it("can sign a simple undelegate",
+     testTransaction(
+       "0/0",
+       JSON.stringify(exampleUndelegate),
+       [
+         {
+        "header": "Undelegate",
+        "prompt": "Transaction",
+         },
+         {
+        "header": "Delegator",
+        "prompt": "pb126pd84746dnjaj64v5klnjzscq5fpwvjhxs4qp",
+         },
+         {
+        "header": "Validator",
+        "prompt": "pbvaloper16xt2xdmunjmye2y2yjrxmc05s7r2yzhtycg3jd",
+         },
+         {
+        "header": "Amount:",
+        "prompt": "18000000000000 (nhash)",
+         },
+         {
+        "header": "Sign Hash?",
+        "prompt": "C647D66E645AB83F746E67457EC0BFCFD1097756D180D494B5AA7254C2DF049F",
+         },
+         {
+        "header": "For Account",
+        "prompt": "2E27FC80E710265D4CD47A4A44D3C1AE4F88DAAA"
+         },
+         {
+           "text": "Confirm",
+           "x": 43,
+           "y": 11,
+         },
        ]
      ));
 });
