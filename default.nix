@@ -1,5 +1,14 @@
 rec {
   ledger-platform = import ./dep/ledger-platform {};
+  nixpkgs-latest = import ./dep/nixpkgs {};
+
+  rustShell = ledger-platform.rustShell.overrideAttrs(old: {
+    shellHook = (old.shellHook or "") + ''
+       export PATH=${nixpkgs-latest.buf}/bin:${pkgs.protobuf}/bin:$PATH
+    '';
+
+    PROTO_INCLUDE = "${pkgs.protobuf}/include";
+  });
 
   inherit (ledger-platform)
     lib
