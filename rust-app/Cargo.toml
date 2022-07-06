@@ -13,6 +13,8 @@ ledger-log = { git = "https://github.com/obsidiansystems/ledger-platform" }
 ledger-crypto-helpers = { git = "https://github.com/ea-nasir/ledger-crypto-helpers" }
 zeroize = { version = "1.5.2", default-features = false }
 pin-project = "1.0.10"
+num-traits = { version = "0.2.14", default-features = false }
+num-derive = "0.3.3"
 
 # Pass --features speculos,ledger-log/log_info (or log_trace, etc) to enable
 # speculos logging and change log level.
@@ -34,6 +36,10 @@ features = [ "speculos" ]
 [dev-dependencies]
 testmacro = { git = "https://github.com/yhql/testmacro"}
 
+[build-dependencies]
+proto-gen = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "add-gen" }
+tempfile = "3.3"
+
 [[bin]]
 name = "rust-app"
 test = false
@@ -44,7 +50,7 @@ git = "https://github.com/obsidiansystems/ledger-nanos-sdk.git"
 branch = "use-ambient-compiler-and-target"
 
 [patch.crates-io]
-ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "async" }
+ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "add-gen" }
 ledger-async-block = { git = "https://github.com/obsidiansystems/ledger-platform", branch = "wip-async-overridable" }
 
 [package.metadata.nanos]
