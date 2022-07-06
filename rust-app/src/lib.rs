@@ -7,10 +7,18 @@
 #![feature(impl_trait_in_bindings)]
 #![feature(const_fn_fn_ptr_basics)]
 #![feature(const_mut_refs)]
+#![feature(generic_associated_types)]
 #![cfg_attr(all(target_os = "nanos", test), no_main)]
 #![cfg_attr(target_os = "nanos", feature(custom_test_frameworks))]
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(target_os = "nanos", test_runner(nanos_sdk::sdk_test_runner))]
+
+#[macro_use]
+extern crate num_derive;
+
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/proto/mod.rs"));
+}
 
 pub use ledger_log::*;
 
