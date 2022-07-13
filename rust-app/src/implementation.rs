@@ -43,8 +43,7 @@ pub const GET_ADDRESS_IMPL: GetAddressImplT =
         Some(())
     }));
 
-const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> = //Action<JsonStringAccumulate<64>,
-                                  //fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
+const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
   Action(JsonStringAccumulate::<64>,
         mkvfn(| from_address: &ArrayVec<u8, 64>, destination | {
           write_scroller("Transfer from", |w| Ok(write!(w, "{}", from_utf8(from_address.as_slice())?)?))?;
@@ -52,40 +51,56 @@ const FROM_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> = //Action<
           Some(())
         }));
 
-const TO_ADDRESS_ACTION: Action<JsonStringAccumulate<64>,
-                                  fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
+const TO_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
   Action(JsonStringAccumulate::<64>,
-        | to_address, destination | {
+        mkvfn(| to_address: &ArrayVec<u8, 64>, destination | {
             write_scroller("Transfer To", |w| Ok(write!(w, "{}", from_utf8(to_address.as_slice())?)?))?;
             *destination = Some(());
             Some(())
-        });
+        }));
 
-/* This would be used to show fees; not currently used.
-const AMOUNT_ACTION: Action<AmountType<JsonStringAccumulate<64>, JsonStringAccumulate<64>>,
-                                  fn(& AmountType<Option<ArrayVec<u8, 64>>, Option<ArrayVec<u8, 64>>>, &mut Option<()>) -> Option<()>> =
-  Action(AmountType{field_amount: JsonStringAccumulate::<64>, field_denom: JsonStringAccumulate::<64>},
-        | AmountType{field_amount: amount, field_denom: denom}, destination | {
+const AMOUNT_ACTION: impl JsonInterp<AmountTypeSchema, State: Debug> =
+  Action(AmountTypeInterp { field_amount: JsonStringAccumulate::<64>, field_denom: JsonStringAccumulate::<64> },
+        mkvfn(| &AmountType { field_amount: ref amount, field_denom: ref denom }: &AmountType<Option<ArrayVec<u8, 64>>, Option<ArrayVec<u8, 64>>>,
+                destination | {
           write_scroller("Amount:", |w| Ok(write!(w, "{} ({})", from_utf8(amount.as_ref()?)?, from_utf8(denom.as_ref()?)?)?))?;
           *destination = Some(());
           Some(())
-        });
-*/
+        }));
 
 const SEND_MESSAGE_ACTION: impl JsonInterp<SendValueSchema, State: Debug> =
   Preaction(|| { write_scroller("Send", |w| Ok(write!(w, "Transaction")?)) },
-  SendValueInterp{field_amount: VALUE_ACTION,
+  SendValueInterp{field_amount: AMOUNT_ACTION,
             field_from_address: FROM_ADDRESS_ACTION,
             field_to_address: TO_ADDRESS_ACTION});
 
-const VALUE_ACTION: Action<JsonStringAccumulate<64>,
-                                 fn(& ArrayVec<u8, 64>, &mut Option<()>) -> Option<()>> =
+const DELEGATOR_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
   Action(JsonStringAccumulate::<64>,
-        | value, destination | {
-          write_scroller("Value", |w| Ok(write!(w, "{}", from_utf8(value.as_ref())?)?))?;
+        mkvfn(| delegator_address: &ArrayVec<u8, 64>, destination | {
+          write_scroller("Delegator", |w| Ok(write!(w, "{}", from_utf8(delegator_address.as_slice())?)?))?;
           *destination = Some(());
           Some(())
-        });
+        }));
+
+const VALIDATOR_ADDRESS_ACTION: impl JsonInterp<JsonString, State: Debug> =
+  Action(JsonStringAccumulate::<64>,
+        mkvfn(| validator_address: &ArrayVec<u8, 64>, destination | {
+            write_scroller("Validator", |w| Ok(write!(w, "{}", from_utf8(validator_address.as_slice())?)?))?;
+            *destination = Some(());
+            Some(())
+        }));
+
+const DELEGATE_MESSAGE_ACTION: impl JsonInterp<DelegateValueSchema, State: Debug> =
+  Preaction(|| { write_scroller("Delegate", |w| Ok(write!(w, "Transaction")?)) }, DelegateValueInterp{
+    field_delegator_address: DELEGATOR_ADDRESS_ACTION,
+    field_validator_address: VALIDATOR_ADDRESS_ACTION,
+    field_amount: AMOUNT_ACTION});
+
+const UNDELEGATE_MESSAGE_ACTION: impl JsonInterp<UndelegateValueSchema, State: Debug> =
+  Preaction(|| { write_scroller("Undelegate", |w| Ok(write!(w, "Transaction")?)) }, UndelegateValueInterp{
+    field_delegator_address: DELEGATOR_ADDRESS_ACTION,
+    field_validator_address: VALIDATOR_ADDRESS_ACTION,
+    field_amount: AMOUNT_ACTION});
 
 pub type SignImplT = impl InterpParser<SignParameters, Returning = ArrayVec<u8, 128>>;
 
@@ -97,12 +112,10 @@ pub const SIGN_IMPL: SignImplT = Action(
                 Hasher::new,
                 Hasher::update,
                 Json(ProvenanceCmdInterp {
-                    field_chain_id: DropInterp,
-                    field_entropy: DropInterp,
-                    field_fee: DropInterp,
-                    field_memo: DropInterp,
-                    field_msgs: SubInterp(Message {
+                    field_messages: SubInterp(Message {
                         send_message: SEND_MESSAGE_ACTION,
+                        delegate_message: DELEGATE_MESSAGE_ACTION,
+                        undelegate_message: UNDELEGATE_MESSAGE_ACTION,
                     }),
                 }),
                 true,
@@ -154,41 +167,46 @@ pub fn reset_parsers_state(state: &mut ParsersState) {
     *state = ParsersState::NoState;
 }
 
-meta_definition!{}
-signer_definition!{}
 amount_type_definition!{}
-fee_definition!{}
 send_value_definition!{}
-unjail_value_definition!{}
-public_key_definition!{}
-stake_value_definition!{}
-unstake_value_definition!{}
+delegate_value_definition!{}
+undelegate_value_definition!{}
 
 #[derive(Copy, Clone, Debug)]
 pub enum MessageType {
   SendMessage,
+  DelegateMessage,
+  UndelegateMessage,
 }
 
 #[derive(Debug)]
 pub struct Message<
-  SendInterp: JsonInterp<SendValueSchema>> {
+  SendInterp: JsonInterp<SendValueSchema>,
+  DelegateInterp: JsonInterp<DelegateValueSchema>,
+  UndelegateInterp: JsonInterp<UndelegateValueSchema>> {
   pub send_message: SendInterp,
+  pub delegate_message: DelegateInterp,
+  pub undelegate_message: UndelegateInterp
 }
 
 type TemporaryStringState<const N: usize>  = <JsonStringAccumulate<N> as JsonInterp<JsonString>>::State;
 type TemporaryStringReturn<const N: usize> = Option<<JsonStringAccumulate<N> as JsonInterp<JsonString>>::Returning>;
 
+
+const TYPE_LEN: usize = 5;
+
+const TYPE: [u8; 5] = *b"@type";
+
 #[derive(Debug)]
-pub enum MessageState<SendMessageState> {
+pub enum MessageState<SendMessageState, DelegateMessageState, UndelegateMessageState> {
   Start,
-  TypeLabel(TemporaryStringState<4>, TemporaryStringReturn<4>),
+  TypeLabel(TemporaryStringState<TYPE_LEN>, TemporaryStringReturn<TYPE_LEN>),
   KeySep1,
   Type(TemporaryStringState<64>, TemporaryStringReturn<64>),
-  ValueSep(MessageType),
-  ValueLabel(MessageType, TemporaryStringState<5>, TemporaryStringReturn<5>),
   KeySep2(MessageType),
   SendMessageState(SendMessageState),
-  End,
+  DelegateMessageState(DelegateMessageState),
+  UndelegateMessageState(UndelegateMessageState),
 }
 
 fn init_str<const N: usize>() -> <JsonStringAccumulate<N> as JsonInterp<JsonString>>::State {
@@ -199,8 +217,12 @@ fn call_str<'a, const N: usize>(ss: &mut <JsonStringAccumulate<N> as JsonInterp<
 }
 
 pub enum MessageReturn<
-    SendMessageReturn> {
+    SendMessageReturn,
+    DelegateMessageReturn,
+    UndelegateMessageReturn> {
   SendMessageReturn(Option<SendMessageReturn>),
+  DelegateMessageReturn(Option<DelegateMessageReturn>),
+  UndelegateMessageReturn(Option<UndelegateMessageReturn>)
 }
 
 impl JsonInterp<MessageSchema> for DropInterp {
@@ -213,13 +235,29 @@ impl JsonInterp<MessageSchema> for DropInterp {
         <DropInterp as JsonInterp<JsonAny>>::parse(&DropInterp, state, token, destination)
     }
 }
+macro_rules! unsafe_project_sum {
+    ($variant:path, $r0:expr) => {
+        match * $r0 {
+            $variant(ref mut r) => r,
+            _ => core::hint::unreachable_unchecked(),
+        }
+    }
+}
 
-impl <SendInterp: JsonInterp<SendValueSchema>>
-  JsonInterp<MessageSchema> for Message<SendInterp>
+impl <SendInterp: JsonInterp<SendValueSchema>,
+      DelegateInterp: JsonInterp<DelegateValueSchema>,
+      UndelegateInterp: JsonInterp<UndelegateValueSchema>>
+  JsonInterp<MessageSchema> for Message<SendInterp, DelegateInterp, UndelegateInterp>
   where
-  <SendInterp as JsonInterp<SendValueSchema>>::State: core::fmt::Debug {
-  type State = MessageState<<SendInterp as JsonInterp<SendValueSchema>>::State>;
-  type Returning = MessageReturn<<SendInterp as JsonInterp<SendValueSchema>>::Returning>;
+  <SendInterp as JsonInterp<SendValueSchema>>::State: core::fmt::Debug,
+  <DelegateInterp as JsonInterp<DelegateValueSchema>>::State: core::fmt::Debug,
+  <UndelegateInterp as JsonInterp<UndelegateValueSchema>>::State: core::fmt::Debug {
+  type State = MessageState<<SendInterp as JsonInterp<SendValueSchema>>::State,
+                            <DelegateInterp as JsonInterp<DelegateValueSchema>>::State,
+                            <UndelegateInterp as JsonInterp<UndelegateValueSchema>>::State>;
+  type Returning = MessageReturn<<SendInterp as JsonInterp<SendValueSchema>>::Returning,
+                                 <DelegateInterp as JsonInterp<DelegateValueSchema>>::Returning,
+                                 <UndelegateInterp as JsonInterp<UndelegateValueSchema>>::Returning>;
   fn init(&self) -> Self::State {
     MessageState::Start
   }
@@ -231,14 +269,14 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
                -> Result<(), Option<OOB>> {
     match state {
       MessageState::Start if token == JsonToken::BeginObject => {
-        set_from_thunk(state, ||MessageState::TypeLabel(init_str::<4>(), None));
+        set_from_thunk(state, ||MessageState::TypeLabel(init_str::<TYPE_LEN>(), None));
       }
       MessageState::TypeLabel(ref mut temp_string_state, ref mut temp_string_return) => {
-        call_str::<4>(temp_string_state, token, temp_string_return)?;
-        if temp_string_return.as_ref().unwrap().as_slice() == b"type" {
+        call_str::<TYPE_LEN>(temp_string_state, token, temp_string_return)?;
+        if temp_string_return.as_ref().unwrap().as_slice() == &TYPE {
           set_from_thunk(state, ||MessageState::KeySep1);
         } else {
-          return Err(Some(OOB::Reject));
+          return Err(Some(OOB::Reject))
         }
       }
       MessageState::KeySep1 if token == JsonToken::NameSeparator => {
@@ -247,30 +285,52 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
       MessageState::Type(ref mut temp_string_state, ref mut temp_string_return) => {
         call_str::<64>(temp_string_state, token, temp_string_return)?;
         match temp_string_return.as_ref().unwrap().as_slice() {
-          b"cosmos-sdk/Send" =>  {
-            set_from_thunk(state, ||MessageState::ValueSep(MessageType::SendMessage));
+          b"/cosmos.bank.v1beta1.MsgSend" =>  {
+            set_from_thunk(state, ||MessageState::KeySep2(MessageType::SendMessage));
+          }
+          b"/cosmos.staking.v1beta1.MsgDelegate" =>  {
+            set_from_thunk(state, ||MessageState::KeySep2(MessageType::DelegateMessage));
+          }
+          b"/cosmos.staking.v1beta1.MsgUndelegate" =>  {
+            set_from_thunk(state, ||MessageState::KeySep2(MessageType::UndelegateMessage));
           }
           _ => return Err(Some(OOB::Reject)),
         }
       }
-      MessageState::ValueSep(msg_type) if token == JsonToken::ValueSeparator => {
-        let new_msg_type = *msg_type;
-        set_from_thunk(state, ||MessageState::ValueLabel(new_msg_type, init_str::<5>(), None));
-      }
-      MessageState::ValueLabel(msg_type, temp_string_state, temp_string_return) => {
-        call_str::<5>(temp_string_state, token, temp_string_return)?;
-        if temp_string_return.as_ref().unwrap().as_slice() == b"value" {
-          let new_msg_type = *msg_type;
-          set_from_thunk(state, ||MessageState::KeySep2(new_msg_type));
-        } else {
-          return Err(Some(OOB::Reject));
-        }
-      }
-      MessageState::KeySep2(msg_type) if token == JsonToken::NameSeparator => {
+      MessageState::KeySep2(msg_type) if token == JsonToken::ValueSeparator => {
         match msg_type {
           MessageType::SendMessage => {
-            *destination = Some(MessageReturn::SendMessageReturn(None));
+            let r0 = destination.insert(MessageReturn::SendMessageReturn(None));
+            // OK because we just set above
+            let r = unsafe { unsafe_project_sum!(MessageReturn::SendMessageReturn, r0) };
             set_from_thunk(state, ||MessageState::SendMessageState(self.send_message.init()));
+            // OK because we just set above
+            let s = unsafe { unsafe_project_sum!(MessageState::SendMessageState, state) };
+            let _res = self.send_message.parse(s, JsonToken::BeginObject, r);
+            // One `{` should be valid but not enough input.
+            assert_eq!(_res, Err(None));
+          }
+          MessageType::DelegateMessage => {
+            let r0 = destination.insert(MessageReturn::DelegateMessageReturn(None));
+            // OK because we just set above
+            let r = unsafe { unsafe_project_sum!(MessageReturn::DelegateMessageReturn, r0) };
+            set_from_thunk(state, ||MessageState::DelegateMessageState(self.delegate_message.init()));
+            // OK because we just set above
+            let s = unsafe { unsafe_project_sum!(MessageState::DelegateMessageState, state) };
+            let _res = self.delegate_message.parse(s, JsonToken::BeginObject, r);
+            // One `{` should be valid but not enough input.
+            assert_eq!(_res, Err(None));
+          }
+          MessageType::UndelegateMessage => {
+            let r0 = destination.insert(MessageReturn::UndelegateMessageReturn(None));
+            // OK because we just set above
+            let r = unsafe { unsafe_project_sum!(MessageReturn::UndelegateMessageReturn, r0) };
+            set_from_thunk(state, ||MessageState::UndelegateMessageState(self.undelegate_message.init()));
+            // OK because we just set above
+            let s = unsafe { unsafe_project_sum!(MessageState::UndelegateMessageState, state) };
+            let _res = self.undelegate_message.parse(s, JsonToken::BeginObject, r);
+            // One `{` should be valid but not enough input.
+            assert_eq!(_res, Err(None));
           }
         }
       }
@@ -278,16 +338,34 @@ impl <SendInterp: JsonInterp<SendValueSchema>>
         let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
         match sub_destination {
           MessageReturn::SendMessageReturn(send_message_return) => {
-            self.send_message.parse(send_message_state, token, send_message_return)?;
-            set_from_thunk(state, ||MessageState::End);
+            return self.send_message.parse(send_message_state, token, send_message_return);
           }
           _ => {
             return Err(Some(OOB::Reject))
           }
         }
       }
-      MessageState::End if token == JsonToken::EndObject => {
-          return Ok(())
+      MessageState::DelegateMessageState(ref mut delegate_message_state) => {
+        let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
+        match sub_destination {
+          MessageReturn::DelegateMessageReturn(delegate_message_return) => {
+            return self.delegate_message.parse(delegate_message_state, token, delegate_message_return);
+          }
+          _ => {
+            return Err(Some(OOB::Reject))
+          }
+        }
+      }
+      MessageState::UndelegateMessageState(ref mut undelegate_message_state) => {
+        let sub_destination = &mut destination.as_mut().ok_or(Some(OOB::Reject))?;
+        match sub_destination {
+          MessageReturn::UndelegateMessageReturn(undelegate_message_return) => {
+            return self.undelegate_message.parse(undelegate_message_state, token, undelegate_message_return);
+          }
+          _ => {
+            return Err(Some(OOB::Reject))
+          }
+        }
       }
       _ => return Err(Some(OOB::Reject)),
     };

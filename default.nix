@@ -1,5 +1,21 @@
 rec {
   ledger-platform = import ./dep/ledger-platform {};
+  nixpkgs-latest = import ./dep/nixpkgs {};
+
+  rustShell = ledger-platform.rustShell.overrideAttrs(old: {
+    shellHook = (old.shellHook or "") + ''
+       export PATH=${nixpkgs-latest.buf}/bin:${pkgs.protobuf}/bin:$PATH
+    '';
+
+    COSMOS_SDK = ledger-platform.pkgs.fetchFromGitHub {
+      owner = "cosmos";
+      repo = "cosmos-sdk";
+      rev = "f2d94445c0f5f52cf5ed999b81048b575de94964";
+      sha256 = "sha256-0B3B7Bo4tsBGJqzN7SnfGytAxOKfAFv9X+LjvnY0AWQ=";
+    };
+
+    PROTO_INCLUDE = "${pkgs.protobuf}/include";
+  });
 
   inherit (ledger-platform)
     lib
