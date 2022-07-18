@@ -314,6 +314,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "provenance"
+version = "0.0.1"
+dependencies = [
+ "arrayvec",
+ "ledger-crypto-helpers",
+ "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform)",
+ "ledger-parser-combinators",
+ "ledger-prompts-ui",
+ "nanos_sdk",
+ "nanos_ui",
+ "num-derive",
+ "num-traits",
+ "proto-gen",
+ "tempfile",
+ "testmacro",
+ "zeroize",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,25 +376,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "rust-app"
-version = "0.0.1"
-dependencies = [
- "arrayvec",
- "ledger-crypto-helpers",
- "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform)",
- "ledger-parser-combinators",
- "ledger-prompts-ui",
- "nanos_sdk",
- "nanos_ui",
- "num-derive",
- "num-traits",
- "proto-gen",
- "tempfile",
- "testmacro",
- "zeroize",
 ]
 
 [[package]]
@@ -447,9 +447,9 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
+checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
 
 [[package]]
 name = "utf8-ranges"

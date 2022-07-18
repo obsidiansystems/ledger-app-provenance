@@ -6,7 +6,7 @@ use ledger_crypto_helpers::common::{with_public_keys, PKH, public_key_bytes};
 use ledger_crypto_helpers::eddsa::eddsa_sign;
 use ledger_log::{info};
 use ledger_parser_combinators::interp_parser::{
-    Action, DefaultInterp, DropInterp, ParserCommon, MoveAction, InterpParser, ObserveBytes, SubInterp,
+    Action, DefaultInterp, DropInterp, MoveAction, InterpParser, ObserveBytes, SubInterp,
 };
 use ledger_prompts_ui::{write_scroller, final_accept_prompt};
 
@@ -90,8 +90,8 @@ pub static SIGN_IMPL: SignImplT = Action(
 
 pub enum ParsersState {
     NoState,
-    GetAddressState(<GetAddressImplT as ParserCommon<Bip32Key>>::State),
-    SignState(<SignImplT as ParserCommon<SignParameters>>::State),
+    GetAddressState(<GetAddressImplT as InterpParser<Bip32Key>>::State),
+    SignState(<SignImplT as InterpParser<SignParameters>>::State),
 }
 
 pub fn reset_parsers_state(state: &mut ParsersState) {
@@ -101,12 +101,12 @@ pub fn reset_parsers_state(state: &mut ParsersState) {
 #[inline(never)]
 pub fn get_get_address_state(
     s: &mut ParsersState,
-) -> &mut <GetAddressImplT as ParserCommon<Bip32Key>>::State {
+) -> &mut <GetAddressImplT as InterpParser<Bip32Key>>::State {
     match s {
         ParsersState::GetAddressState(_) => {}
         _ => {
             info!("Non-same state found; initializing state.");
-            *s = ParsersState::GetAddressState(<GetAddressImplT as ParserCommon<Bip32Key>>::init(
+            *s = ParsersState::GetAddressState(<GetAddressImplT as InterpParser<Bip32Key>>::init(
                 &GET_ADDRESS_IMPL,
             ));
         }
@@ -122,12 +122,12 @@ pub fn get_get_address_state(
 #[inline(never)]
 pub fn get_sign_state(
     s: &mut ParsersState,
-) -> &mut <SignImplT as ParserCommon<SignParameters>>::State {
+) -> &mut <SignImplT as InterpParser<SignParameters>>::State {
     match s {
         ParsersState::SignState(_) => {}
         _ => {
             info!("Non-same state found; initializing state.");
-            *s = ParsersState::SignState(<SignImplT as ParserCommon<SignParameters>>::init(
+            *s = ParsersState::SignState(<SignImplT as InterpParser<SignParameters>>::init(
                 &SIGN_IMPL,
             ));
         }

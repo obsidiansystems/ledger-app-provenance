@@ -5,13 +5,17 @@ use std::env;
 fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=script.ld");
 
+    // Cosmos repo path
     let cosmos = env::var("COSMOS_SDK").unwrap();
 
+    // Temp dir for buf output
     let temp_dir = tempfile::Builder::new()
         .prefix("buf-out")
         .tempdir()?;
     let buf_out_file = temp_dir.path().join("buf_out.bin");
 
+    // Generate a FileDescriptorSet binary file using buf on the cosmos-sdk repo
+    // targeting the type cosmos.tx.v1.beta1.Tx
     let output = process::Command::new(&"buf")
         .arg("build")
         .arg(cosmos)
@@ -21,6 +25,8 @@ fn main() -> std::io::Result<()> {
 
     assert!(output.status.success(), "buf command returned non success status {}\nstderr:\n{}", output.status, String::from_utf8_lossy(&output.stderr));
 
+    // Use the FileDescriptorSet binary file to generate rust code
+    // under $OUT_DIR/proto
     proto_gen::generate::generate_rust_code(
         &buf_out_file,
         Path::new("proto")
