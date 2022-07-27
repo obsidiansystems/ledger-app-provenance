@@ -84,6 +84,11 @@ describe('basic tests', () => {
         "x": 43,
         "y": 11,
       },
+      {
+        "text": "Provenance 0.0.1",
+        "x": 20,
+        "y": 11,
+      }
     ]);
   });
 });

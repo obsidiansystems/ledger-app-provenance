@@ -1,15 +1,15 @@
-use rust_app::implementation::*;
 use core::pin::Pin;
 use core::cell::RefCell;
 
 use ledger_async_block::*;
+use provenance::implementation::*;
 
 use ledger_prompts_ui::RootMenu;
 
 use nanos_sdk::io;
 nanos_sdk::set_panic!(nanos_sdk::exiting_panic);
 
-use rust_app::*;
+use provenance::*;
 
 static mut COMM_CELL : Option<RefCell<io::Comm>> = None;
 
@@ -37,10 +37,10 @@ extern "C" fn sample_main() {
     let host_io = HostIO(unsafe { HOST_IO_STATE.as_ref().unwrap() });
     let mut states = unsafe { Pin::new_unchecked( &mut STATES_BACKING ) };
 
-    let mut idle_menu = RootMenu::new([ concat!("Rust App ", env!("CARGO_PKG_VERSION")), "Exit" ]);
+    let mut idle_menu = RootMenu::new([ concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit" ]);
     let mut busy_menu = RootMenu::new([ "Working...", "Cancel" ]);
 
-    info!("Rust App {}", env!("CARGO_PKG_VERSION"));
+    info!("Provenance App {}", env!("CARGO_PKG_VERSION"));
     info!("State sizes\ncomm: {}\nstates: {}"
           , core::mem::size_of::<io::Comm>()
           , core::mem::size_of::<ParsersState>());

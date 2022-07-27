@@ -1,5 +1,5 @@
 [package]
-name = "rust-app"
+name = "provenance"
 version = "0.0.1"
 authors = ["jonored", "yhql"]
 edition = "2018"
@@ -41,7 +41,7 @@ proto-gen = { git = "https://github.com/obsidiansystems/ledger-parser-combinator
 tempfile = "3.3"
 
 [[bin]]
-name = "rust-app"
+name = "provenance"
 test = false
 path = "bin-src/main.rs"
 
@@ -54,8 +54,8 @@ ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-p
 ledger-async-block = { git = "https://github.com/obsidiansystems/ledger-platform", branch = "wip-async-overridable" }
 
 [package.metadata.nanos]
-name = "Rust App"
+name = "Provenance"
 path = "44'/535348'"
-curve = "ed25519"
+curve = "secp256k1"
 flags = "0"
-icon = "crab.gif"
+icon = "provenance.gif"
