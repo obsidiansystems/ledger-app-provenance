@@ -94,6 +94,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ledger-async-block"
+version = "0.1.0"
+source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async-overridable#f0fd7a9a1312898758ef71f6fdc5737778a4c1c1"
+dependencies = [
+ "arrayvec",
+ "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async)",
+ "ledger-parser-combinators",
+ "nanos_sdk",
+ "pin-project",
+]
+
+[[package]]
 name = "ledger-crypto-helpers"
 version = "0.1.0"
 source = "git+https://github.com/ea-nasir/ledger-crypto-helpers#7c362ab4381df5b44cdf0b83ae2b366eba27f29e"
@@ -109,6 +121,15 @@ dependencies = [
 [[package]]
 name = "ledger-log"
 version = "0.1.0"
+source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async#873fe59a8da9c9756557297bd37d777f2b526b0a"
+dependencies = [
+ "arrayvec",
+ "nanos_sdk",
+]
+
+[[package]]
+name = "ledger-log"
+version = "0.1.0"
 source = "git+https://github.com/ea-nasir/ledger-log.git#4f813daf1099672cafa0cf7794d0b70786407a0e"
 dependencies = [
  "arrayvec",
@@ -118,7 +139,7 @@ dependencies = [
 [[package]]
 name = "ledger-log"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-platform#a9ae3aef61a17bec246571a4bdbbe81fdd991258"
+source = "git+https://github.com/obsidiansystems/ledger-platform#d1adbc09dd31115694b92b31a1efda8e889cce50"
 dependencies = [
  "arrayvec",
  "nanos_sdk",
@@ -127,13 +148,13 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-parser-combinators#3f1bdb4d58249a71543c3ba10ded9a8491ea9c28"
+source = "git+https://github.com/obsidiansystems/ledger-parser-combinators?branch=async#6f7c59308ccf38560ed1b71bd273b2f05bfb756c"
 dependencies = [
  "arrayvec",
  "bstringify",
  "enum-init",
  "generic-array",
- "ledger-log 0.1.0 (git+https://github.com/ea-nasir/ledger-log.git)",
+ "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform)",
  "log",
  "nanos_sdk",
  "paste",
@@ -208,10 +229,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
 
 [[package]]
-name = "proc-macro2"
-version = "1.0.40"
+name = "pin-project"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
+checksum = "78203e83c48cffbe01e4a2d35d566ca4de445d79a85372fc64e378bfc812a260"
+dependencies = [
+ "pin-project-internal",
+]
+
+[[package]]
+name = "pin-project-internal"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "710faf75e1b33345361201d36d04e98ac1ed8909151a017ed384700836104c74"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.42"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c278e965f1d8cf32d6e0e96de3d3e79712178ae67986d9cf9151f51e95aac89b"
 dependencies = [
  "unicode-ident",
 ]
@@ -249,12 +290,14 @@ name = "rust-app"
 version = "0.0.1"
 dependencies = [
  "arrayvec",
+ "ledger-async-block",
  "ledger-crypto-helpers",
  "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform)",
  "ledger-parser-combinators",
  "ledger-prompts-ui",
  "nanos_sdk",
  "nanos_ui",
+ "pin-project",
  "testmacro",
  "zeroize",
 ]
@@ -306,9 +349,9 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
+checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
 
 [[package]]
 name = "utf8-ranges"
@@ -336,6 +379,6 @@ checksum = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
 
 [[package]]
 name = "zeroize"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94693807d016b2f2d2e14420eb3bfcca689311ff775dcf113d74ea624b7cdf07"
+checksum = "c394b5bd0c6f669e7275d9c20aa90ae064cb22e75a1cad54e1b34088034b149f"

@@ -8,10 +8,11 @@ resolver = "2"
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-parser-combinators" }
+ledger-parser-combinators = "0.1.0"
 ledger-log = { git = "https://github.com/obsidiansystems/ledger-platform" }
 ledger-crypto-helpers = { git = "https://github.com/ea-nasir/ledger-crypto-helpers" }
 zeroize = { version = "1.5.2", default-features = false }
+pin-project = "1.0.10"
 
 # Pass --features speculos,ledger-log/log_info (or log_trace, etc) to enable
 # speculos logging and change log level.
@@ -24,6 +25,7 @@ extra_debug = ["ledger-log/log_trace"]
 nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" } 
 nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" } 
 ledger-prompts-ui = { git = "https://github.com/ea-nasir/ledger-prompts-ui" }
+ledger-async-block = "0.1.0"
 
 [target.thumbv6m-none-eabi.dev-dependencies.nanos_sdk]
 git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git"
@@ -40,6 +42,10 @@ path = "bin-src/main.rs"
 [patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
 git = "https://github.com/obsidiansystems/ledger-nanos-sdk.git"
 branch = "use-ambient-compiler-and-target"
+
+[patch.crates-io]
+ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "async" }
+ledger-async-block = { git = "https://github.com/obsidiansystems/ledger-platform", branch = "wip-async-overridable" }
 
 [package.metadata.nanos]
 name = "Rust App"
