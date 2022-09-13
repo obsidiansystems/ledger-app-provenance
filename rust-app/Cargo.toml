@@ -8,54 +8,58 @@ resolver = "2"
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-ledger-parser-combinators = "0.1.0"
-ledger-log = { git = "https://github.com/obsidiansystems/ledger-platform" }
-ledger-crypto-helpers = { git = "https://github.com/ea-nasir/ledger-crypto-helpers" }
+ledger-parser-combinators = "*"
+ledger-log = "*"
+ledger-crypto-helpers = "*"
 zeroize = { version = "1.5.2", default-features = false }
 pin-project = "1.0.10"
-num-traits = { version = "0.2.14", default-features = false }
+num-traits = { version = "0.2.15", default-features = false }
 num-derive = "0.3.3"
 
 # Pass --features speculos,ledger-log/log_info (or log_trace, etc) to enable
 # speculos logging and change log level.
 [features]
 default = [ ]
+# Pass --features speculos,ledger-log/log_info (or log_trace, etc) to enable speculos logging and change log level.
 speculos = [ "nanos_sdk/speculos", "ledger-log/speculos", "ledger-log/log_error", "ledger-parser-combinators/logging" ]
 extra_debug = ["ledger-log/log_trace"]
 
 [target.thumbv6m-none-eabi.dependencies]
-nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" } 
-nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" } 
-ledger-prompts-ui = { git = "https://github.com/ea-nasir/ledger-prompts-ui" }
-ledger-async-block = "0.1.0"
+nanos_sdk = "*"
+nanos_ui = "*"
+ledger-prompts-ui = "*"
+ledger-async-block = "*"
 
 [target.thumbv6m-none-eabi.dev-dependencies.nanos_sdk]
-git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git"
+version = "*"
 features = [ "speculos" ]
 
 [dev-dependencies]
-testmacro = { git = "https://github.com/yhql/testmacro"}
+testmacro = { git = "https://github.com/yhql/testmacro" }
 
 [build-dependencies]
-proto-gen = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "add-gen" }
-tempfile = "3.3"
+proto-gen = "*"
+tempfile = "3.2.0"
 
 [[bin]]
 name = "provenance"
 test = false
 path = "bin-src/main.rs"
 
-[patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
-git = "https://github.com/obsidiansystems/ledger-nanos-sdk.git"
-branch = "use-ambient-compiler-and-target"
-
 [patch.crates-io]
-ledger-parser-combinators = { git = "https://github.com/obsidiansystems/ledger-parser-combinators", branch = "add-gen" }
+ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
+proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
+nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "use-ambient-compiler-and-target" }
+ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
+ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable" }
+nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch = "patchable" }
+enum-init = { git = "https://github.com/alamgu/enum-init" }
+ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui", branch = "patchable" }
 ledger-async-block = { git = "https://github.com/obsidiansystems/ledger-platform", branch = "wip-async-overridable" }
 
 [package.metadata.nanos]
-name = "Provenance"
+name = "Rust App"
 path = "44'/535348'"
-curve = "secp256k1"
+curve = "ed25519"
 flags = "0"
-icon = "provenance.gif"
+icon = "crab.gif"

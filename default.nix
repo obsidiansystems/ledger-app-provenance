@@ -1,23 +1,29 @@
 rec {
-  ledger-platform = import ./dep/ledger-platform {};
-  nixpkgs-latest = import ./dep/nixpkgs {};
+  nix-thunk = import ./dep/nix-thunk {};
+  thunk-src-in-env = name: var: path: let
+	  src = nix-thunk.thunkSource path;
+  in alamgu.pkgs.runCommand name {} ''
+          mkdir -p $out/nix-support/
+          cat <<EOF >$out/nix-support/setup-hook
+	  export ${var}=${src}
+EOF
+  '';
+  buf-nixpkgs = import ./dep/nixpkgs {};
+  cosmos-sdk = thunk-src-in-env "cosmos-sdk-hook" "COSMOS_SDK" ./dep/cosmos-sdk;
+  buf_hook = alamgu.pkgs.runCommand "buf-hooks" {} ''
+    mkdir -p $out/nix-support/
+    cat <<EOF >$out/nix-support/setup-hook
+    export PROTO_INCLDUE="${alamgu.pkgs.protobuf}/include"
+    export PATH=${alamgu.pkgs.protobuf}/bin:$PATH
+EOF
+  '';
+  
+  alamgu = import ./dep/alamgu {
+    extraAppInputs=[cosmos-sdk buf_hook];
+    extraNativeAppInputs=[buf-nixpkgs.buf];
+  };
 
-  rustShell = ledger-platform.rustShell.overrideAttrs(old: {
-    shellHook = (old.shellHook or "") + ''
-       export PATH=${nixpkgs-latest.buf}/bin:${pkgs.protobuf}/bin:$PATH
-    '';
-
-    COSMOS_SDK = ledger-platform.pkgs.fetchFromGitHub {
-      owner = "cosmos";
-      repo = "cosmos-sdk";
-      rev = "f2d94445c0f5f52cf5ed999b81048b575de94964";
-      sha256 = "sha256-0B3B7Bo4tsBGJqzN7SnfGytAxOKfAFv9X+LjvnY0AWQ=";
-    };
-
-    PROTO_INCLUDE = "${pkgs.protobuf}/include";
-  });
-
-  inherit (ledger-platform)
+  inherit (alamgu)
     lib
     pkgs ledgerPkgs
     crate2nix
@@ -36,19 +42,23 @@ rec {
             rust-app = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
             in {
-              preHook = ledger-platform.gccLibsPreHook;
+              preHook = alamgu.gccLibsPreHook;
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
               ];
+	      PROTO_INCLUDE = "${pkgs.protobuf}/include";
+              nativeBuildInputs = [pkgs.protobuf buf-nixpkgs.buf];
+              buildInputs = [buf_hook cosmos-sdk];
+              
             };
           };
         });
     in
       args: fun (args // lib.optionalAttrs pkgs.stdenv.hostPlatform.isAarch32 {
         dependencies = map (d: d // { stdlib = true; }) [
-          ledger-platform.ledgerCore
-          ledger-platform.ledgerCompilerBuiltins
+          alamgu.ledgerCore
+          alamgu.ledgerCompilerBuiltins
         ] ++ args.dependencies;
       });
   };
@@ -65,10 +75,10 @@ rec {
 
   tarSrc = ledgerPkgs.runCommandCC "tarSrc" {
     nativeBuildInputs = [
-      ledger-platform.cargo-ledger
-      ledger-platform.ledgerRustPlatform.rust.cargo
+      alamgu.cargo-ledger
+      alamgu.ledgerRustPlatform.rust.cargo
     ];
-  } (ledger-platform.cargoLedgerPreHook + ''
+  } (alamgu.cargoLedgerPreHook + ''
 
     cp ${./rust-app/Cargo.toml} ./Cargo.toml
     # So cargo knows it's a binary
@@ -91,7 +101,7 @@ rec {
   loadApp = pkgs.writeScriptBin "load-app" ''
     #!/usr/bin/env bash
     cd ${tarSrc}/rust-app
-    ${ledger-platform.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/rust-app/app.json
+    ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/rust-app/app.json
   '';
 
   testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
@@ -104,7 +114,7 @@ rec {
 
   runTests = { appExe ? rootCrate + "/bin/rust-app" }: pkgs.runCommandNoCC "run-tests" {
     nativeBuildInputs = [
-      pkgs.wget ledger-platform.speculos.speculos testScript
+      pkgs.wget alamgu.speculos.speculos testScript
     ];
   } ''
     RUST_APP=${rootCrate}/bin/*
@@ -136,6 +146,23 @@ rec {
   inherit (pkgs.nodePackages) node2nix;
 
   appShell = pkgs.mkShell {
-    packages = [ loadApp ledger-platform.generic-cli pkgs.jq ];
+    packages = [ loadApp alamgu.generic-cli pkgs.jq ];
+  };
+
+  provenanced = pkgs.stdenv.mkDerivation {
+    name = "provenance-bin";
+    src = builtins.fetchurl {
+      url = "https://github.com/provenance-io/provenance/releases/download/v1.12.0/provenance-linux-amd64-v1.12.0.zip";
+      sha256="0bj8ay1vxplx5l9w19vwgv254s60c804zx11h9jlk0lvd6rz2xa0";
+    };
+    buildInputs = [ pkgs.leveldb ];
+    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+    unpackPhase = ":";
+    buildPhase = ":";
+    installPhase = ''
+      mkdir $out
+      cd $out
+      ${pkgs.unzip}/bin/unzip $src
+    '';
   };
 }

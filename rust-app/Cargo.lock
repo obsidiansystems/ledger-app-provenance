@@ -70,9 +70,9 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "either"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
+checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "enum-init"
@@ -132,10 +132,10 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 [[package]]
 name = "ledger-async-block"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async-overridable#f0fd7a9a1312898758ef71f6fdc5737778a4c1c1"
+source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async-overridable#6da4b2e24091fadd9ade6243c7a2644cba3ab973"
 dependencies = [
  "arrayvec",
- "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async)",
+ "ledger-log",
  "ledger-parser-combinators",
  "nanos_sdk",
  "pin-project",
@@ -144,11 +144,11 @@ dependencies = [
 [[package]]
 name = "ledger-crypto-helpers"
 version = "0.1.0"
-source = "git+https://github.com/ea-nasir/ledger-crypto-helpers#7c362ab4381df5b44cdf0b83ae2b366eba27f29e"
+source = "git+https://github.com/alamgu/ledger-crypto-helpers?branch=patchable#f448b0e72db3f8be01f482de2fa3e42aa8056591"
 dependencies = [
  "arrayvec",
  "base64",
- "ledger-log 0.1.0 (git+https://github.com/ea-nasir/ledger-log.git)",
+ "ledger-log",
  "nanos_sdk",
  "nanos_ui",
  "zeroize",
@@ -157,25 +157,7 @@ dependencies = [
 [[package]]
 name = "ledger-log"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async#873fe59a8da9c9756557297bd37d777f2b526b0a"
-dependencies = [
- "arrayvec",
- "nanos_sdk",
-]
-
-[[package]]
-name = "ledger-log"
-version = "0.1.0"
-source = "git+https://github.com/ea-nasir/ledger-log.git#4f813daf1099672cafa0cf7794d0b70786407a0e"
-dependencies = [
- "arrayvec",
- "nanos_sdk",
-]
-
-[[package]]
-name = "ledger-log"
-version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-platform#d1adbc09dd31115694b92b31a1efda8e889cce50"
+source = "git+https://github.com/alamgu/ledger-log?branch=patchable#cd7ca8faad65561d0ff172de52ddc97bdbf4a95e"
 dependencies = [
  "arrayvec",
  "nanos_sdk",
@@ -184,15 +166,14 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-parser-combinators?branch=add-gen#36867d8827cdd701186dc7bdde01eef68ae6a334"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#c062a37d903423b60a6f0254f93db5ec6fafcf3f"
 dependencies = [
  "arrayvec",
  "bstringify",
  "enum-init",
  "generic-array",
- "ledger-log 0.1.0 (git+https://github.com/ea-nasir/ledger-log.git)",
+ "ledger-log",
  "log",
- "nanos_sdk",
  "num-derive",
  "num-traits",
  "paste",
@@ -202,10 +183,10 @@ dependencies = [
 [[package]]
 name = "ledger-prompts-ui"
 version = "0.1.0"
-source = "git+https://github.com/ea-nasir/ledger-prompts-ui#4a669e4a21e38cbeb2588a405ca726af3908cd88"
+source = "git+https://github.com/alamgu/ledger-prompts-ui?branch=patchable#c015f9f7a3a73d8ee7d4613491e7129b2cf7fc11"
 dependencies = [
  "arrayvec",
- "ledger-log 0.1.0 (git+https://github.com/ea-nasir/ledger-log.git)",
+ "ledger-log",
  "nanos_sdk",
  "nanos_ui",
 ]
@@ -237,7 +218,7 @@ dependencies = [
 [[package]]
 name = "nanos_sdk"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-nanos-sdk.git?branch=use-ambient-compiler-and-target#1d358edd6cddbdcd4d6deb29f856b40e7e863c07"
+source = "git+https://github.com/alamgu/ledger-nanos-sdk?branch=use-ambient-compiler-and-target#1d358edd6cddbdcd4d6deb29f856b40e7e863c07"
 dependencies = [
  "cc",
  "cty",
@@ -247,7 +228,7 @@ dependencies = [
 [[package]]
 name = "nanos_ui"
 version = "0.1.0"
-source = "git+https://github.com/LedgerHQ/ledger-nanos-ui.git#bab7dc5a40d2988f682e0ca9c04eb631d50934ca"
+source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#1f0e67e01854c0b6c880c58474a4c3d7a348356b"
 dependencies = [
  "nanos_sdk",
 ]
@@ -310,7 +291,7 @@ dependencies = [
 [[package]]
 name = "proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-parser-combinators?branch=add-gen#36867d8827cdd701186dc7bdde01eef68ae6a334"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#c062a37d903423b60a6f0254f93db5ec6fafcf3f"
 dependencies = [
  "protobuf",
  "protoc-rust",
@@ -361,7 +342,7 @@ dependencies = [
  "arrayvec",
  "ledger-async-block",
  "ledger-crypto-helpers",
- "ledger-log 0.1.0 (git+https://github.com/obsidiansystems/ledger-platform)",
+ "ledger-log",
  "ledger-parser-combinators",
  "ledger-prompts-ui",
  "nanos_sdk",
@@ -556,3 +537,8 @@ name = "zeroize"
 version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c394b5bd0c6f669e7275d9c20aa90ae064cb22e75a1cad54e1b34088034b149f"
+
+[[patch.unused]]
+name = "enum-init"
+version = "0.1.0"
+source = "git+https://github.com/alamgu/enum-init#a831c2fbbe00af926ae87c064bfe4da58d26777c"

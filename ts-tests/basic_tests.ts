@@ -53,7 +53,7 @@ let sendCommandAndAccept = async function(command : any, prompts : any) {
 
     let transport = await Transport.open("http://localhost:5000/apdu");
     let client = new Common(transport, "rust-app");
-    // client.sendChunks = client.sendWithBlocks; // Use Block protocol
+    client.sendChunks = client.sendWithBlocks; // Use Block protocol
     let err = null;
 
     try { await command(client); } catch(e) {
