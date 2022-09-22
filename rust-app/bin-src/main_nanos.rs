@@ -1,7 +1,7 @@
 use core::pin::Pin;
 use core::cell::RefCell;
 
-use ledger_async_block::*;
+use alamgu_async_block::*;
 use provenance::implementation::*;
 
 use ledger_prompts_ui::RootMenu;
@@ -26,7 +26,12 @@ unsafe fn initialize() {
         requested_block: None,
         sent_command: None,
     }));
+    ASYNC_TRAMPOLINE = Some(RefCell::new(FutureTrampoline { fut: None }));
+}
 
+#[inline(never)]
+fn noinline<A>(f: impl FnOnce() -> A) -> A {
+    f()
 }
 
 #[cfg(not(test))]
@@ -41,9 +46,10 @@ extern "C" fn sample_main() {
     let mut busy_menu = RootMenu::new([ "Working...", "Cancel" ]);
 
     info!("Provenance App {}", env!("CARGO_PKG_VERSION"));
-    info!("State sizes\ncomm: {}\nstates: {}"
+    info!("State sizes\ncomm: {}\nstates: {}\nhostio: {}"
           , core::mem::size_of::<io::Comm>()
-          , core::mem::size_of::<ParsersState>());
+          , core::mem::size_of::<ParsersState>()
+          , core::mem::size_of::<HostIOState>());
 
     let // Draw some 'welcome' screen
         menu = |states : &ParsersState, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
@@ -53,7 +59,7 @@ extern "C" fn sample_main() {
             }
         };
 
-    menu(&states, & mut idle_menu, & mut busy_menu);
+    noinline(|| menu(&states, & mut idle_menu, & mut busy_menu));
     loop {
         // Wait for either a specific button push to exit the app
         // or an APDU command
@@ -69,18 +75,18 @@ extern "C" fn sample_main() {
                     }
                     Err(sw) => comm.borrow_mut().reply(sw),
                 };
-                menu(&states, & mut idle_menu, & mut busy_menu);
+                noinline(|| menu(&states, & mut idle_menu, & mut busy_menu));
                 trace!("Command done");
             }
             io::Event::Button(btn) => {
                 trace!("Button received");
                 match states.is_no_state() {
-                    true => {match idle_menu.update(btn) {
+                    true => {match noinline(|| idle_menu.update(btn)) {
                         Some(1) => { info!("Exiting app at user direction via root menu"); nanos_sdk::exit_app(0) },
                         _ => (),
                     } }
-                    false => { match busy_menu.update(btn) {
-                        Some(1) => { info!("Resetting at user direction via busy menu"); reset_parsers_state(&mut states) }
+                    false => { match noinline(|| busy_menu.update(btn)) {
+                        Some(1) => { info!("Resetting at user direction via busy menu"); noinline(|| reset_parsers_state(&mut states)) }
                         _ => (),
                     } }
                 };
@@ -132,10 +138,11 @@ fn handle_apdu<'a: 'b, 'b>(io: HostIO, ins: Ins, state: &'b mut Pin<&'a mut Pars
 
         }
         Ins::GetPubkey => {
-            poll_apdu_handler(state, io, GetAddress)?
+            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress)?
         }
         Ins::Sign => {
-            poll_apdu_handler(state, io, Sign)?
+            trace!("Handling sign");
+            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, Sign)?
         }
         Ins::GetVersionStr => {
         }

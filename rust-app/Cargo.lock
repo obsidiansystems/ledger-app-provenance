@@ -21,6 +21,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "alamgu-async-block"
+version = "0.1.0"
+source = "git+https://github.com/alamgu/alamgu-async-block?branch=main#86ec7f64776ac9bad13a8737613eab62fd0868c3"
+dependencies = [
+ "arrayvec",
+ "ledger-log",
+ "ledger-parser-combinators",
+ "nanos_sdk",
+ "pin-project",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -130,18 +142,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "ledger-async-block"
-version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-platform?branch=wip-async-overridable#6da4b2e24091fadd9ade6243c7a2644cba3ab973"
-dependencies = [
- "arrayvec",
- "ledger-log",
- "ledger-parser-combinators",
- "nanos_sdk",
- "pin-project",
-]
-
-[[package]]
 name = "ledger-crypto-helpers"
 version = "0.1.0"
 source = "git+https://github.com/alamgu/ledger-crypto-helpers?branch=patchable#f448b0e72db3f8be01f482de2fa3e42aa8056591"
@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#c062a37d903423b60a6f0254f93db5ec6fafcf3f"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#3e5fba38ba1466b0fcdf90eac20652efab892a7d"
 dependencies = [
  "arrayvec",
  "bstringify",
@@ -291,7 +291,7 @@ dependencies = [
 [[package]]
 name = "proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#c062a37d903423b60a6f0254f93db5ec6fafcf3f"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#3e5fba38ba1466b0fcdf90eac20652efab892a7d"
 dependencies = [
  "protobuf",
  "protoc-rust",
@@ -339,8 +339,8 @@ dependencies = [
 name = "provenance"
 version = "0.0.1"
 dependencies = [
+ "alamgu-async-block",
  "arrayvec",
- "ledger-async-block",
  "ledger-crypto-helpers",
  "ledger-log",
  "ledger-parser-combinators",
@@ -458,7 +458,7 @@ dependencies = [
 [[package]]
 name = "trie-enum"
 version = "0.1.0"
-source = "git+https://github.com/ea-nasir/trie-enum#ef2315fda4223affa3e3a2b5e5c5516a3160af25"
+source = "git+https://github.com/alamgu/trie-enum?branch=main#ef2315fda4223affa3e3a2b5e5c5516a3160af25"
 dependencies = [
  "paste",
 ]

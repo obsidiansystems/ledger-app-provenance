@@ -7,10 +7,12 @@ rustflags = [
   "-C", "relocation-model=ropi",
   "-C", "link-arg=-Tscript.ld",
   "-C", "opt-level=3",
+  "-Z", "mir-opt-level=3",
   "-C", "passes=ledger-ropi",
   "-C", "codegen-units=1",
   "-C", "lto",
   "-C", "embed-bitcode",
+  #"-Z", "print-llvm-passes",
   "--cfg", "target_os=\"nanos\"",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
@@ -23,4 +25,4 @@ target = "thumbv6m-none-eabi"
 [alias]
 tt = "test --features extra_debug"
 br = "build --release"
-stackcheck = "stack-sizes --release --bin rust-app --target=thumbv6m-none-eabi"
+stackcheck = "stack-sizes --release --bin provenance --target=thumbv6m-none-eabi"
