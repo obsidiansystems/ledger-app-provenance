@@ -84,7 +84,7 @@ pub fn get_private_key(
 // Public Key Hash type; update this to match the target chain's notion of an address and how to
 // format one.
 
-pub struct PKH([u8; 20]);
+pub struct PKH(pub [u8; 20]);
 
 #[allow(dead_code)]
 pub fn get_pkh(key: [u8; 33]) -> Result<PKH, SyscallError> {

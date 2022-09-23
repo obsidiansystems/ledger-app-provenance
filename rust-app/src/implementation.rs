@@ -13,10 +13,11 @@ use ledger_parser_combinators::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
+use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::interp::Buffer;
 pub use crate::proto::cosmos::tx::v1beta1::{SignDocInterp, TxBodyInterp, TxBody};
 pub use crate::proto::cosmos::bank::v1beta1::{MsgSendInterp, MsgSend};
-pub use crate::proto::cosmos::base::v1beta1::{CoinInterp, Coin};
+pub use crate::proto::cosmos::base::v1beta1::{CoinUnorderedInterp, Coin};
 
 use ledger_prompts_ui::write_scroller;
 
@@ -50,7 +51,7 @@ pub struct FutureTrampoline {
     }
 pub struct FutureTrampolineRunner;
 
-pub fn run_fut<'a, A: 'static + Clone, F: 'a + Future<Output = A>>(ft: &'static RefCell<FutureTrampoline>, mut fut: F) -> impl Future<Output = A> + 'a {
+pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>>(ft: &'static RefCell<FutureTrampoline>, mut fut: F) -> impl Future<Output = A> + 'a {
     async move {
     let mut receiver = None;
     let rcv_ptr: *mut Option<A> = &mut receiver;
@@ -104,26 +105,19 @@ impl AsyncTrampoline for FutureTrampolineRunner {
     }
 }
 
-pub type GetAddressImplT = impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u8, 128>>; // Returning = ArrayVec<u8, 260_usize>>;
+struct TrampolineParse<S>(S);
 
-pub static GET_ADDRESS_IMPL: GetAddressImplT =
-    Action(SubInterp(DefaultInterp), mkfinfun(|path: ArrayVec<u32, 10>| -> Option<ArrayVec<u8, 128>> {
-        // Needs updated for crypto_helpers
-        let mut p = ArrayVec::new();
-        /*
-        let key = get_pubkey(&path).ok()?;
+impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
+    type Output = S::Output;
+}
 
-        let pkh = get_pkh(key).ok()?;
+impl<T: 'static, BS: Readable, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TrampolineParse<S> where S::Output: 'static + Clone {
+    type State<'c> = impl Future<Output = Self::Output>;
+    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
+            run_fut(trampoline(), self.0.parse(input, length))
+    }
+}
 
-        // At this point we have the value to send to the host; but there's a bit more to do to
-        // ask permission from the user.
-        write_scroller("Provide Public Key", |w| Ok(write!(w, "{}", pkh)?))?;
-
-        p.try_push(u8::try_from(key.W_len).ok()?).ok()?;
-        p.try_extend_from_slice(&key.W[1..key.W_len as usize]).ok()?;
-        */
-        Some(p)
-    }));
 
 #[derive(Copy, Clone)]
 pub struct GetAddress; // (pub GetAddressImplT);
@@ -134,9 +128,29 @@ impl AsyncAPDU for GetAddress {
 
     fn run<'c>(self, io: HostIO, input: ArrayVec<ByteStream, MAX_PARAMS >) -> Self::State<'c> {
         async move {
-            let mut param = input[0].clone();
-            let address = GET_ADDRESS_IMPL.parse(&mut param).await;
-            io.result_final(&address).await;
+            error!("Doing getAddress");
+
+            let path = BIP_PATH_PARSER.parse(&mut input[0].clone()).await;
+
+            let _sig = {
+                error!("Handling getAddress trampoline call");
+                let prompt_fn = || {
+                    let pubkey = get_pubkey(&path).ok()?;
+                    let pkh = get_pkh(pubkey).ok()?;
+                    write_scroller("Provide Public Key", |w| Ok(write!(w, "{}", pkh)?))?;
+                    Some((pubkey, pkh))
+                };
+                if let Some((pubkey, pkh)) = prompt_fn() {
+                    error!("Producing Output");
+                    let mut rv = ArrayVec::<u8, 128>::new();
+                    rv.push(pubkey.len() as u8);
+                    rv.try_extend_from_slice(&pubkey);
+                    rv.try_extend_from_slice(&pkh.0);
+                    io.result_final(&rv).await;
+                } else {
+                    reject::<()>().await;
+                }
+            };
         }
     }
 }
@@ -189,36 +203,62 @@ const fn show_send_message<BS: 'static + Readable + Clone>() -> impl LengthDelim
 }
 */
 
+const fn show_address<BS: Readable>(_msg: &'static str) -> impl LengthDelimitedParser<schema::String, BS> {
+    Buffer::<120>
+        /*
+    TrampolineParse(Action(
+        Buffer::<120>, move |pkh| {
+                        write_scroller(msg, |w| Ok(write!(w, "Foo")?))
+        }
+    ))*/
+}
+
 /*type SMBS = impl Readable + Clone;
 const SHOW_SEND_MESSAGE : impl LengthDelimitedParser<MsgSend, dyn Readable + Clone> + HasOutput<MsgSend> =
 */
 
+const fn show_coin<BS: 'static + Readable + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
+    // Action(
+        CoinUnorderedInterp {
+            field_denom: Buffer::<20>,
+            field_amount: Buffer::<100>
+     /*   },
+    move |_| {
+        // write_scroller("Amount", |w| Ok(write!(w, "Faked")?))
+        Some(())
+     */
+    }
+    // )
+}
+
 // Transaction parser; this should prompt the user a lot more than this.
 const TXN_PARSER : impl LengthDelimitedParser<Transaction, ByteStream> /*+ HasOutput<Transaction, Output = ()> */ =
     SignDocInterp {
-        field_body_bytes: BytesAsMessage(TxBody,
-                              TxBodyInterp {
-                                  field_messages: MessagesInterp {
-                                      send: // DropInterp
-    MsgSendInterp {
-        field_from_address: Buffer::<120>, //DropInterp, //show_address("From address"),
-        field_to_address: Buffer::<120>, //show_address("To address"),
-        field_amount: CoinInterp {
-            field_denom: Buffer::<20>,
-            field_amount: Buffer::<100>
-        }
-    }
-    //                                      show_send_message()
-                                  },
-                                  field_memo: DropInterp,
-                                  field_timeout_height: DropInterp,
-                                  field_extension_options: DropInterp,
-                                  field_non_critical_extension_options: DropInterp
-    }
-                          ),
-        field_auth_info_bytes: DropInterp,
-        field_chain_id: DropInterp,
-        field_account_number: DropInterp
+        field_body_bytes: 
+            BytesAsMessage(TxBody,
+                TxBodyInterp {
+                    field_messages: MessagesInterp {
+                        send:
+                            MsgSendInterp {
+                                field_from_address: show_address("From address"),
+                                field_to_address: show_address("To address"),
+                                field_amount: show_coin()
+                                   /* CoinUnorderedInterp {
+                                    field_denom: Buffer::<20>,
+                                    field_amount: Buffer::<100>
+                                }*/
+                            }
+                        //                                      show_send_message()
+                    },
+                    field_memo: DropInterp,
+                    field_timeout_height: DropInterp,
+                    field_extension_options: DropInterp,
+                    field_non_critical_extension_options: DropInterp
+                }
+            ),
+            field_auth_info_bytes: DropInterp,
+            field_chain_id: DropInterp,
+            field_account_number: DropInterp
     };
 
 
@@ -230,7 +270,7 @@ any_of! {
     }
     }
 
-const PRIVKEY_PARSER : impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>= // Action(
+const BIP_PATH_PARSER : impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>= // Action(
     SubInterp(DefaultInterp); /*,
     // And ask the user if this is the key the meant to sign with:
     mkfn(|path: &ArrayVec<u32, 10>, destination: &mut _| {
@@ -272,14 +312,13 @@ impl AsyncAPDU for Sign {
             trace!("Hashed txn");
             }
 
-            let path = PRIVKEY_PARSER.parse(&mut input[1].clone()).await;
+            let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
             /*let path : ArrayVec<u32, 10> = run_fut(trampoline(), async move {
                 let mut key = input[1].clone();
                 PRIVKEY_PARSER.parse(&mut key).await
             }).await;*/
 
-            let sig = { //run_fut(trampoline(), async {
-                error!("Trampoline");
+            let sig = run_fut(trampoline(), async {
                 if let Ok(privkey) = get_private_key(&path) {
                     let prompt_fn = || {
                         let pubkey = get_pubkey(&path).ok()?;
@@ -293,14 +332,9 @@ impl AsyncAPDU for Sign {
                     error!("Failing in sign");
                     panic!()
                 }
-            }; // ).await;
+            } ).await;
 
-            /*let (sig, len) = detecdsa_sign(&hash.0[..], &privkey).unwrap();
-
-*/
-            // io.result_final(&sig[0..128 as usize]).await;
             io.result_final(&sig).await;
-            // io.result_final(&[]).await;
         }
     }
 }

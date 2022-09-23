@@ -48,6 +48,7 @@ path = "bin-src/main.rs"
 
 [patch.crates-io]
 ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
+#ledger-parser-combinators = { path = "./ledger-parser-combinators/parser-combinators" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "use-ambient-compiler-and-target" }
 ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
