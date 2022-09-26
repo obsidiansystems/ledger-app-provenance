@@ -312,7 +312,7 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/obsidiansystems/ledger-platform";
+          url = "https://github.com/obsidiansystems/alamgu";
           rev = "6da4b2e24091fadd9ade6243c7a2644cba3ab973";
           sha256 = "052yikmb01pmv4kfynm4aqyqzskrwl7vfymdmq1w9ka5r0bdbp1a";
         };
