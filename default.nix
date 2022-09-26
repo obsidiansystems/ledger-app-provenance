@@ -1,27 +1,7 @@
 rec {
-  nix-thunk = import ./dep/nix-thunk {};
-  thunk-src-in-env = name: var: path: let
-	  src = nix-thunk.thunkSource path;
-  in alamgu.pkgs.runCommand name {} ''
-          mkdir -p $out/nix-support/
-          cat <<EOF >$out/nix-support/setup-hook
-	  export ${var}=${src}
-EOF
-  '';
-  buf-nixpkgs = import ./dep/nixpkgs {};
-  cosmos-sdk = thunk-src-in-env "cosmos-sdk-hook" "COSMOS_SDK" ./dep/cosmos-sdk;
-  buf_hook = alamgu.pkgs.runCommand "buf-hooks" {} ''
-    mkdir -p $out/nix-support/
-    cat <<EOF >$out/nix-support/setup-hook
-    export PROTO_INCLDUE="${alamgu.pkgs.protobuf}/include"
-    export PATH=${alamgu.pkgs.protobuf}/bin:$PATH
-EOF
-  '';
-  
-  alamgu = import ./dep/alamgu {
-    extraAppInputs=[cosmos-sdk buf_hook];
-    extraNativeAppInputs=[buf-nixpkgs.buf];
-  };
+  alamgu = import ./dep/alamgu {};
+
+  cosmos-sdk = alamgu.thunkSource ./dep/cosmos-sdk;
 
   inherit (alamgu)
     lib
@@ -30,6 +10,15 @@ EOF
     buildRustCrateForPkgsLedger
     buildRustCrateForPkgsWrapper
     ;
+
+  protobufOverrides = pkgs: attrs: {
+    COSMOS_SDK = cosmos-sdk;
+    PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+    nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
+      protobuf buf
+    ]);
+    buildInputs = (attrs.buildInputs or []) ++ [ cosmos-sdk ];
+  };
 
   makeApp = { rootFeatures ? [ "default" ], release ? true }: import ./Cargo.nix {
     inherit rootFeatures release;
@@ -41,16 +30,12 @@ EOF
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
             rust-app = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
-            in {
+            in protobufOverrides pkgs attrs // {
               preHook = alamgu.gccLibsPreHook;
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
               ];
-	      PROTO_INCLUDE = "${pkgs.protobuf}/include";
-              nativeBuildInputs = [pkgs.protobuf buf-nixpkgs.buf];
-              buildInputs = [buf_hook cosmos-sdk];
-              
             };
           };
         });
@@ -62,6 +47,8 @@ EOF
         ] ++ args.dependencies;
       });
   };
+
+  rustShell = alamgu.rustShell.overrideAttrs (protobufOverrides alamgu.ledgerPkgs);
 
   app = makeApp {};
   app-with-logging = makeApp {
