@@ -87,7 +87,8 @@ rec {
         crateName = "Inflector";
         version = "0.2.1";
         edition = "2015";
-        sha256 = "0bviy0y94xnf9lqm8gq5vjrzjw11kvc7wscghxf5qqr2kn349vkl";type = [ "dylib" "rlib" ];
+        sha256 = "0bviy0y94xnf9lqm8gq5vjrzjw11kvc7wscghxf5qqr2kn349vkl";
+        libName = "inflector";type = [ "dylib" "rlib" ];
         authors = [
           "Josh Teeter<joshteeter@gmail.com>"
         ];
@@ -98,6 +99,7 @@ rec {
           }
         ];
         features = {
+          "clippy" = [ "dep:clippy" ];
         };
         resolvedDefaultFeatures = [ "default" ];
       };
@@ -119,6 +121,41 @@ rec {
         ];
 
       };
+      "alamgu-async-block" = rec {
+        crateName = "alamgu-async-block";
+        version = "0.1.0";
+        edition = "2018";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/alamgu/alamgu-async-block";
+          rev = "86ec7f64776ac9bad13a8737613eab62fd0868c3";
+          sha256 = "1kg097739jppx3hbv7z8qssm918z2d71xybf6d5chsallgxznm90";
+        };
+        dependencies = [
+          {
+            name = "arrayvec";
+            packageId = "arrayvec";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "ledger-log";
+            packageId = "ledger-log";
+          }
+          {
+            name = "ledger-parser-combinators";
+            packageId = "ledger-parser-combinators";
+          }
+          {
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+          }
+          {
+            name = "pin-project";
+            packageId = "pin-project";
+          }
+        ];
+
+      };
       "arrayvec" = rec {
         crateName = "arrayvec";
         version = "0.7.2";
@@ -129,6 +166,7 @@ rec {
         ];
         features = {
           "default" = [ "std" ];
+          "serde" = [ "dep:serde" ];
         };
       };
       "autocfg" = rec {
@@ -177,6 +215,7 @@ rec {
           "Alex Crichton <alex@alexcrichton.com>"
         ];
         features = {
+          "jobserver" = [ "dep:jobserver" ];
           "parallel" = [ "jobserver" ];
         };
       };
@@ -189,6 +228,8 @@ rec {
           "Alex Crichton <alex@alexcrichton.com>"
         ];
         features = {
+          "compiler_builtins" = [ "dep:compiler_builtins" ];
+          "core" = [ "dep:core" ];
           "rustc-dep-of-std" = [ "core" "compiler_builtins" ];
         };
       };
@@ -212,6 +253,7 @@ rec {
         ];
         features = {
           "default" = [ "use_std" ];
+          "serde" = [ "dep:serde" ];
         };
         resolvedDefaultFeatures = [ "default" "use_std" ];
       };
@@ -281,6 +323,7 @@ rec {
           }
         ];
         features = {
+          "serde" = [ "dep:serde" ];
         };
       };
       "kernel32-sys" = rec {
@@ -302,41 +345,6 @@ rec {
           {
             name = "winapi-build";
             packageId = "winapi-build";
-          }
-        ];
-
-      };
-      "ledger-async-block" = rec {
-        crateName = "ledger-async-block";
-        version = "0.1.0";
-        edition = "2018";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/obsidiansystems/alamgu";
-          rev = "6da4b2e24091fadd9ade6243c7a2644cba3ab973";
-          sha256 = "052yikmb01pmv4kfynm4aqyqzskrwl7vfymdmq1w9ka5r0bdbp1a";
-        };
-        dependencies = [
-          {
-            name = "arrayvec";
-            packageId = "arrayvec";
-            usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-log";
-            packageId = "ledger-log";
-          }
-          {
-            name = "ledger-parser-combinators";
-            packageId = "ledger-parser-combinators";
-          }
-          {
-            name = "nanos_sdk";
-            packageId = "nanos_sdk";
-          }
-          {
-            name = "pin-project";
-            packageId = "pin-project";
           }
         ];
 
@@ -403,7 +411,7 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
           }
         ];
         features = {
@@ -422,8 +430,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "c062a37d903423b60a6f0254f93db5ec6fafcf3f";
-          sha256 = "10fvsdg24pprrbgrjq8lc0av9p16lvg4lprmzn506lr8qsygkgmr";
+          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
+          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -475,6 +483,7 @@ rec {
           }
         ];
         features = {
+          "ledger-log" = [ "dep:ledger-log" ];
           "logging" = [ "ledger-log" ];
         };
         resolvedDefaultFeatures = [ "ledger-log" "logging" ];
@@ -523,6 +532,7 @@ rec {
         features = {
           "default" = [ "std" ];
           "rustc-dep-of-std" = [ "align" "rustc-std-workspace-core" ];
+          "rustc-std-workspace-core" = [ "dep:rustc-std-workspace-core" ];
           "use_std" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "default" "std" ];
@@ -546,6 +556,9 @@ rec {
           "kv_unstable_serde" = [ "kv_unstable_std" "value-bag/serde" "serde" ];
           "kv_unstable_std" = [ "std" "kv_unstable" "value-bag/error" ];
           "kv_unstable_sval" = [ "kv_unstable" "value-bag/sval" "sval" ];
+          "serde" = [ "dep:serde" ];
+          "sval" = [ "dep:sval" ];
+          "value-bag" = [ "dep:value-bag" ];
         };
       };
       "memchr" = rec {
@@ -664,6 +677,7 @@ rec {
         ];
         features = {
           "default" = [ "std" ];
+          "libm" = [ "dep:libm" ];
         };
       };
       "paste" = rec {
@@ -741,8 +755,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "c062a37d903423b60a6f0254f93db5ec6fafcf3f";
-          sha256 = "10fvsdg24pprrbgrjq8lc0av9p16lvg4lprmzn506lr8qsygkgmr";
+          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
+          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
         };
         dependencies = [
           {
@@ -771,6 +785,9 @@ rec {
           "Stepan Koltsov <stepan.koltsov@gmail.com>"
         ];
         features = {
+          "bytes" = [ "dep:bytes" ];
+          "serde" = [ "dep:serde" ];
+          "serde_derive" = [ "dep:serde_derive" ];
           "with-bytes" = [ "bytes" ];
           "with-serde" = [ "serde" "serde_derive" ];
         };
@@ -845,23 +862,31 @@ rec {
         version = "0.0.1";
         edition = "2018";
         crateBin = [
-          { name = "provenance"; path = "bin-src/main.rs"; }
+          {
+            name = "provenance";
+            path = "bin-src/main.rs";
+            requiredFeatures = [ ];
+          }
         ];
-        src = lib.cleanSourceWith { filter = sourceFilter;  src = ./rust-app; };
+        # We can't filter paths with references in Nix 2.4
+        # See https://github.com/NixOS/nix/issues/5410
+        src = if (lib.versionOlder builtins.nixVersion "2.4pre20211007")
+          then lib.cleanSourceWith { filter = sourceFilter;  src = ./rust-app; }
+          else ./rust-app;
         authors = [
           "jonored"
           "yhql"
         ];
         dependencies = [
           {
+            name = "alamgu-async-block";
+            packageId = "alamgu-async-block";
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+          }
+          {
             name = "arrayvec";
             packageId = "arrayvec";
             usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-async-block";
-            packageId = "ledger-async-block";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
           }
           {
             name = "ledger-crypto-helpers";
@@ -874,21 +899,22 @@ rec {
           {
             name = "ledger-parser-combinators";
             packageId = "ledger-parser-combinators";
+            features = [ "logging" ];
           }
           {
             name = "ledger-prompts-ui";
             packageId = "ledger-prompts-ui";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
           }
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
           }
           {
             name = "nanos_ui";
             packageId = "nanos_ui";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
           }
           {
             name = "num-derive";
@@ -923,7 +949,7 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = {target, features}: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+            target = {target, features}: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
             features = [ "speculos" ];
           }
           {
@@ -989,6 +1015,7 @@ rec {
           }
         ];
         features = {
+          "simd" = [ "dep:simd" ];
           "simd-accel" = [ "simd" ];
         };
       };
@@ -1041,6 +1068,7 @@ rec {
           "default" = [ "derive" "parsing" "printing" "clone-impls" "proc-macro" ];
           "printing" = [ "quote" ];
           "proc-macro" = [ "proc-macro2/proc-macro" "quote/proc-macro" ];
+          "quote" = [ "dep:quote" ];
           "test" = [ "syn-test-suite/all-features" ];
         };
         resolvedDefaultFeatures = [ "clone-impls" "default" "derive" "full" "parsing" "printing" "proc-macro" "quote" "visit-mut" ];
@@ -1142,7 +1170,7 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/ea-nasir/trie-enum";
+          url = "https://github.com/alamgu/trie-enum";
           rev = "ef2315fda4223affa3e3a2b5e5c5516a3160af25";
           sha256 = "1myaz3cxwapj3q16ql3v99q29vn6jr6m6p5s84ccw0p3k9b9czxi";
         };
@@ -1165,6 +1193,7 @@ rec {
           "Andre Bogus <bogusandre@gmail.com>"
         ];
         features = {
+          "scale-info" = [ "dep:scale-info" ];
           "scale_info" = [ "scale-info/derive" ];
         };
       };
@@ -1216,7 +1245,9 @@ rec {
             packageId = "libc";
           }
         ];
-
+        features = {
+          "regex" = [ "dep:regex" ];
+        };
       };
       "winapi" = rec {
         crateName = "winapi";
@@ -1250,7 +1281,9 @@ rec {
         features = {
           "default" = [ "alloc" ];
           "derive" = [ "zeroize_derive" ];
+          "serde" = [ "dep:serde" ];
           "std" = [ "alloc" ];
+          "zeroize_derive" = [ "dep:zeroize_derive" ];
         };
       };
     };
@@ -1268,14 +1301,26 @@ rec {
     fuchsia = true;
     test = false;
 
-    # This doesn't appear to be officially documented anywhere yet.
-    # See https://github.com/rust-lang-nursery/rust-forge/issues/101.
-    os =
-      if platform.isDarwin
-      then "macos"
-      else platform.parsed.kernel.name;
-    arch = platform.parsed.cpu.name;
-    family = "unix";
+    /* We are choosing an arbitrary rust version to grab `lib` from,
+      which is unfortunate, but `lib` has been version-agnostic the
+      whole time so this is good enough for now.
+    */
+    os = pkgs.rust.lib.toTargetOs platform;
+    arch = pkgs.rust.lib.toTargetArch platform;
+    family =
+      if platform ? rustc.platform.target-family
+      then
+        (
+          /* Since https://github.com/rust-lang/rust/pull/84072
+             `target-family` is a list instead of single value.
+           */
+          let
+            f = platform.rustc.platform.target-family;
+          in
+          if builtins.isList f then f else [ f ]
+        )
+      else lib.optional platform.isUnix "unix"
+        ++ lib.optional platform.isWindows "windows";
     env = "gnu";
     endian =
       if platform.parsed.cpu.significantByte.name == "littleEndian"
@@ -1543,16 +1588,19 @@ rec {
                 dependencies = crateConfig.buildDependencies or [ ];
               };
             dependenciesWithRenames =
-              lib.filter (d: d ? "rename")
-                (filterEnabledDependencies {
-                  inherit features;
-                  inherit (self.build) target;
-                  dependencies = crateConfig.buildDependencies or [ ];
-                } ++ filterEnabledDependencies {
+              let
+                buildDeps = filterEnabledDependencies {
                   inherit features;
                   inherit (self) target;
                   dependencies = crateConfig.dependencies or [ ] ++ devDependencies;
-                });
+                };
+                hostDeps = filterEnabledDependencies {
+                  inherit features;
+                  inherit (self.build) target;
+                  dependencies = crateConfig.buildDependencies or [ ];
+                };
+              in
+              lib.filter (d: d ? "rename") (hostDeps ++ buildDeps);
             # Crate renames have the form:
             #
             # {
@@ -1803,15 +1851,14 @@ rec {
       dependencies;
 
   /* Returns whether the given feature should enable the given dependency. */
-  doesFeatureEnableDependency = { name, rename ? null, ... }: feature:
+  doesFeatureEnableDependency = dependency: feature:
     let
+      name = dependency.rename or dependency.name;
       prefix = "${name}/";
       len = builtins.stringLength prefix;
       startsWithPrefix = builtins.substring 0 len feature == prefix;
     in
-    (rename == null && feature == name)
-    || (rename != null && rename == feature)
-    || startsWithPrefix;
+    feature == name || feature == "dep:" + name || startsWithPrefix;
 
   /* Returns the expanded features for the given inputFeatures by applying the
     rules in featureMap.
@@ -1846,7 +1893,9 @@ rec {
             let
               enabled = builtins.any (doesFeatureEnableDependency dependency) features;
             in
-            if (dependency.optional or false) && enabled then [ dependency.name ] else [ ]
+            if (dependency.optional or false) && enabled
+            then [ (dependency.rename or dependency.name) ]
+            else [ ]
         )
         dependencies;
     in
