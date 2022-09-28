@@ -10,7 +10,7 @@ resolver = "2"
 arrayvec = { version = "0.7.2", default-features = false }
 ledger-parser-combinators = { version = "*", features = ["logging"] }
 ledger-log = "*"
-ledger-crypto-helpers = "*"
+# ledger-crypto-helpers = "*"
 zeroize = { version = "1.5.2", default-features = false }
 pin-project = "1.0.10"
 num-traits = { version = "0.2.15", default-features = false }
@@ -24,13 +24,13 @@ default = [ ]
 speculos = [ "nanos_sdk/speculos", "ledger-log/speculos", "ledger-log/log_error", "ledger-parser-combinators/logging" ]
 extra_debug = ["ledger-log/log_trace"]
 
-[target.thumbv6m-none-eabi.dependencies]
+[target.'cfg(target_family = "bolos")'.dependencies]
 nanos_sdk = "*"
 nanos_ui = "*"
 ledger-prompts-ui = "*"
 alamgu-async-block = "*"
 
-[target.thumbv6m-none-eabi.dev-dependencies.nanos_sdk]
+[target.'cfg(target_family = "bolos")'.dev-dependencies.nanos_sdk]
 version = "*"
 features = [ "speculos" ]
 
@@ -48,10 +48,8 @@ path = "bin-src/main.rs"
 
 [patch.crates-io]
 ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-#ledger-parser-combinators = { path = "./ledger-parser-combinators/parser-combinators" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "use-ambient-compiler-and-target" }
-ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
+nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "unified-build-with-lib-bagl" }
 ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable" }
 nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch = "patchable" }
 enum-init = { git = "https://github.com/alamgu/enum-init" }

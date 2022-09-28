@@ -1,12 +1,10 @@
-use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
+// use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
+use crate::crypto_helpers::{get_pubkey, get_pkh, Hasher, format_signature, compress_public_key};
 use crate::interface::*;
 use core::pin::Pin;
 use arrayvec::ArrayVec;
 use core::fmt::Write;
 use ledger_parser_combinators::any_of;
-use ledger_parser_combinators::interp_parser::{
-    Action, DefaultInterp, DropInterp, ObserveBytes, SubInterp
-};
 use pin_project::pin_project;
 use core::future::Future;
 use ledger_parser_combinators::async_parser::*;
@@ -14,14 +12,16 @@ use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema;
-use ledger_parser_combinators::interp::Buffer;
-pub use crate::proto::cosmos::tx::v1beta1::{SignDocInterp, TxBodyInterp, TxBody};
-pub use crate::proto::cosmos::bank::v1beta1::{MsgSendInterp, MsgSend};
-pub use crate::proto::cosmos::base::v1beta1::{CoinUnorderedInterp, Coin};
+use ledger_parser_combinators::interp::{DropInterp, Buffer,
+    DefaultInterp, ObserveBytes, SubInterp
+};
+use nanos_sdk::ecc::*;
+pub use crate::proto::cosmos::tx::v1beta1::*; //{SignDocInterp, TxBodyInterp, TxBody};
+pub use crate::proto::cosmos::bank::v1beta1::*; // {MsgSendInterp, MsgSend};
+pub use crate::proto::cosmos::base::v1beta1::*; // {CoinUnorderedInterp, Coin};
 
 use ledger_prompts_ui::write_scroller;
 
-use core::convert::TryFrom;
 use core::task::*;
 use core::cell::RefCell;
 use alamgu_async_block::*;
@@ -38,20 +38,12 @@ fn trampoline() -> &'static RefCell<FutureTrampoline> {
     }
 }
 
-// A couple type ascription functions to help the compiler along.
-const fn mkfn<A,B,C>(q: fn(&A,&mut B)->C) -> fn(&A,&mut B)->C {
-    q
-}
-const fn mkfinfun(a: fn(ArrayVec<u32, 10>) -> Option<ArrayVec<u8, 128>>) -> fn(ArrayVec<u32, 10>) -> Option<ArrayVec<u8, 128>> {
-    a
-}
-
 pub struct FutureTrampoline {
     pub fut: Option<Pin<&'static mut (dyn Future<Output = ()> + 'static)>>
     }
 pub struct FutureTrampolineRunner;
 
-pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>>(ft: &'static RefCell<FutureTrampoline>, mut fut: F) -> impl Future<Output = A> + 'a {
+pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>>(ft: &'static RefCell<FutureTrampoline>, fut: F) -> impl Future<Output = A> + 'a {
     async move {
     let mut receiver = None;
     let rcv_ptr: *mut Option<A> = &mut receiver;
@@ -104,7 +96,7 @@ impl AsyncTrampoline for FutureTrampolineRunner {
         }
     }
 }
-
+/*
 struct TrampolineParse<S>(S);
 
 impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
@@ -117,7 +109,7 @@ impl<T: 'static, BS: Readable, S: LengthDelimitedParser<T, BS>> LengthDelimitedP
             run_fut(trampoline(), self.0.parse(input, length))
     }
 }
-
+*/
 
 #[derive(Copy, Clone)]
 pub struct GetAddress; // (pub GetAddressImplT);
@@ -135,8 +127,8 @@ impl AsyncAPDU for GetAddress {
             let _sig = {
                 error!("Handling getAddress trampoline call");
                 let prompt_fn = || {
-                    let pubkey = get_pubkey(&path).ok()?;
-                    let pkh = get_pkh(pubkey).ok()?;
+                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::from_bip32(&path).public_key().ok()?;
+                    let pkh = get_pkh(&pubkey).ok()?;
                     write_scroller("Provide Public Key", |w| Ok(write!(w, "{}", pkh)?))?;
                     Some((pubkey, pkh))
                 };
@@ -144,8 +136,12 @@ impl AsyncAPDU for GetAddress {
                     error!("Producing Output");
                     let mut rv = ArrayVec::<u8, 128>::new();
                     rv.push(pubkey.len() as u8);
-                    rv.try_extend_from_slice(&pubkey);
-                    rv.try_extend_from_slice(&pkh.0);
+                    
+                    // We statically know the lengths of
+                    // these slices and so that these will
+                    // succeed.
+                    let _ = rv.try_extend_from_slice(&pubkey);
+                    let _ = rv.try_extend_from_slice(&pkh.0);
                     io.result_final(&rv).await;
                 } else {
                     reject::<()>().await;
@@ -217,7 +213,7 @@ const fn show_address<BS: Readable>(_msg: &'static str) -> impl LengthDelimitedP
 const SHOW_SEND_MESSAGE : impl LengthDelimitedParser<MsgSend, dyn Readable + Clone> + HasOutput<MsgSend> =
 */
 
-const fn show_coin<BS: 'static + Readable + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
+const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
     // Action(
         CoinUnorderedInterp {
             field_denom: Buffer::<20>,
@@ -232,7 +228,8 @@ const fn show_coin<BS: 'static + Readable + Clone>() -> impl LengthDelimitedPars
 }
 
 // Transaction parser; this should prompt the user a lot more than this.
-const TXN_PARSER : impl LengthDelimitedParser<Transaction, ByteStream> /*+ HasOutput<Transaction, Output = ()> */ =
+type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>;
+const TXN_PARSER : TxnParserType = // impl LengthDelimitedParser<Transaction, ByteStream> /*+ HasOutput<Transaction, Output = ()> */ =
     SignDocInterp {
         field_body_bytes: 
             BytesAsMessage(TxBody,
@@ -262,7 +259,7 @@ const TXN_PARSER : impl LengthDelimitedParser<Transaction, ByteStream> /*+ HasOu
     };
 
 
-const HASHER : impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)> = ObserveBytes(Hasher::new, Hasher::update, DropInterp);
+const fn hasher_parser() -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)> { ObserveBytes(Hasher::new, Hasher::update, DropInterp) }
 
 any_of! {
     MessagesInterp {
@@ -270,7 +267,8 @@ any_of! {
     }
     }
 
-const BIP_PATH_PARSER : impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>= // Action(
+type BipPathParserType = impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>;
+const BIP_PATH_PARSER : BipPathParserType = // Action(
     SubInterp(DefaultInterp); /*,
     // And ask the user if this is the key the meant to sign with:
     mkfn(|path: &ArrayVec<u32, 10>, destination: &mut _| {
@@ -299,7 +297,7 @@ impl AsyncAPDU for Sign {
             trace!("Passed length");
 
             {
-            let mut txn = input[0].clone();
+            let mut txn = LengthTrack(input[0].clone(), 0);
             TXN_PARSER.parse(&mut txn, length).await;
             trace!("Passed txn");
             }
@@ -308,7 +306,7 @@ impl AsyncAPDU for Sign {
 
             {
                 let mut txn = input[0].clone();
-            hash = HASHER.parse(&mut txn, length).await.0.finalize();
+            hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
             trace!("Hashed txn");
             }
 
@@ -318,23 +316,20 @@ impl AsyncAPDU for Sign {
                 PRIVKEY_PARSER.parse(&mut key).await
             }).await;*/
 
-            let sig = run_fut(trampoline(), async {
-                if let Ok(privkey) = get_private_key(&path) {
-                    let prompt_fn = || {
-                        let pubkey = get_pubkey(&path).ok()?;
-                        let pkh = get_pkh(pubkey).ok()?;
-                        write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))
-                    };
-                    if prompt_fn().is_none() { reject::<()>().await; }
+            if let Some(sig) = run_fut(trampoline(), async {
+                let sk = Secp256k1::from_bip32(&path);
+                let prompt_fn = || {
+                    let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
+                    write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))
+                };
+                if prompt_fn().is_none() { reject::<()>().await; }
 
-                    detecdsa_sign(&hash.0[..], &privkey).unwrap()
-                } else {
-                    error!("Failing in sign");
-                    panic!()
-                }
-            } ).await;
-
-            io.result_final(&sig).await;
+                format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
+            } ).await {
+                io.result_final(&sig).await;
+            } else {
+                reject::<()>().await;
+            }
         }
     }
 }
