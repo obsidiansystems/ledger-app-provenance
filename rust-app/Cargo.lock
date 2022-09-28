@@ -174,7 +174,7 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#3e5fba38ba1466b0fcdf90eac20652efab892a7d"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#b07b8512bc2840d41c5a311e3db28af5b53fe280"
 dependencies = [
  "arrayvec",
  "bstringify",
@@ -299,7 +299,7 @@ dependencies = [
 [[package]]
 name = "proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#3e5fba38ba1466b0fcdf90eac20652efab892a7d"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#b07b8512bc2840d41c5a311e3db28af5b53fe280"
 dependencies = [
  "protobuf",
  "protoc-rust",

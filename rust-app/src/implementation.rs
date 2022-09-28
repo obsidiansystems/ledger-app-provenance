@@ -15,9 +15,9 @@ use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::interp::Buffer;
-pub use crate::proto::cosmos::tx::v1beta1::{SignDocInterp, TxBodyInterp, TxBody};
-pub use crate::proto::cosmos::bank::v1beta1::{MsgSendInterp, MsgSend};
-pub use crate::proto::cosmos::base::v1beta1::{CoinInterp, Coin};
+pub use crate::proto::cosmos::tx::v1beta1::*;//{SignDocInterp, TxBodyInterp, TxBody};
+pub use crate::proto::cosmos::bank::v1beta1::*;//{MsgSendInterp, MsgSend};
+pub use crate::proto::cosmos::base::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
 
 use ledger_prompts_ui::write_scroller;
 
@@ -111,7 +111,7 @@ impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
     type Output = S::Output;
 }
 
-impl<T: 'static, BS: Readable, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TrampolineParse<S> where S::Output: 'static + Clone {
+impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TrampolineParse<S> where S::Output: 'static + Clone {
     type State<'c> = impl Future<Output = Self::Output>;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
             run_fut(trampoline(), self.0.parse(input, length))
@@ -209,52 +209,74 @@ const fn show_send_message<BS: 'static + Readable + Clone>() -> impl LengthDelim
 }
 */
 
-const fn show_address<BS: Readable>(_msg: &'static str) -> impl LengthDelimitedParser<schema::String, BS> {
-    Buffer::<120>
-        /*
-    TrampolineParse(Action(
-        Buffer::<120>, move |pkh| {
-                        write_scroller(msg, |w| Ok(write!(w, "Foo")?))
-        }
-    ))*/
+// We'd like this to be just a const fn, but the resulting closure rather than function pointer seems to crash the app.
+macro_rules! show_string {
+    {$n: literal, $msg:literal}
+    => {
+        Action(
+            Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
+                write_scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+            }
+        )
+    }
 }
+
+/*const fn show_address<F: Fn(ArrayVec<u8, 120>)->Option<()>>(msg: &'static str) -> Action<Buffer<120>, F> { // impl LengthDelimitedParser<schema::String, BS> {
+    // Buffer::<120>
+    Action(
+        Buffer::<120>, move |pkh| {
+                        write_scroller(msg, |w| Ok(write!(w, "{:?}", pkh)?))
+        }
+    )
+}*/
 
 /*type SMBS = impl Readable + Clone;
 const SHOW_SEND_MESSAGE : impl LengthDelimitedParser<MsgSend, dyn Readable + Clone> + HasOutput<MsgSend> =
 */
 
-const fn show_coin<BS: 'static + Readable + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
-    // Action(
-        CoinInterp {
+const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
+    Action(
+        CoinUnorderedInterp {
             field_denom: Buffer::<20>,
             field_amount: Buffer::<100>
-     /*   },
-    move |_| {
-        // write_scroller("Amount", |w| Ok(write!(w, "Faked")?))
-        Some(())
-     */
+        },
+    move |CoinValue { field_denom, field_amount }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
+        // Consider shifting the decimals for nhash to hash here.
+        write_scroller("Amount", |w| Ok(write!(w, "{} {}", core::str::from_utf8(field_amount.as_ref()?.as_slice())?, core::str::from_utf8(field_denom.as_ref()?.as_slice())?)?))
     }
-    // )
+    )
 }
 
 // Transaction parser; this should prompt the user a lot more than this.
-const TXN_PARSER : impl LengthDelimitedParser<Transaction, ByteStream> /*+ HasOutput<Transaction, Output = ()> */ =
+const TXN_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */ =
     SignDocInterp {
-        field_body_bytes: 
+        field_body_bytes:
             BytesAsMessage(TxBody,
                 TxBodyInterp {
+                    field_messages: DropInterp,
+                    field_memo: DropInterp,
+                    field_timeout_height: DropInterp,
+                    field_extension_options: DropInterp,
+                    field_non_critical_extension_options: DropInterp
+                }
+            ),
+            field_auth_info_bytes: DropInterp,
+            field_chain_id: show_string!(20, "Chain ID"),
+            field_account_number: DropInterp
+    };
+
+const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */ =
+    SignDocUnorderedInterp {
+        field_body_bytes:
+            BytesAsMessage(TxBody,
+                TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
                         send:
                             MsgSendInterp {
-                                field_from_address: show_address("From address"),
-                                field_to_address: show_address("To address"),
+                                field_from_address: show_string!(120, "From address"),
+                                field_to_address: show_string!(120, "To address"),
                                 field_amount: show_coin()
-                                   /* CoinUnorderedInterp {
-                                    field_denom: Buffer::<20>,
-                                    field_amount: Buffer::<100>
-                                }*/
                             }
-                        //                                      show_send_message()
                     },
                     field_memo: DropInterp,
                     field_timeout_height: DropInterp,
@@ -305,7 +327,13 @@ impl AsyncAPDU for Sign {
             trace!("Passed length");
 
             {
-            let mut txn = input[0].clone();
+            let mut txn = LengthTrack(input[0].clone(), 0);
+            TXN_MESSAGES_PARSER.parse(&mut txn, length).await;
+            trace!("Passed txn messages");
+            }
+
+            {
+            let mut txn = LengthTrack(input[0].clone(), 0);
             TXN_PARSER.parse(&mut txn, length).await;
             trace!("Passed txn");
             }
