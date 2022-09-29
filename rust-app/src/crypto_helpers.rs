@@ -5,6 +5,9 @@ use nanos_sdk::bindings::*;
 use nanos_sdk::ecc::*;
 use nanos_sdk::io::SyscallError;
 
+use arrayvec::ArrayVec;
+use bech32::*;
+
 pub const BIP32_PATH: [u32; 5] = nanos_sdk::ecc::make_bip32_path(b"m/44'/535348'/0'/0/0");
 /*
 /// Helper function that derives the seed over secp256k1
@@ -117,11 +120,10 @@ impl Default for PKH {
 
 impl fmt::Display for PKH {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")?;
-        for byte in self.0 {
-            write!(f, "{:02X}", byte)?;
-        }
-        Ok(())
+        let mut temp = ArrayVec::<u5, 32>::new();
+        self.0.write_base32(&mut temp).unwrap();
+        encode_to_fmt_anycase(f, "pb", temp, Variant::Bech32).unwrap() // Don't assume that
+                                                                            // this works.
     }
 }
 
