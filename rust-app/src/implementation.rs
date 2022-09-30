@@ -18,6 +18,8 @@ use ledger_parser_combinators::interp::Buffer;
 pub use crate::proto::cosmos::tx::v1beta1::*;//{SignDocInterp, TxBodyInterp, TxBody};
 pub use crate::proto::cosmos::bank::v1beta1::*;//{MsgSendInterp, MsgSend};
 pub use crate::proto::cosmos::base::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
+pub use crate::proto::cosmos::staking::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
+pub use crate::proto::cosmos::gov::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
 
 use ledger_prompts_ui::write_scroller;
 
@@ -218,6 +220,16 @@ macro_rules! show_string {
                 write_scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
             }
         )
+    };
+    {ifnonempty, $n: literal, $msg:literal}
+    => {
+        Action(
+            Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
+                if pkh.is_empty() { Some(()) } else {
+                    write_scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                }
+            }
+        )
     }
 }
 
@@ -254,12 +266,14 @@ const TXN_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<ByteStrea
             BytesAsMessage(TxBody,
                 TxBodyInterp {
                     field_messages: DropInterp,
-                    field_memo: DropInterp,
+                    field_memo: show_string!(ifnonempty, 128, "Memo"), // DropInterp,
                     field_timeout_height: DropInterp,
-                    field_extension_options: DropInterp,
-                    field_non_critical_extension_options: DropInterp
+                    field_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
+                    field_non_critical_extension_options: DropInterp,// Action(DropInterp, |_| { None::<()> }),
                 }
             ),
+            // We could verify that our signature matters with these, but not part of the defining
+            // what will the transaction _do_.
             field_auth_info_bytes: DropInterp,
             field_chain_id: show_string!(20, "Chain ID"),
             field_account_number: DropInterp
@@ -272,11 +286,28 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
                         send:
-                            MsgSendInterp {
+                            (MsgSendInterp {
                                 field_from_address: show_string!(120, "From address"),
                                 field_to_address: show_string!(120, "To address"),
                                 field_amount: show_coin()
-                            }
+                            }),
+                        delegate:
+                            (MsgDelegateInterp {
+                                field_amount: show_coin(),
+                                field_delegator_address: show_string!(120, "Delegator Address"),
+                                field_validator_address: show_string!(120, "Validator Address"),
+                            }),
+                        deposit:
+                            (MsgDepositInterp {
+                                field_amount: show_coin(),
+                                field_depositor: show_string!(120, "Depositor Address"),
+                                field_proposal_id: 
+                                    Action(
+                                        DefaultInterp, |value: u64| {
+                                                write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
+                                        }
+                                    )
+                            })
                     },
                     field_memo: DropInterp,
                     field_timeout_height: DropInterp,
@@ -294,7 +325,9 @@ const HASHER : impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, 
 
 any_of! {
     MessagesInterp {
-        Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend"
+        Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
+        Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
+        Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
     }
     }
 
