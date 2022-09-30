@@ -1,7 +1,7 @@
 use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
 use crate::interface::*;
 use core::pin::Pin;
-use arrayvec::ArrayVec;
+use arrayvec::{ArrayVec, ArrayString};
 use core::fmt::Write;
 use ledger_parser_combinators::any_of;
 use ledger_parser_combinators::interp_parser::{
@@ -134,20 +134,26 @@ impl AsyncAPDU for GetAddress {
 
             let path = BIP_PATH_PARSER.parse(&mut input[0].clone()).await;
 
+            error!("Got path");
+
             let _sig = {
                 error!("Handling getAddress trampoline call");
                 let prompt_fn = || {
                     let pubkey = get_pubkey(&path).ok()?;
                     let pkh = get_pkh(pubkey).ok()?;
-                    write_scroller("Provide Public Key", |w| Ok(write!(w, "{}", pkh)?))?;
+                    error!("Prompting for {}", pkh);
+                    write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
                     error!("Producing Output");
                     let mut rv = ArrayVec::<u8, 128>::new();
-                    rv.push(pubkey.len() as u8);
+                    rv.push((pubkey.len()) as u8);
                     rv.try_extend_from_slice(&pubkey);
-                    rv.try_extend_from_slice(&pkh.0);
+                    let mut temp_fmt = ArrayString::<50>::new();
+                    write!(temp_fmt, "{}", pkh);
+                    rv.try_push(temp_fmt.as_bytes().len() as u8);
+                    rv.try_extend_from_slice(temp_fmt.as_bytes());
                     io.result_final(&rv).await;
                 } else {
                     reject::<()>().await;

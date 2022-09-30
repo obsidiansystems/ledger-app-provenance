@@ -119,6 +119,41 @@ rec {
         ];
 
       };
+      "alamgu-async-block" = rec {
+        crateName = "alamgu-async-block";
+        version = "0.1.0";
+        edition = "2018";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/alamgu/alamgu-async-block";
+          rev = "86ec7f64776ac9bad13a8737613eab62fd0868c3";
+          sha256 = "1kg097739jppx3hbv7z8qssm918z2d71xybf6d5chsallgxznm90";
+        };
+        dependencies = [
+          {
+            name = "arrayvec";
+            packageId = "arrayvec";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "ledger-log";
+            packageId = "ledger-log";
+          }
+          {
+            name = "ledger-parser-combinators";
+            packageId = "ledger-parser-combinators";
+          }
+          {
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+          }
+          {
+            name = "pin-project";
+            packageId = "pin-project";
+          }
+        ];
+
+      };
       "arrayvec" = rec {
         crateName = "arrayvec";
         version = "0.7.2";
@@ -306,41 +341,6 @@ rec {
         ];
 
       };
-      "ledger-async-block" = rec {
-        crateName = "ledger-async-block";
-        version = "0.1.0";
-        edition = "2018";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/obsidiansystems/ledger-platform";
-          rev = "6da4b2e24091fadd9ade6243c7a2644cba3ab973";
-          sha256 = "052yikmb01pmv4kfynm4aqyqzskrwl7vfymdmq1w9ka5r0bdbp1a";
-        };
-        dependencies = [
-          {
-            name = "arrayvec";
-            packageId = "arrayvec";
-            usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-log";
-            packageId = "ledger-log";
-          }
-          {
-            name = "ledger-parser-combinators";
-            packageId = "ledger-parser-combinators";
-          }
-          {
-            name = "nanos_sdk";
-            packageId = "nanos_sdk";
-          }
-          {
-            name = "pin-project";
-            packageId = "pin-project";
-          }
-        ];
-
-      };
       "ledger-crypto-helpers" = rec {
         crateName = "ledger-crypto-helpers";
         version = "0.1.0";
@@ -422,8 +422,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "c062a37d903423b60a6f0254f93db5ec6fafcf3f";
-          sha256 = "10fvsdg24pprrbgrjq8lc0av9p16lvg4lprmzn506lr8qsygkgmr";
+          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
+          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -741,8 +741,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "c062a37d903423b60a6f0254f93db5ec6fafcf3f";
-          sha256 = "10fvsdg24pprrbgrjq8lc0av9p16lvg4lprmzn506lr8qsygkgmr";
+          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
+          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
         };
         dependencies = [
           {
@@ -854,14 +854,14 @@ rec {
         ];
         dependencies = [
           {
+            name = "alamgu-async-block";
+            packageId = "alamgu-async-block";
+            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
+          }
+          {
             name = "arrayvec";
             packageId = "arrayvec";
             usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-async-block";
-            packageId = "ledger-async-block";
-            target = { target, features }: ((let p = stdenv.hostPlatform; in p.rustc.config or p.config) == "thumbv6m-none-eabi");
           }
           {
             name = "ledger-crypto-helpers";
@@ -874,6 +874,7 @@ rec {
           {
             name = "ledger-parser-combinators";
             packageId = "ledger-parser-combinators";
+            features = [ "logging" ];
           }
           {
             name = "ledger-prompts-ui";
@@ -1142,7 +1143,7 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/ea-nasir/trie-enum";
+          url = "https://github.com/alamgu/trie-enum";
           rev = "ef2315fda4223affa3e3a2b5e5c5516a3160af25";
           sha256 = "1myaz3cxwapj3q16ql3v99q29vn6jr6m6p5s84ccw0p3k9b9czxi";
         };
