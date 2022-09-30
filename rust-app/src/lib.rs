@@ -10,6 +10,8 @@
 #![cfg_attr(target_family = "bolos", feature(custom_test_frameworks))]
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(target_family = "bolos", test_runner(nanos_sdk::sdk_test_runner))]
+#![feature(const_eval_limit)]
+#![const_eval_limit = "0"]
 
 #[macro_use]
 extern crate num_derive;
