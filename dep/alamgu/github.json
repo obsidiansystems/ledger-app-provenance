@@ -1,8 +1,8 @@
 {
   "owner": "alamgu",
   "repo": "alamgu",
-  "branch": "provenance-tweaks",
+  "branch": "wip-provenance-debugging-nano-s",
   "private": false,
-  "rev": "d7200c274bf69253b0ab688628f0d33959066300",
-  "sha256": "1qyz49vxki6s3qk0l2z9h6lkkj6imbpqz2ijvacxgc9bjf09935p"
+  "rev": "617e4d4b19b06bf1c9eb37450110f7ed90f6e0dd",
+  "sha256": "0v5aahzfqjizcivs213lzyl4b7kqzj26yyx0r7ila2ni36wnjrip"
 }

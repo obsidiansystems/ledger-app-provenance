@@ -7,11 +7,12 @@ rustflags = [
   "-C", "relocation-model=ropi",
   "-C", "link-arg=-Tscript.ld",
   "-C", "opt-level=3",
-  "-Z", "mir-opt-level=3",
+  "-Z", "mir-opt-level=4",
   "-C", "passes=ledger-ropi",
   "-C", "codegen-units=1",
   "-C", "lto",
   "-C", "embed-bitcode",
+  "-Z", "dump-mir=GenFuture",
   #"-Z", "print-llvm-passes",
   "--cfg", "target_os=\"nanos\"",
   "--emit=obj,llvm-ir,llvm-bc"
