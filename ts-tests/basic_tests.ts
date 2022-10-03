@@ -80,7 +80,7 @@ describe('basic tests', () => {
       expect(rv.publicKey).to.equal("0251ec84e33a3119486461a44240e906ff94bf40cf807b025b1ca43332b80dc9db");
       return;
     }, [
-      { "header": "Provide Public Key", "prompt": "For Address pb17kkv9l2uvzmjv0z2gk25rs2880pfuk85meuqzc" },
+	    { "header": "Provide Public Key", "prompt": "For Address pb17kkv9l2uvzmjv0z2gk25rs2880pfuk85meuqzc" },
     ]);
   });
 });
@@ -139,7 +139,7 @@ describe("Protobufs tests", function() {
 		     },
 		     {
 			     "header": "With PKH",
-			     "prompt": "ABF20C51EFFB2152DFE06C2F7B96138CABD69AD1"
+			     "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l"
 		     },
 		     {
 			     "text": "Confirm",
@@ -194,7 +194,7 @@ describe("Protobufs tests", function() {
 		     },
 		     {
 			     "header": "With PKH",
-			     "prompt": "ABF20C51EFFB2152DFE06C2F7B96138CABD69AD1"
+			     "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l"
 		     },
 		     {
 			     "text": "Confirm",
