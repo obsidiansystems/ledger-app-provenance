@@ -7,7 +7,7 @@ import { Common } from "hw-app-obsidian-common";
 import * as blake2b from "blake2b";
 import { instantiate, Nacl } from "js-nacl";
 
-let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Rust App 0.0.1"]
+let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
 
 let setAcceptAutomationRules = async function() {
     await Axios.post("http://localhost:5000/automation", {

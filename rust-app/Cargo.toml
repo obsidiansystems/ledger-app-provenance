@@ -60,8 +60,8 @@ alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", bra
 trie-enum = { git = "https://github.com/alamgu/trie-enum", branch = "main" }
 
 [package.metadata.nanos]
-name = "Rust App"
-path = "44'/535348'"
-curve = "ed25519"
+name = "Provenance"
+path = "44'/505'"
+curve = "secp256k1"
 flags = "0"
 icon = "crab.gif"
