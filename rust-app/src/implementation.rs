@@ -319,7 +319,7 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                                     field_amount: show_coin(),
                                     field_delegator_address: show_string!(120, "Delegator Address"),
                                     field_validator_address: show_string!(120, "Validator Address"),
-                                })// ,
+                                }),
                         /*deposit: // Disabled for now, while we work out an issue where the compiler seems to do the wrong thing.
                             (MsgDepositInterp {
                                 field_amount: show_coin(),
@@ -330,7 +330,7 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                                                 write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
                                         }
                                     )
-                            })*/
+                            }),*/
                     },
                     field_memo: DropInterp,
                     field_timeout_height: DropInterp,

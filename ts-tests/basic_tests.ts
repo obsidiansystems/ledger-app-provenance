@@ -139,7 +139,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "With PKH",
-          "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l"
+          "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l",
         },
         {
           "text": "Confirm",
@@ -227,6 +227,11 @@ describe("Protobufs tests", function() {
         {
           "header": "With PKH",
           "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11,
         },
       ])
   );
