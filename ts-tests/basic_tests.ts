@@ -22,12 +22,12 @@ let setAcceptAutomationRules = async function() {
 }
 
 let processPrompts = function(prompts: [any]) {
-  let i = prompts.filter((a : any) => !ignoredScreens.includes(a["text"])).values();
-  let {done, value} = i.next();
+  let i = prompts.filter((a : any) => !ignoredScreens.includes(a["text"])); // .values();
   let header = "";
   let prompt = "";
   let rv = [];
-  while(!done) {
+  for (var ii in i) {
+    let value = i[ii];
     if(value["y"] == 1) {
       if(value["text"] != header) {
         if(header || prompt) rv.push({ header, prompt });
@@ -42,8 +42,8 @@ let processPrompts = function(prompts: [any]) {
       header = "";
       prompt = "";
     }
-    ({done, value} = i.next());
   }
+  if (header || prompt) rv.push({ header, prompt });
   return rv;
 }
 
@@ -61,7 +61,8 @@ let sendCommandAndAccept = async function(command : any, prompts : any) {
     }
     if(err) throw(err);
 
-    expect(processPrompts((await Axios.get("http://localhost:5000/events")).data["events"] as [any])).to.deep.equal(prompts);
+    let result_prompts = (await Axios.get("http://localhost:5000/events")).data["events"] as [any];
+    expect(processPrompts(result_prompts)).to.deep.equal(prompts);
 }
 
 describe('basic tests', () => {
@@ -75,21 +76,11 @@ describe('basic tests', () => {
 
     await sendCommandAndAccept(async (client : Common) => {
       let rv = await client.getPublicKey("0");
-      console.log(rv);
-      //expect(rv.publicKey).to.equal("8118ad392b9276e348c1473649a3bbb7ec2b39380e40898d25b55e9e6ee94ca3");
+      expect(Buffer.from(rv.address, 'hex').toString()).to.equal("pb17kkv9l2uvzmjv0z2gk25rs2880pfuk85meuqzc");
+      expect(rv.publicKey).to.equal("0251ec84e33a3119486461a44240e906ff94bf40cf807b025b1ca43332b80dc9db");
       return;
     }, [
-      { "header": "Provide Public Key", "prompt": "For Address     7f916b907886913c6dd7ab62681fc52140afbc84" },
-      {
-        "text": "Confirm",
-        "x": 43,
-        "y": 11,
-      },
-      {
-        "text": "Provenance 0.0.1",
-        "x": 20,
-        "y": 11,
-      }
+      { "header": "Provide Public Key", "prompt": "For Address pb17kkv9l2uvzmjv0z2gk25rs2880pfuk85meuqzc" },
     ]);
   });
 });
