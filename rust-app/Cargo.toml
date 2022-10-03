@@ -49,8 +49,6 @@ path = "bin-src/main.rs"
 
 [patch.crates-io]
 ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-# ledger-parser-combinators = { path = "./ledger-parser-combinators/parser-combinators" }
-# proto-gen = { path = "./ledger-parser-combinators/proto-gen" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "use-ambient-compiler-and-target" }
 ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
@@ -59,7 +57,6 @@ nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch 
 enum-init = { git = "https://github.com/alamgu/enum-init" }
 ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui", branch = "patchable" }
 alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", branch = "main" }
-# trie-enum = { path = "./trie-enum" }
 trie-enum = { git = "https://github.com/alamgu/trie-enum", branch = "main" }
 
 [package.metadata.nanos]
