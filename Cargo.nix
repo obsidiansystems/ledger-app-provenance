@@ -189,6 +189,33 @@ rec {
           "default" = [ "std" ];
         };
       };
+      "bech32" = rec {
+        crateName = "bech32";
+        version = "0.9.1";
+        edition = "2018";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/obsidiansystems/rust-bech32";
+          rev = "79cb4998c277161aa41bd054cfab78423804291c";
+          sha256 = "1dzxmkjga3yrkk5v8bqwl7a8k9gc4dmx9scgjs98z7qlikf7b4xx";
+        };
+        authors = [
+          "Clark Moody"
+        ];
+        dependencies = [
+          {
+            name = "arrayvec";
+            packageId = "arrayvec";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+        ];
+        features = {
+          "default" = [ "std" ];
+          "std" = [ "alloc" ];
+        };
+        resolvedDefaultFeatures = [ "arrayvec" ];
+      };
       "bstringify" = rec {
         crateName = "bstringify";
         version = "0.1.2";
@@ -422,8 +449,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
-          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
+          rev = "b07b8512bc2840d41c5a311e3db28af5b53fe280";
+          sha256 = "1xl8ls995jrp7rw70z41dg8rvr7kjdl820c089lzxzqb1rgyh3gv";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -741,8 +768,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
-          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
+          rev = "b07b8512bc2840d41c5a311e3db28af5b53fe280";
+          sha256 = "1xl8ls995jrp7rw70z41dg8rvr7kjdl820c089lzxzqb1rgyh3gv";
         };
         dependencies = [
           {
@@ -862,6 +889,12 @@ rec {
             name = "arrayvec";
             packageId = "arrayvec";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "bech32";
+            packageId = "bech32";
+            usesDefaultFeatures = false;
+            features = [ "arrayvec" ];
           }
           {
             name = "ledger-crypto-helpers";
