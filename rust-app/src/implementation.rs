@@ -17,13 +17,13 @@ use ledger_parser_combinators::interp::{
     DefaultInterp, ObserveBytes, SubInterp
 };
 use nanos_sdk::ecc::*;
-pub use crate::proto::cosmos::tx::v1beta1::*;//{SignDocInterp, TxBodyInterp, TxBody};
-pub use crate::proto::cosmos::bank::v1beta1::*;//{MsgSendInterp, MsgSend};
-pub use crate::proto::cosmos::base::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
-pub use crate::proto::cosmos::staking::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
-pub use crate::proto::cosmos::gov::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
+pub use crate::proto::cosmos::tx::v1beta1::*;
+pub use crate::proto::cosmos::bank::v1beta1::*;
+pub use crate::proto::cosmos::base::v1beta1::*;
+pub use crate::proto::cosmos::staking::v1beta1::*;
+pub use crate::proto::cosmos::gov::v1beta1::*;
 
-use ledger_prompts_ui::{ScrollerError, write_scroller};
+use ledger_prompts_ui::{ScrollerError, write_scroller, final_accept_prompt};
 
 use core::task::*;
 use core::cell::RefCell;
@@ -283,6 +283,25 @@ const TXN_PARSER : TxnParserType =
             field_account_number: DropInterp
     };
 
+struct Preaction<S>(fn()->Option<()>, S);
+
+impl<T, S: HasOutput<T>> HasOutput<T> for Preaction<S> {
+    type Output = S::Output;
+}
+
+impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimitedParser<Schema, BS> for Preaction<S> {
+    type State<'c> = impl Future<Output = Self::Output> where S: 'c, BS: 'c;
+    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
+        async move {
+            if self.0().is_none() {
+                reject().await
+            } else {
+                self.1.parse(input, length).await
+            }
+        }
+    }
+}
+
 type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */;
 const TXN_MESSAGES_PARSER : TxnMessagesParser =
     SignDocUnorderedInterp {
@@ -291,17 +310,21 @@ const TXN_MESSAGES_PARSER : TxnMessagesParser =
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
                         send:
-                            (MsgSendInterp {
-                                field_from_address: show_string!(120, "From address"),
-                                field_to_address: show_string!(120, "To address"),
-                                field_amount: show_coin()
-                            }),
+                            Preaction(
+                                || { write_scroller("Transfer", |w| Ok(())) },
+                                MsgSendInterp {
+                                    field_from_address: show_string!(120, "From address"),
+                                    field_to_address: show_string!(120, "To address"),
+                                    field_amount: show_coin()
+                                }),
                         delegate:
-                            (MsgDelegateInterp {
-                                field_amount: show_coin(),
-                                field_delegator_address: show_string!(120, "Delegator Address"),
-                                field_validator_address: show_string!(120, "Validator Address"),
-                            }),
+                            Preaction(
+                                || { write_scroller("Delegate", |w| Ok(())) },
+                                MsgDelegateInterp {
+                                    field_amount: show_coin(),
+                                    field_delegator_address: show_string!(120, "Delegator Address"),
+                                    field_validator_address: show_string!(120, "Validator Address"),
+                                }),
                         deposit:
                             (MsgDepositInterp {
                                 field_amount: show_coin(),
@@ -354,6 +377,7 @@ const BIP_PATH_PARSER : BipPathParserType = // Action(
 
 // #[rustc_layout(debug)]
 // type Q<'c> = <Sign as AsyncAPDU>::State<'c>;
+//
 
 impl AsyncAPDU for Sign {
     // const MAX_PARAMS : usize = 2;
@@ -395,7 +419,8 @@ impl AsyncAPDU for Sign {
                 let sk = Secp256k1::from_bip32(&path);
                 let prompt_fn = || {
                     let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
-                    write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))
+                    write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
+                    final_accept_prompt(&[])
                 };
                 if prompt_fn().is_none() { reject::<()>().await; }
 
