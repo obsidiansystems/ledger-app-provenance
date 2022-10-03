@@ -1103,6 +1103,10 @@ rec {
             name = "remove_dir_all";
             packageId = "remove_dir_all";
           }
+          {
+            name = "libc";
+            packageId = "libc";
+          }
         ];
         features = {
         };
