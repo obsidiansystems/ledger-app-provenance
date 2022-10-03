@@ -118,6 +118,10 @@ describe("Protobufs tests", function() {
       "0a90010a8b010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126b0a29747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b70386632667778122974703176786c63787032766a6e796a7577366d716e39643863713632636575366c6c6c7075736879361a130a056e68617368120a313630303030303030301200126d0a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a020801184e12190a130a056e68617368120a3137303238343532313010eefa041a0d70696f2d746573746e65742d3120ae59",
       [
         {
+          "header": "Transfer",
+          "prompt": "",
+        },
+        {
           "header": "From address",
           "prompt": "tp1g5ugfegkl5gmn049n5a9hgjn3ged0ekp8f2fwx",
         },
@@ -137,6 +141,11 @@ describe("Protobufs tests", function() {
           "header": "With PKH",
           "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l",
         },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11
+        },
       ])
   );
   it.skip("Can sign a delegate transaction",
@@ -149,6 +158,10 @@ describe("Protobufs tests", function() {
       "0a9b020a89010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412690a29747031303530776b7a743764723734306a76703578703936766a71616d78356b70396a76706a7663751229747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781a110a056e68617368120831303030303030300a8c010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512650a29747031303530776b7a743764723734306a76703578703936766a71616d78356b70396a76706a7663751229747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781a0d0a056e68617368120431303030124a12480a160a056e68617368120d3133373336393937363337303010d290ec011a29747031303530776b7a743764723734306a76703578703936766a71616d78356b70396a76706a7663751a0d70696f2d746573746e65742d3120e37c",
       [
         {
+          "header": "Transfer",
+          "prompt": "",
+        },
+        {
           "header": "From address",
           "prompt": "tp1050wkzt7dr740jvp5xp96vjqamx5kp9jvpjvcu",
         },
@@ -159,6 +172,10 @@ describe("Protobufs tests", function() {
         {
           "header": "Amount",
           "prompt": "10000000 nhash",
+        },
+        {
+          "header": "Delegate",
+          "prompt": "",
         },
         {
           "header": "Delegator Address",
@@ -179,6 +196,11 @@ describe("Protobufs tests", function() {
         {
           "header": "With PKH",
           "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11,
         },
       ])
   );
@@ -205,6 +227,11 @@ describe("Protobufs tests", function() {
         {
           "header": "With PKH",
           "prompt": "pb140eqc500lvs49hlqdshhh9sn3j4adxk3quxd9l",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11,
         },
       ])
   );

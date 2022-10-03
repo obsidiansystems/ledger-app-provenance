@@ -15,13 +15,13 @@ use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::interp::Buffer;
-pub use crate::proto::cosmos::tx::v1beta1::*;//{SignDocInterp, TxBodyInterp, TxBody};
-pub use crate::proto::cosmos::bank::v1beta1::*;//{MsgSendInterp, MsgSend};
-pub use crate::proto::cosmos::base::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
-pub use crate::proto::cosmos::staking::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
-pub use crate::proto::cosmos::gov::v1beta1::*;//{CoinUnorderedInterp, Coin, CoinValue};
+pub use crate::proto::cosmos::tx::v1beta1::*;
+pub use crate::proto::cosmos::bank::v1beta1::*;
+pub use crate::proto::cosmos::base::v1beta1::*;
+pub use crate::proto::cosmos::staking::v1beta1::*;
+pub use crate::proto::cosmos::gov::v1beta1::*;
 
-use ledger_prompts_ui::write_scroller;
+use ledger_prompts_ui::{write_scroller, final_accept_prompt};
 
 use core::convert::TryFrom;
 use core::task::*;
@@ -279,6 +279,25 @@ const TXN_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<ByteStrea
             field_account_number: DropInterp
     };
 
+struct Preaction<S>(fn()->Option<()>, S);
+
+impl<T, S: HasOutput<T>> HasOutput<T> for Preaction<S> {
+    type Output = S::Output;
+}
+
+impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimitedParser<Schema, BS> for Preaction<S> {
+    type State<'c> = impl Future<Output = Self::Output>;
+    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
+        async move {
+            if self.0().is_none() {
+                reject().await
+            } else {
+                self.1.parse(input, length).await
+            }
+        }
+    }
+}
+
 const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */ =
     SignDocUnorderedInterp {
         field_body_bytes:
@@ -286,17 +305,21 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
                         send:
-                            (MsgSendInterp {
-                                field_from_address: show_string!(120, "From address"),
-                                field_to_address: show_string!(120, "To address"),
-                                field_amount: show_coin()
-                            }),
+                            Preaction(
+                                || { write_scroller("Transfer", |w| Ok(())) },
+                                MsgSendInterp {
+                                    field_from_address: show_string!(120, "From address"),
+                                    field_to_address: show_string!(120, "To address"),
+                                    field_amount: show_coin()
+                                }),
                         delegate:
-                            (MsgDelegateInterp {
-                                field_amount: show_coin(),
-                                field_delegator_address: show_string!(120, "Delegator Address"),
-                                field_validator_address: show_string!(120, "Validator Address"),
-                            }),
+                            Preaction(
+                                || { write_scroller("Delegate", |w| Ok(())) },
+                                MsgDelegateInterp {
+                                    field_amount: show_coin(),
+                                    field_delegator_address: show_string!(120, "Delegator Address"),
+                                    field_validator_address: show_string!(120, "Validator Address"),
+                                }),
                         deposit:
                             (MsgDepositInterp {
                                 field_amount: show_coin(),
@@ -348,6 +371,7 @@ const BIP_PATH_PARSER : impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32
 
 // #[rustc_layout(debug)]
 // type Q<'c> = <Sign as AsyncAPDU>::State<'c>;
+//
 
 impl AsyncAPDU for Sign {
     // const MAX_PARAMS : usize = 2;
@@ -390,7 +414,8 @@ impl AsyncAPDU for Sign {
                     let prompt_fn = || {
                         let pubkey = get_pubkey(&path).ok()?;
                         let pkh = get_pkh(pubkey).ok()?;
-                        write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))
+                        write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
+                        final_accept_prompt(&[])
                     };
                     if prompt_fn().is_none() { reject::<()>().await; }
 
