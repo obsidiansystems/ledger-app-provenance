@@ -94,8 +94,23 @@ EOF
     cp ${./rust-app/crab.gif} $out/rust-app/crab.gif
   '');
 
+  impureTarSrc = ledgerPkgs.runCommandCC "tarSrc" {
+  } (''
+    mkdir -p $out/rust-app
+    cp ${./rust-app/target/thumbv6m-none-eabi/release/app.hex} $out/rust-app/app.hex
+    cp ${./rust-app/target/thumbv6m-none-eabi/release/provenance} $out/rust-app/provenance
+    cp ${./rust-app/app.json} $out/rust-app/app.json
+    cp ${./tarball-default.nix} $out/rust-app/default.nix
+    cp ${./tarball-shell.nix} $out/rust-app/shell.nix
+    cp ${./rust-app/crab.gif} $out/rust-app/crab.gif
+  '');
+
   tarball = pkgs.runCommandNoCC "app-tarball.tar.gz" { } ''
     tar -czvhf $out -C ${tarSrc} rust-app
+  '';
+
+  impureTarball = pkgs.runCommandNoCC "app-tarball.tar.gz" { } ''
+    tar -czvhf $out -C ${impureTarSrc} rust-app
   '';
 
   loadApp = pkgs.writeScriptBin "load-app" ''
