@@ -84,8 +84,8 @@ describe('basic tests', () => {
       {
         "text": "Confirm",
         "x": 43,
-        "y": 11
-      }
+        "y": 11,
+      },
     ]);
   });
 });
