@@ -81,6 +81,11 @@ describe('basic tests', () => {
       return;
     }, [
       { "header": "Provide Public Key", "prompt": "For Address pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x" },
+      {
+        "text": "Confirm",
+        "x": 43,
+        "y": 11
+      }
     ]);
   });
 });

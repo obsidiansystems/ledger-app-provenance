@@ -143,6 +143,7 @@ impl AsyncAPDU for GetAddress {
                     let pkh = get_pkh(pubkey).ok()?;
                     error!("Prompting for {}", pkh);
                     write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
+                    final_accept_prompt(&[])?;
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
