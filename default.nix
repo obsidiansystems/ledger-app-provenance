@@ -1,27 +1,25 @@
 rec {
-  nix-thunk = import ./dep/nix-thunk {};
-  thunk-src-in-env = name: var: path: let
-	  src = nix-thunk.thunkSource path;
-  in alamgu.pkgs.runCommand name {} ''
-          mkdir -p $out/nix-support/
-          cat <<EOF >$out/nix-support/setup-hook
-	  export ${var}=${src}
-EOF
+  cosmos_hook = alamgu.pkgs.runCommand "cosmos-hook" {} ''
+    mkdir -p $out/nix-support/
+    cat <<EOF >$out/nix-support/setup-hook
+      export COSMOS_SDK=${cosmos-sdk}
+    EOF
   '';
   buf-nixpkgs = import ./dep/nixpkgs {};
-  cosmos-sdk = thunk-src-in-env "cosmos-sdk-hook" "COSMOS_SDK" ./dep/cosmos-sdk;
   buf_hook = alamgu.pkgs.runCommand "buf-hooks" {} ''
     mkdir -p $out/nix-support/
     cat <<EOF >$out/nix-support/setup-hook
-    export PROTO_INCLDUE="${alamgu.pkgs.protobuf}/include"
-    export PATH=${alamgu.pkgs.protobuf}/bin:$PATH
-EOF
+      export PROTO_INCLDUE="${alamgu.pkgs.protobuf}/include"
+      export PATH=${alamgu.pkgs.protobuf}/bin:$PATH
+    EOF
   '';
-  
+
   alamgu = import ./dep/alamgu {
-    extraAppInputs=[cosmos-sdk buf_hook];
+    extraAppInputs=[cosmos_hook buf_hook];
     extraNativeAppInputs=[buf-nixpkgs.buf];
   };
+
+  cosmos-sdk = alamgu.thunkSource ./dep/cosmos-sdk;
 
   inherit (alamgu)
     lib
@@ -39,18 +37,52 @@ EOF
         pkgs
         ((buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            rust-app = attrs: let
+            proto-gen = attrs: {
+              PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+              nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ [
+                pkgs.buildPackages.protobuf
+              ];
+            };
+            provenance = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
             in {
               preHook = alamgu.gccLibsPreHook;
+              preConfigure = let
+                mkVendor = { name, rev, sha256 }:
+                let
+                  src = pkgs.runCommand "fetch-buf" {
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = sha256;
+                    nativeBuildInputs = [ buf-nixpkgs.buf ];
+                  } ''
+                     set -x
+                     echo $(command -v buf)
+                     HOME=$(mktemp -d)
+                     buf export ${name}:${rev} --exclude-imports --output $out
+                     set +x
+                  '';
+                in "cp -r ${src} ~/.cache/buf/v1/module/data/${name}/${rev}";
+              in ''
+                HOME=$(mktemp -d)
+                cp --no-preserve=mode -r ${builtins.path { path = ./.cache; name = "buf-cache"; }} ~/.cache
+              '' + mkVendor {
+                name = "buf.build/cosmos/cosmos-proto";
+                rev = "1935555c206d4afb9e94615dfd0fad31";
+                sha256 = "15z70yaivlkpx27vzv99ibf8d2x5jp24yn69y0xi20w86v4cxrch";
+              };
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
               ];
-	      PROTO_INCLUDE = "${pkgs.protobuf}/include";
-              nativeBuildInputs = [pkgs.protobuf buf-nixpkgs.buf];
-              buildInputs = [buf_hook cosmos-sdk];
-              
+              COSMOS_SDK = cosmos-sdk;
+              PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+              nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ [
+                pkgs.buildPackages.protobuf buf-nixpkgs.buf
+              ];
+              buildInputs = (attrs.buildInputs or []) ++ [
+                cosmos-sdk
+              ];
             };
           };
         });
