@@ -56,7 +56,7 @@ ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable
 nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch = "patchable" }
 enum-init = { git = "https://github.com/alamgu/enum-init" }
 ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui", branch = "patchable" }
-alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", branch = "main" }
+alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", branch = "rust-1.53" }
 trie-enum = { git = "https://github.com/alamgu/trie-enum", branch = "main" }
 
 [package.metadata.nanos]

@@ -143,6 +143,7 @@ impl AsyncAPDU for GetAddress {
                     let pkh = get_pkh(pubkey).ok()?;
                     error!("Prompting for {}", pkh);
                     write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
+                    final_accept_prompt(&[])?;
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
@@ -320,7 +321,7 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                                     field_delegator_address: show_string!(120, "Delegator Address"),
                                     field_validator_address: show_string!(120, "Validator Address"),
                                 }),
-                        deposit:
+                        /*deposit: // Disabled for now, while we work out an issue where the compiler seems to do the wrong thing.
                             (MsgDepositInterp {
                                 field_amount: show_coin(),
                                 field_depositor: show_string!(120, "Depositor Address"),
@@ -330,7 +331,7 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                                                 write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
                                         }
                                     )
-                            })
+                            }),*/
                     },
                     field_memo: DropInterp,
                     field_timeout_height: DropInterp,
@@ -349,8 +350,8 @@ const HASHER : impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, 
 any_of! {
     MessagesInterp {
         Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
-        Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
-        Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
+        Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate"// ,
+        // Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
     }
     }
 
