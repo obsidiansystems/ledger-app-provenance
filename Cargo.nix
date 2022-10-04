@@ -128,8 +128,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/alamgu-async-block";
-          rev = "86ec7f64776ac9bad13a8737613eab62fd0868c3";
-          sha256 = "1kg097739jppx3hbv7z8qssm918z2d71xybf6d5chsallgxznm90";
+          rev = "3e9a7a17bdde8d0563a85f8801193c11fc7be9ee";
+          sha256 = "0vq7y7c9l626z804i0i4bmyv95x08zxbz05ri3ib6fi9dvd55vfb";
         };
         dependencies = [
           {
@@ -179,18 +179,48 @@ rec {
         ];
 
       };
-      "base64" = rec {
-        crateName = "base64";
-        version = "0.13.0";
+      "bech32" = rec {
+        crateName = "bech32";
+        version = "0.9.1";
         edition = "2018";
-        sha256 = "1z82g23mbzjgijkpcrilc7nljpxpvpf7zxf6iyiapkgka2ngwkch";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/obsidiansystems/rust-bech32";
+          rev = "79cb4998c277161aa41bd054cfab78423804291c";
+          sha256 = "1dzxmkjga3yrkk5v8bqwl7a8k9gc4dmx9scgjs98z7qlikf7b4xx";
+        };
         authors = [
-          "Alice Maz <alice@alicemaz.com>"
-          "Marshall Pierce <marshall@mpierce.org>"
+          "Clark Moody"
+        ];
+        dependencies = [
+          {
+            name = "arrayvec";
+            packageId = "arrayvec";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
         ];
         features = {
+          "arrayvec" = [ "dep:arrayvec" ];
           "default" = [ "std" ];
+          "std" = [ "alloc" ];
         };
+        resolvedDefaultFeatures = [ "arrayvec" ];
+      };
+      "bitflags" = rec {
+        crateName = "bitflags";
+        version = "1.3.2";
+        edition = "2018";
+        sha256 = "12ki6w8gn1ldq7yz9y680llwk5gmrhrzszaa17g1sbrw2r2qvwxy";
+        authors = [
+          "The Rust Project Developers"
+        ];
+        features = {
+          "compiler_builtins" = [ "dep:compiler_builtins" ];
+          "core" = [ "dep:core" ];
+          "rustc-dep-of-std" = [ "core" "compiler_builtins" ];
+        };
+        resolvedDefaultFeatures = [ "default" ];
       };
       "bstringify" = rec {
         crateName = "bstringify";
@@ -232,16 +262,6 @@ rec {
           "core" = [ "dep:core" ];
           "rustc-dep-of-std" = [ "core" "compiler_builtins" ];
         };
-      };
-      "cty" = rec {
-        crateName = "cty";
-        version = "0.2.2";
-        edition = "2015";
-        sha256 = "0d8z0pbr87wgzqqb2jk5pvj0afzc6d3rb772ach6fijhg6yglrdk";
-        authors = [
-          "Jorge Aparicio <jorge@japaric.io>"
-        ];
-
       };
       "either" = rec {
         crateName = "either";
@@ -298,13 +318,28 @@ rec {
         authors = [
           "Stjepan Glavina <stjepang@gmail.com>"
         ];
+        dependencies = [
+          {
+            name = "instant";
+            packageId = "instant";
+            target = { target, features }: ("wasm32" == target."arch");
+          }
+        ];
+        devDependencies = [
+          {
+            name = "instant";
+            packageId = "instant";
+            target = {target, features}: ("wasm32" == target."arch");
+            features = [ "wasm-bindgen" ];
+          }
+        ];
 
       };
       "generic-array" = rec {
         crateName = "generic-array";
-        version = "0.14.5";
+        version = "0.14.6";
         edition = "2015";
-        sha256 = "00qqhls43bzvyb7s26iw6knvsz3mckbxl3rhaahvypzhqwzd6j7x";
+        sha256 = "1fgi07v268jd0mr6xc42rjbq0wzl8ngsgp5b8wj33wwpfaa9xx5z";
         libName = "generic_array";
         authors = [
           "Bartłomiej Kamiński <fizyk20@gmail.com>"
@@ -324,6 +359,29 @@ rec {
         ];
         features = {
           "serde" = [ "dep:serde" ];
+          "zeroize" = [ "dep:zeroize" ];
+        };
+      };
+      "instant" = rec {
+        crateName = "instant";
+        version = "0.1.12";
+        edition = "2018";
+        sha256 = "0b2bx5qdlwayriidhrag8vhy10kdfimfhmb3jnjmsz2h9j1bwnvs";
+        authors = [
+          "sebcrozet <developer@crozet.re>"
+        ];
+        dependencies = [
+          {
+            name = "cfg-if";
+            packageId = "cfg-if";
+          }
+        ];
+        features = {
+          "js-sys" = [ "dep:js-sys" ];
+          "stdweb" = [ "dep:stdweb" ];
+          "wasm-bindgen" = [ "js-sys" "wasm-bindgen_rs" "web-sys" ];
+          "wasm-bindgen_rs" = [ "dep:wasm-bindgen_rs" ];
+          "web-sys" = [ "dep:web-sys" ];
         };
       };
       "kernel32-sys" = rec {
@@ -338,7 +396,7 @@ rec {
         dependencies = [
           {
             name = "winapi";
-            packageId = "winapi";
+            packageId = "winapi 0.2.8";
           }
         ];
         buildDependencies = [
@@ -349,58 +407,15 @@ rec {
         ];
 
       };
-      "ledger-crypto-helpers" = rec {
-        crateName = "ledger-crypto-helpers";
-        version = "0.1.0";
-        edition = "2018";
-        workspace_member = null;
-        src = pkgs.fetchgit {
-          url = "https://github.com/alamgu/ledger-crypto-helpers";
-          rev = "f448b0e72db3f8be01f482de2fa3e42aa8056591";
-          sha256 = "1v3zaac6j8x1hxdkcvqsnc5i4j8ljrflr6sz6a9wj0hccbmwl6vs";
-        };
-        dependencies = [
-          {
-            name = "arrayvec";
-            packageId = "arrayvec";
-            usesDefaultFeatures = false;
-          }
-          {
-            name = "base64";
-            packageId = "base64";
-            usesDefaultFeatures = false;
-          }
-          {
-            name = "ledger-log";
-            packageId = "ledger-log";
-          }
-          {
-            name = "nanos_sdk";
-            packageId = "nanos_sdk";
-          }
-          {
-            name = "nanos_ui";
-            packageId = "nanos_ui";
-          }
-          {
-            name = "zeroize";
-            packageId = "zeroize";
-            usesDefaultFeatures = false;
-          }
-        ];
-        features = {
-          "speculos" = [ "nanos_sdk/speculos" ];
-        };
-      };
       "ledger-log" = rec {
         crateName = "ledger-log";
-        version = "0.1.0";
+        version = "0.2.0";
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-log";
-          rev = "cd7ca8faad65561d0ff172de52ddc97bdbf4a95e";
-          sha256 = "1nfvdnwxjwhdrjjg7aw1z6mh5n1pmy8kcndjqbpvyvlrzi6s3rn5";
+          rev = "a7866800644226f0c1edd269adfadff2d78d3ae5";
+          sha256 = "0q5rb4kfi4nmznvr6agakzlrnv8nzwrsb1knjicarga82jd602n3";
         };
         dependencies = [
           {
@@ -411,7 +426,7 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = { target, features }: (builtins.elem "bolos" target."family");
           }
         ];
         features = {
@@ -430,8 +445,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
-          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
+          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
+          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -461,8 +476,10 @@ rec {
             optional = true;
           }
           {
-            name = "log";
-            packageId = "log";
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+            target = { target, features }: (builtins.elem "bolos" target."family");
+            features = [ "speculos" ];
           }
           {
             name = "num-derive";
@@ -482,6 +499,14 @@ rec {
             packageId = "trie-enum";
           }
         ];
+        devDependencies = [
+          {
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+            target = {target, features}: (builtins.elem "bolos" target."family");
+            features = [ "speculos" ];
+          }
+        ];
         features = {
           "ledger-log" = [ "dep:ledger-log" ];
           "logging" = [ "ledger-log" ];
@@ -495,8 +520,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-prompts-ui";
-          rev = "c015f9f7a3a73d8ee7d4613491e7129b2cf7fc11";
-          sha256 = "1rvsagk4b3gdj2b9s9flwg4kbnqh5v0q0lsvvq63za3qpkprjm9s";
+          rev = "00878775ef7515ed33c1eabcf8d67894fd8019a8";
+          sha256 = "1h5n4y89znbvn7b0ckk9s34dsm6g12ahwf38i1rjm04prrdfzsi5";
         };
         dependencies = [
           {
@@ -523,9 +548,9 @@ rec {
       };
       "libc" = rec {
         crateName = "libc";
-        version = "0.2.126";
+        version = "0.2.133";
         edition = "2015";
-        sha256 = "0diqlpap4pq81284368vffjwvp9jg9hp2x03s7hlk2yj3icmm79l";
+        sha256 = "0rj92r2gd59bn36pynnlmgddspjxv6958z3cb78l6gksfijhvy60";
         authors = [
           "The Rust Project Developers"
         ];
@@ -580,25 +605,26 @@ rec {
       };
       "nanos_sdk" = rec {
         crateName = "nanos_sdk";
-        version = "0.1.0";
-        edition = "2018";
+        version = "0.2.0";
+        edition = "2021";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-nanos-sdk";
-          rev = "1d358edd6cddbdcd4d6deb29f856b40e7e863c07";
-          sha256 = "1v5xz06vsd2ih6vl3qxill5w3k5gplbylqk3nw0jdvcwy0jx3v09";
+          rev = "c6e7314029593a5caa40b9df5a78bb54d308d161";
+          sha256 = "1iami49s435anrycwx2r20vl11xmxarl9l32gn9sic4hg5v45saz";
         };
         authors = [
           "yhql"
         ];
         dependencies = [
           {
-            name = "cty";
-            packageId = "cty";
-          }
-          {
             name = "num-traits";
             packageId = "num-traits";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "rand_core";
+            packageId = "rand_core";
             usesDefaultFeatures = false;
           }
         ];
@@ -680,11 +706,29 @@ rec {
           "libm" = [ "dep:libm" ];
         };
       };
+      "once_cell" = rec {
+        crateName = "once_cell";
+        version = "1.15.0";
+        edition = "2021";
+        sha256 = "1q9r8c0ls1qgjp89p4rd36sjv4671pz6710c106ajwcv2c2asbg8";
+        authors = [
+          "Aleksey Kladov <aleksey.kladov@gmail.com>"
+        ];
+        features = {
+          "alloc" = [ "race" ];
+          "atomic-polyfill" = [ "dep:atomic-polyfill" ];
+          "default" = [ "std" ];
+          "parking_lot" = [ "parking_lot_core" ];
+          "parking_lot_core" = [ "dep:parking_lot_core" ];
+          "std" = [ "alloc" ];
+        };
+        resolvedDefaultFeatures = [ "alloc" "default" "race" "std" ];
+      };
       "paste" = rec {
         crateName = "paste";
-        version = "1.0.7";
+        version = "1.0.9";
         edition = "2018";
-        sha256 = "1z15h1rnq1wcacpcvgm77djl3413gs1nlhmn90qpcvjx2c2hwlhc";
+        sha256 = "1q8q3ygjcdm90ai29yjywfkhsjnby3rfsyizyy1sq1dr3xajxpmi";
         procMacro = true;
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
@@ -693,9 +737,9 @@ rec {
       };
       "pin-project" = rec {
         crateName = "pin-project";
-        version = "1.0.11";
+        version = "1.0.12";
         edition = "2018";
-        sha256 = "0q522b4byy73cky74lx8g5fl9pm4dib5vlx2wh0vxzwcqj1kw83q";
+        sha256 = "1k3f9jkia3idxl2pqxamszwnl89dk52fa4jqj3p7zmmwnq4scadd";
         dependencies = [
           {
             name = "pin-project-internal";
@@ -706,9 +750,9 @@ rec {
       };
       "pin-project-internal" = rec {
         crateName = "pin-project-internal";
-        version = "1.0.11";
+        version = "1.0.12";
         edition = "2018";
-        sha256 = "0x2c20v0hw44sdz026hm164yvhcax426vlq128v4acxkw5ssy3vi";
+        sha256 = "0maa6icn7rdfy4xvgfaq7m7bwpw9f19wg76f1ncsiixd0lgdp6q6";
         procMacro = true;
         dependencies = [
           {
@@ -729,9 +773,9 @@ rec {
       };
       "proc-macro2" = rec {
         crateName = "proc-macro2";
-        version = "1.0.42";
+        version = "1.0.44";
         edition = "2018";
-        sha256 = "16y8maaixxaij77xk1krws51f4lpwz9y6vg9w3b35kyqy5jyjy62";
+        sha256 = "0n3wxpfagpm6kw7rmirgra27jdbk1il7icl29aic9di2h5m3bmvv";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
           "Alex Crichton <alex@alexcrichton.com>"
@@ -755,8 +799,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "3e5fba38ba1466b0fcdf90eac20652efab892a7d";
-          sha256 = "04iaqjxdyjwnb4205igf2ay17rqmmhrvk52vnnxf0bvnvl8frsv3";
+          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
+          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
         };
         dependencies = [
           {
@@ -778,9 +822,9 @@ rec {
       };
       "protobuf" = rec {
         crateName = "protobuf";
-        version = "2.27.1";
+        version = "2.28.0";
         edition = "2018";
-        sha256 = "15jgq6nkhysicmnb2a998aiqan8jr4rd46hdsc10kkcffcc6szng";
+        sha256 = "154dfzjvxlpx37ha3cmp7fkhcsnyzbnfv7aisvz34x23k2gdjv8h";
         authors = [
           "Stepan Koltsov <stepan.koltsov@gmail.com>"
         ];
@@ -794,10 +838,10 @@ rec {
       };
       "protobuf-codegen" = rec {
         crateName = "protobuf-codegen";
-        version = "2.27.1";
+        version = "2.28.0";
         edition = "2015";
         crateBin = [];
-        sha256 = "01ypnn1194br42c5ign40s4v2irw3zypv6j38c1n4blgghmn7hdf";
+        sha256 = "1mhpl2cs1d2sqddf097ala180il61g9axpqnzky5bxswnypn0d03";
         authors = [
           "Stepan Koltsov <stepan.koltsov@gmail.com>"
         ];
@@ -811,9 +855,9 @@ rec {
       };
       "protoc" = rec {
         crateName = "protoc";
-        version = "2.27.1";
+        version = "2.28.0";
         edition = "2015";
-        sha256 = "13x30685in0j7mzq17ly2bllwh15y48skf7xf0jaqbwl6v01vvy2";
+        sha256 = "1vjmihqnx06v5n7wavasz328lzs2a36jwx30a15f3y8lqlwq08d0";
         authors = [
           "Stepan Koltsov <stepan.koltsov@gmail.com>"
         ];
@@ -831,9 +875,9 @@ rec {
       };
       "protoc-rust" = rec {
         crateName = "protoc-rust";
-        version = "2.27.1";
+        version = "2.28.0";
         edition = "2015";
-        sha256 = "156cqmvfmgvcpw9i54z351nhla4jgz9a6h79jq9y5ry8458k37hs";
+        sha256 = "0f3q4rvyq3xmk73n3r6g4h8ac04hqfl78hnw1gr8bi0ppf1a3y12";
         authors = [
           "Stepan Koltsov <stepan.koltsov@gmail.com>"
         ];
@@ -881,7 +925,7 @@ rec {
           {
             name = "alamgu-async-block";
             packageId = "alamgu-async-block";
-            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = { target, features }: (builtins.elem "bolos" target."family");
           }
           {
             name = "arrayvec";
@@ -889,8 +933,10 @@ rec {
             usesDefaultFeatures = false;
           }
           {
-            name = "ledger-crypto-helpers";
-            packageId = "ledger-crypto-helpers";
+            name = "bech32";
+            packageId = "bech32";
+            usesDefaultFeatures = false;
+            features = [ "arrayvec" ];
           }
           {
             name = "ledger-log";
@@ -904,17 +950,17 @@ rec {
           {
             name = "ledger-prompts-ui";
             packageId = "ledger-prompts-ui";
-            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = { target, features }: (builtins.elem "bolos" target."family");
           }
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = { target, features }: (builtins.elem "bolos" target."family");
           }
           {
             name = "nanos_ui";
             packageId = "nanos_ui";
-            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = { target, features }: (builtins.elem "bolos" target."family");
           }
           {
             name = "num-derive";
@@ -949,7 +995,7 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
-            target = {target, features}: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "thumbv6m-none-eabi");
+            target = {target, features}: (builtins.elem "bolos" target."family");
             features = [ "speculos" ];
           }
           {
@@ -965,9 +1011,9 @@ rec {
       };
       "quote" = rec {
         crateName = "quote";
-        version = "1.0.20";
+        version = "1.0.21";
         edition = "2018";
-        sha256 = "015qrb5jf9q0pajx38mfn431gfqn0hv2kc1ssarbqvvpx49g5k9v";
+        sha256 = "0yai5cyd9h95n7hkwjcx8ig3yv0hindmz5gm60g9dmm7fzrlir5v";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -983,6 +1029,39 @@ rec {
           "proc-macro" = [ "proc-macro2/proc-macro" ];
         };
         resolvedDefaultFeatures = [ "default" "proc-macro" ];
+      };
+      "rand_core" = rec {
+        crateName = "rand_core";
+        version = "0.6.4";
+        edition = "2018";
+        sha256 = "0b4j2v4cb5krak1pv6kakv4sz6xcwbrmy2zckc32hsigbrwy82zc";
+        authors = [
+          "The Rand Project Developers"
+          "The Rust Project Developers"
+        ];
+        features = {
+          "getrandom" = [ "dep:getrandom" ];
+          "serde" = [ "dep:serde" ];
+          "serde1" = [ "serde" ];
+          "std" = [ "alloc" "getrandom" "getrandom/std" ];
+        };
+      };
+      "redox_syscall" = rec {
+        crateName = "redox_syscall";
+        version = "0.2.16";
+        edition = "2018";
+        sha256 = "16jicm96kjyzm802cxdd1k9jmcph0db1a4lhslcnhjsvhp0mhnpv";
+        libName = "syscall";
+        authors = [
+          "Jeremy Soller <jackpot51@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "bitflags";
+            packageId = "bitflags";
+          }
+        ];
+
       };
       "regex" = rec {
         crateName = "regex";
@@ -1037,13 +1116,21 @@ rec {
         authors = [
           "Aaronepower <theaaronepower@gmail.com>"
         ];
+        dependencies = [
+          {
+            name = "winapi";
+            packageId = "winapi 0.3.9";
+            target = { target, features }: (target."windows" or false);
+            features = [ "std" "errhandlingapi" "winerror" "fileapi" "winbase" ];
+          }
+        ];
 
       };
       "syn" = rec {
         crateName = "syn";
-        version = "1.0.98";
+        version = "1.0.101";
         edition = "2018";
-        sha256 = "1pbklw6fnwwgrkj8qz3wcjfggmn7vmyln44gg0yc5r2dj25fy2n5";
+        sha256 = "1lm7rg0ki54ynqby7jp2f9s1vg6qvnlwn478rfw915jb5h8xw379";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -1094,8 +1181,24 @@ rec {
             packageId = "fastrand";
           }
           {
+            name = "libc";
+            packageId = "libc";
+            target = { target, features }: ((target."unix" or false) || ("wasi" == target."os"));
+          }
+          {
+            name = "redox_syscall";
+            packageId = "redox_syscall";
+            target = { target, features }: ("redox" == target."os");
+          }
+          {
             name = "remove_dir_all";
             packageId = "remove_dir_all";
+          }
+          {
+            name = "winapi";
+            packageId = "winapi 0.3.9";
+            target = { target, features }: (target."windows" or false);
+            features = [ "fileapi" "handleapi" "winbase" ];
           }
         ];
         features = {
@@ -1171,8 +1274,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/trie-enum";
-          rev = "ef2315fda4223affa3e3a2b5e5c5516a3160af25";
-          sha256 = "1myaz3cxwapj3q16ql3v99q29vn6jr6m6p5s84ccw0p3k9b9czxi";
+          rev = "551bddc313f2af5c2dedb79f3d6de7328e34b208";
+          sha256 = "0ixqf9wqzw9a7scc2gw3bdn952grny5vkrgxgj78dqpnp5dy7h47";
         };
         dependencies = [
           {
@@ -1199,9 +1302,9 @@ rec {
       };
       "unicode-ident" = rec {
         crateName = "unicode-ident";
-        version = "1.0.2";
+        version = "1.0.4";
         edition = "2018";
-        sha256 = "19zf5lzhzix2s35lp5lckdy90sw0kfi5a0ii49d24dcj7yk1pihm";
+        sha256 = "1pf59d521libxsf73cd9px9vc345qirphc0i9zw65b3683f13j6w";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -1229,9 +1332,9 @@ rec {
       };
       "which" = rec {
         crateName = "which";
-        version = "4.2.5";
+        version = "4.3.0";
         edition = "2018";
-        sha256 = "1bi4gklz7qcw19z4d2a4c1wsq083zc2387745rvsidhkc57baksw";
+        sha256 = "0yybp94wikf21vkcl8b6w6l5pnd95nl4fxryz669l4lyxsxiz0qw";
         authors = [
           "Harry Fei <tiziyuanfang@gmail.com>"
         ];
@@ -1244,12 +1347,17 @@ rec {
             name = "libc";
             packageId = "libc";
           }
+          {
+            name = "once_cell";
+            packageId = "once_cell";
+            target = { target, features }: (target."windows" or false);
+          }
         ];
         features = {
           "regex" = [ "dep:regex" ];
         };
       };
-      "winapi" = rec {
+      "winapi 0.2.8" = rec {
         crateName = "winapi";
         version = "0.2.8";
         edition = "2015";
@@ -1259,12 +1367,57 @@ rec {
         ];
 
       };
+      "winapi 0.3.9" = rec {
+        crateName = "winapi";
+        version = "0.3.9";
+        edition = "2015";
+        sha256 = "06gl025x418lchw1wxj64ycr7gha83m44cjr5sarhynd9xkrm0sw";
+        authors = [
+          "Peter Atashian <retep998@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "winapi-i686-pc-windows-gnu";
+            packageId = "winapi-i686-pc-windows-gnu";
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "i686-pc-windows-gnu");
+          }
+          {
+            name = "winapi-x86_64-pc-windows-gnu";
+            packageId = "winapi-x86_64-pc-windows-gnu";
+            target = { target, features }: (pkgs.rust.lib.toRustTarget stdenv.hostPlatform == "x86_64-pc-windows-gnu");
+          }
+        ];
+        features = {
+          "debug" = [ "impl-debug" ];
+        };
+        resolvedDefaultFeatures = [ "errhandlingapi" "fileapi" "handleapi" "std" "winbase" "winerror" ];
+      };
       "winapi-build" = rec {
         crateName = "winapi-build";
         version = "0.1.1";
         edition = "2015";
         sha256 = "1g4rqsgjky0a7530qajn2bbfcrl2v0zb39idgdws9b1l7gp5wc9d";
         libName = "build";
+        authors = [
+          "Peter Atashian <retep998@gmail.com>"
+        ];
+
+      };
+      "winapi-i686-pc-windows-gnu" = rec {
+        crateName = "winapi-i686-pc-windows-gnu";
+        version = "0.4.0";
+        edition = "2015";
+        sha256 = "1dmpa6mvcvzz16zg6d5vrfy4bxgg541wxrcip7cnshi06v38ffxc";
+        authors = [
+          "Peter Atashian <retep998@gmail.com>"
+        ];
+
+      };
+      "winapi-x86_64-pc-windows-gnu" = rec {
+        crateName = "winapi-x86_64-pc-windows-gnu";
+        version = "0.4.0";
+        edition = "2015";
+        sha256 = "0gqq64czqb64kskjryj8isp62m2sgvx25yyj3kpc2myh85w24bki";
         authors = [
           "Peter Atashian <retep998@gmail.com>"
         ];

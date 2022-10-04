@@ -12,13 +12,21 @@ rec {
     ;
 
   protobufOverrides = pkgs: attrs: {
-    COSMOS_SDK = cosmos-sdk;
     PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
     nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
-      protobuf buf
+      protobuf
     ]);
-    buildInputs = (attrs.buildInputs or []) ++ [ cosmos-sdk ];
   };
+
+  bufCosmosOverrides = pkgs: attrs: let
+    super = protobufOverrides pkgs attrs;
+    self = super // {
+      COSMOS_SDK = cosmos-sdk;
+      nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
+        buf
+      ]);
+    };
+  in self;
 
   makeApp = { rootFeatures ? [ "default" ], release ? true }: import ./Cargo.nix {
     inherit rootFeatures release;
@@ -28,12 +36,43 @@ rec {
         pkgs
         ((buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            rust-app = attrs: let
+            proto-gen = protobufOverrides pkgs;
+            provenance = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
-            in protobufOverrides pkgs attrs // {
+            in bufCosmosOverrides pkgs attrs // {
               preHook = alamgu.gccLibsPreHook;
+              preConfigure = let
+                conf = pkgs.runCommand "fetch-buf" (let
+                  super = {
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
+
+                    nativeBuildInputs = [
+                      pkgs.buildPackages.cacert pkgs.buildPackages.buf
+                    ];
+                  };
+                  self = super // protobufOverrides pkgs super;
+                in self) ''
+                   mkdir -p $out
+                   HOME=$(mktemp -d)
+                   curl https://api.buf.build
+                   buf build ${cosmos-sdk} \
+                     --type=cosmos.tx.v1beta1.Tx \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.staking.v1beta1.MsgDelegate \
+                     --type=cosmos.gov.v1beta1.MsgDeposit \
+                     --output $out/buf_out.bin
+                   mv ~/.cache $out
+                '';
+              in ''
+                HOME=$(mktemp -d)
+                cp -r --no-preserve=mode ${conf}/.cache ~/.cache
+              '';
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
-                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
+                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
+                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanos_layout.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
               ];
             };
@@ -48,7 +87,7 @@ rec {
       });
   };
 
-  rustShell = alamgu.rustShell.overrideAttrs (protobufOverrides alamgu.ledgerPkgs);
+  rustShell = alamgu.rustShell.overrideAttrs (bufCosmosOverrides alamgu.ledgerPkgs);
 
   app = makeApp {};
   app-with-logging = makeApp {
@@ -72,23 +111,24 @@ rec {
     mkdir src
     touch src/main.rs
 
-    cargo-ledger --use-prebuilt ${rootCrate}/bin/rust-app --hex-next-to-json
+    cargo-ledger --use-prebuilt ${rootCrate}/bin/provenance --hex-next-to-json ledger nanos
 
-    mkdir -p $out/rust-app
-    cp app.json app.hex $out/rust-app
-    cp ${./tarball-default.nix} $out/rust-app/default.nix
-    cp ${./tarball-shell.nix} $out/rust-app/shell.nix
-    cp ${./rust-app/crab.gif} $out/rust-app/crab.gif
+    mkdir -p $out/provenance
+    cp app_nanos.json $out/provenance/app.json
+    cp app.hex $out/provenance
+    cp ${./tarball-default.nix} $out/provenance/default.nix
+    cp ${./tarball-shell.nix} $out/provenance/shell.nix
+    cp ${./rust-app/crab.gif} $out/provenance/crab.gif
   '');
 
   tarball = pkgs.runCommandNoCC "app-tarball.tar.gz" { } ''
-    tar -czvhf $out -C ${tarSrc} rust-app
+    tar -czvhf $out -C ${tarSrc} provenance
   '';
 
   loadApp = pkgs.writeScriptBin "load-app" ''
     #!/usr/bin/env bash
-    cd ${tarSrc}/rust-app
-    ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/rust-app/app.json
+    cd ${tarSrc}/provenance
+    ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/provenance/app.json
   '';
 
   testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
@@ -99,7 +139,7 @@ rec {
     exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
   '';
 
-  runTests = { appExe ? rootCrate + "/bin/rust-app" }: pkgs.runCommandNoCC "run-tests" {
+  runTests = { appExe ? rootCrate + "/bin/provenance" }: pkgs.runCommandNoCC "run-tests" {
     nativeBuildInputs = [
       pkgs.wget alamgu.speculos.speculos testScript
     ];
@@ -124,10 +164,10 @@ rec {
   '';
 
   test-with-loging = runTests {
-    appExe = rootCrate-with-logging + "/bin/rust-app";
+    appExe = rootCrate-with-logging + "/bin/provenance";
   };
   test = runTests {
-    appExe = rootCrate + "/bin/rust-app";
+    appExe = rootCrate + "/bin/provenance";
   };
 
   inherit (pkgs.nodePackages) node2nix;

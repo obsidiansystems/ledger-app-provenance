@@ -136,6 +136,7 @@ impl AsyncAPDU for GetAddress {
                     let pkh = get_pkh(&pubkey).ok()?;
                     error!("Prompting for {}", pkh);
                     write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
+                    final_accept_prompt(&[])?;
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
@@ -360,20 +361,15 @@ any_of! {
     }
 
 type BipPathParserType = impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>;
-const BIP_PATH_PARSER : BipPathParserType = // Action(
-    SubInterp(DefaultInterp); /*,
-    // And ask the user if this is the key the meant to sign with:
-    mkfn(|path: &ArrayVec<u32, 10>, destination: &mut _| {
-
-        /*let privkey = get_private_key(path).ok()?;
-        let pubkey = get_pubkey(path).ok()?; // Redoing work here; fix.
-        let pkh = get_pkh(pubkey).ok()?;
-
-        write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;*/
-
-        *destination = Some(path.clone());
-        Some(())
-    }));*/
+const BIP_PATH_PARSER : BipPathParserType =
+    Action(SubInterp(DefaultInterp),
+    |path: ArrayVec<u32, 10>| {
+        if path.len()<2 || path[0] != 0x8000002c || path[1] != 0x800001f9 {
+            None
+        } else {
+            Some(path)
+        }
+    });
 
 // #[rustc_layout(debug)]
 // type Q<'c> = <Sign as AsyncAPDU>::State<'c>;
