@@ -29,6 +29,13 @@ rec {
     buildRustCrateForPkgsWrapper
     ;
 
+  protobufOverrides = pkgs: attrs: {
+    PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+    nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
+      protobuf
+    ]);
+  };
+
   makeApp = { rootFeatures ? [ "default" ], release ? true }: import ./Cargo.nix {
     inherit rootFeatures release;
     pkgs = ledgerPkgs;
@@ -37,32 +44,29 @@ rec {
         pkgs
         ((buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            proto-gen = attrs: {
-              PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
-              nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ [
-                pkgs.buildPackages.protobuf
-              ];
-            };
+            proto-gen = protobufOverrides pkgs;
             provenance = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
-            in {
+            in protobufOverrides pkgs attrs // {
               preHook = alamgu.gccLibsPreHook;
               preConfigure = let
-                conf = pkgs.runCommand "fetch-buf" {
-                  outputHashMode = "recursive";
-                  outputHashAlgo = "sha256";
-                  outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
+                conf = pkgs.runCommand "fetch-buf" (let
+                  super = {
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
 
-                  COSMOS_SDK = cosmos-sdk;
-                  PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
-                  nativeBuildInputs = [
-                    buf-nixpkgs.cacert buf-nixpkgs.buf
-                    pkgs.buildPackages.protobuf
-                  ];
-                } ''
+                    PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+                    nativeBuildInputs = [
+                      buf-nixpkgs.curl buf-nixpkgs.cacert buf-nixpkgs.buf
+                    ];
+                  };
+                  self = super // protobufOverrides pkgs super;
+                in self) ''
                    mkdir -p $out
                    HOME=$(mktemp -d)
-                   buf build $COSMOS_SDK \
+                   curl https://api.buf.build
+                   buf build ${cosmos-sdk} \
                      --type=cosmos.tx.v1beta1.Tx \
                      --type=cosmos.tx.v1beta1.SignDoc \
                      --type=cosmos.tx.v1beta1.SignDoc \
@@ -80,12 +84,8 @@ rec {
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
               ];
               COSMOS_SDK = cosmos-sdk;
-              PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
               nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ [
-                pkgs.buildPackages.protobuf buf-nixpkgs.buf
-              ];
-              buildInputs = (attrs.buildInputs or []) ++ [
-                cosmos-sdk
+                buf-nixpkgs.buf
               ];
             };
           };
