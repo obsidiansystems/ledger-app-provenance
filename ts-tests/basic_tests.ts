@@ -80,7 +80,12 @@ describe('basic tests', () => {
       expect(rv.publicKey).to.equal("0251ec84e33a3119486461a44240e906ff94bf40cf807b025b1ca43332b80dc9db");
       return;
     }, [
-      { "header": "Provide Public Key", "prompt": "For Address pb17kkv9l2uvzmjv0z2gk25rs2880pfuk85meuqzc" },
+      { "header": "Provide Public Key", "prompt": "For Address pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x" },
+      {
+        "text": "Confirm",
+        "x": 43,
+        "y": 11,
+      },
     ]);
   });
 });
