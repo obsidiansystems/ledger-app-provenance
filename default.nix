@@ -48,41 +48,32 @@ rec {
             in {
               preHook = alamgu.gccLibsPreHook;
               preConfigure = let
-                mkVendor = { name, rev, sha256 }:
-                let
-                  src = pkgs.runCommand "fetch-buf" {
-                    outputHashMode = "recursive";
-                    outputHashAlgo = "sha256";
-                    outputHash = sha256;
-                    nativeBuildInputs = [ buf-nixpkgs.cacert buf-nixpkgs.buf  ];
-                  } ''
-                     set -x
-                     echo $(command -v buf)
-                     HOME=$(mktemp -d)
-                     buf export ${name}:${rev} --exclude-imports --output $out
-                     set +x
-                  '';
-                in ''
-                  mkdir -p ~/.cache/buf/v1/module/data/${name}
-                  cp -r ${src} ~/.cache/buf/v1/module/data/${name}/${rev}
+                conf = pkgs.runCommand "fetch-buf" {
+                  outputHashMode = "recursive";
+                  outputHashAlgo = "sha256";
+                  outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
+
+                  COSMOS_SDK = cosmos-sdk;
+                  PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
+                  nativeBuildInputs = [
+                    buf-nixpkgs.cacert buf-nixpkgs.buf
+                    pkgs.buildPackages.protobuf
+                  ];
+                } ''
+                   mkdir -p $out
+                   HOME=$(mktemp -d)
+                   buf build $COSMOS_SDK \
+                     --type=cosmos.tx.v1beta1.Tx \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.staking.v1beta1.MsgDelegate \
+                     --type=cosmos.gov.v1beta1.MsgDeposit \
+                     --output $out/buf_out.bin
+                   mv ~/.cache $out
                 '';
               in ''
                 HOME=$(mktemp -d)
-                cp --no-preserve=mode -r ${builtins.path { path = ./.cache; name = "buf-cache"; }} ~/.cache
-              '' + mkVendor {
-                name = "buf.build/cosmos/cosmos-proto";
-                rev = "1935555c206d4afb9e94615dfd0fad31";
-                sha256 = "0vxmqghi4y9zlhy57qc4hvyf3s2vbpy9sknjhxf8v02nvkzr0icl";
-              } + mkVendor {
-                name = "buf.build/cosmos/gogo-proto";
-                rev = "bee5511075b7499da6178d9e4aaa628b";
-                sha256 = "1azby8nggpwk2k39pil86r6rx6rpbkfks781m5kvyxqymy5hvihb";
-              } + mkVendor {
-                name = "buf.build/googleapis/googleapis";
-                rev = "62f35d8aed1149c291d606d958a7ce32";
-                sha256 = "0jppm7yaayirhl3f3a73g4fpz5wg620rmjm33a2vzwrmhrbk3sll";
-              } + ''
-                find ~/.cache/
+                cp -r --no-preserve=mode ${conf}/.cache ~/.cache
               '';
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
@@ -130,23 +121,23 @@ rec {
     mkdir src
     touch src/main.rs
 
-    cargo-ledger --use-prebuilt ${rootCrate}/bin/rust-app --hex-next-to-json
+    cargo-ledger --use-prebuilt ${rootCrate}/bin/provenance --hex-next-to-json
 
-    mkdir -p $out/rust-app
-    cp app.json app.hex $out/rust-app
-    cp ${./tarball-default.nix} $out/rust-app/default.nix
-    cp ${./tarball-shell.nix} $out/rust-app/shell.nix
-    cp ${./rust-app/crab.gif} $out/rust-app/crab.gif
+    mkdir -p $out/provenance
+    cp app.json app.hex $out/provenance
+    cp ${./tarball-default.nix} $out/provenance/default.nix
+    cp ${./tarball-shell.nix} $out/provenance/shell.nix
+    cp ${./rust-app/crab.gif} $out/provenance/crab.gif
   '');
 
   tarball = pkgs.runCommandNoCC "app-tarball.tar.gz" { } ''
-    tar -czvhf $out -C ${tarSrc} rust-app
+    tar -czvhf $out -C ${tarSrc} provenance
   '';
 
   loadApp = pkgs.writeScriptBin "load-app" ''
     #!/usr/bin/env bash
-    cd ${tarSrc}/rust-app
-    ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/rust-app/app.json
+    cd ${tarSrc}/provenance
+    ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/provenance/app.json
   '';
 
   testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
@@ -157,7 +148,7 @@ rec {
     exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
   '';
 
-  runTests = { appExe ? rootCrate + "/bin/rust-app" }: pkgs.runCommandNoCC "run-tests" {
+  runTests = { appExe ? rootCrate + "/bin/provenance" }: pkgs.runCommandNoCC "run-tests" {
     nativeBuildInputs = [
       pkgs.wget alamgu.speculos.speculos testScript
     ];
@@ -182,10 +173,10 @@ rec {
   '';
 
   test-with-loging = runTests {
-    appExe = rootCrate-with-logging + "/bin/rust-app";
+    appExe = rootCrate-with-logging + "/bin/provenance";
   };
   test = runTests {
-    appExe = rootCrate + "/bin/rust-app";
+    appExe = rootCrate + "/bin/provenance";
   };
 
   inherit (pkgs.nodePackages) node2nix;
