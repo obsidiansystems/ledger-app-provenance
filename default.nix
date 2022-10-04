@@ -54,7 +54,7 @@ rec {
                     outputHashMode = "recursive";
                     outputHashAlgo = "sha256";
                     outputHash = sha256;
-                    nativeBuildInputs = [ buf-nixpkgs.buf ];
+                    nativeBuildInputs = [ buf-nixpkgs.cacert buf-nixpkgs.buf  ];
                   } ''
                      set -x
                      echo $(command -v buf)
@@ -62,15 +62,28 @@ rec {
                      buf export ${name}:${rev} --exclude-imports --output $out
                      set +x
                   '';
-                in "cp -r ${src} ~/.cache/buf/v1/module/data/${name}/${rev}";
+                in ''
+                  mkdir -p ~/.cache/buf/v1/module/data/${name}
+                  cp -r ${src} ~/.cache/buf/v1/module/data/${name}/${rev}
+                '';
               in ''
                 HOME=$(mktemp -d)
                 cp --no-preserve=mode -r ${builtins.path { path = ./.cache; name = "buf-cache"; }} ~/.cache
               '' + mkVendor {
                 name = "buf.build/cosmos/cosmos-proto";
                 rev = "1935555c206d4afb9e94615dfd0fad31";
-                sha256 = "15z70yaivlkpx27vzv99ibf8d2x5jp24yn69y0xi20w86v4cxrch";
-              };
+                sha256 = "0vxmqghi4y9zlhy57qc4hvyf3s2vbpy9sknjhxf8v02nvkzr0icl";
+              } + mkVendor {
+                name = "buf.build/cosmos/gogo-proto";
+                rev = "bee5511075b7499da6178d9e4aaa628b";
+                sha256 = "1azby8nggpwk2k39pil86r6rx6rpbkfks781m5kvyxqymy5hvihb";
+              } + mkVendor {
+                name = "buf.build/googleapis/googleapis";
+                rev = "62f35d8aed1149c291d606d958a7ce32";
+                sha256 = "0jppm7yaayirhl3f3a73g4fpz5wg620rmjm33a2vzwrmhrbk3sll";
+              } + ''
+                find ~/.cache/
+              '';
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
