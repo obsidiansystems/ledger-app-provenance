@@ -15,6 +15,8 @@ let setAcceptAutomationRules = async function() {
       rules: [
         ... ignoredScreens.map(txt => { return { "text": txt, "actions": [] } }),
         { "y": 16, "actions": [] },
+        { "y": 31, "actions": [] },
+        { "y": 46, "actions": [] },
         { "text": "Confirm", "actions": [ [ "button", 1, true ], [ "button", 2, true ], [ "button", 2, false ], [ "button", 1, false ] ]},
         { "actions": [ [ "button", 2, true ], [ "button", 2, false ] ]}
       ]
@@ -36,6 +38,10 @@ let processPrompts = function(prompts: [any]) {
       }
     } else if(value["y"] == 16) {
       prompt += value["text"];
+    } else if((value["y"] == 31)) {
+      prompt += value["text"];
+    } else if((value["y"] == 46)) {
+      prompt += value["text"];
     } else {
       if(header || prompt) rv.push({ header, prompt });
       rv.push(value);
@@ -45,6 +51,32 @@ let processPrompts = function(prompts: [any]) {
   }
   if (header || prompt) rv.push({ header, prompt });
   return rv;
+}
+
+let fixActualPromptsForSPlus = function(prompts: any[]) {
+  return prompts.map ( (value) => {
+    if (value["text"]) {
+      value["x"] = "<patched>";
+    }
+    return value;
+  });
+}
+
+// HACK to workaround the OCR bug https://github.com/LedgerHQ/speculos/issues/204
+let fixRefPromptsForSPlus = function(prompts: any[]) {
+  return prompts.map ( (value) => {
+    let fixF = (str: string) => {
+      return str.replace(/S/g,"").replace(/I/g, "l");
+    };
+    if (value["header"]) {
+      value["header"] = fixF(value["header"]);
+      value["prompt"] = fixF(value["prompt"]);
+    } else if (value["text"]) {
+      value["text"] = fixF(value["text"]);
+      value["x"] = "<patched>";
+    }
+    return value;
+  });
 }
 
 let sendCommandAndAccept = async function(command : any, prompts : any) {
@@ -61,8 +93,17 @@ let sendCommandAndAccept = async function(command : any, prompts : any) {
     }
     if(err) throw(err);
 
-    let result_prompts = (await Axios.get("http://127.0.0.1:5000/events")).data["events"] as [any];
-    expect(processPrompts(result_prompts)).to.deep.equal(prompts);
+    let actual_prompts = processPrompts((await Axios.get("http://127.0.0.1:5000/events")).data["events"] as [any]);
+    try {
+      expect(actual_prompts).to.deep.equal(prompts);
+    } catch(e) {
+      try {
+        expect(fixActualPromptsForSPlus(actual_prompts)).to.deep.equal(fixRefPromptsForSPlus(prompts));
+      } catch (_) {
+        // Throw the original error if there is a mismatch as it is generally more useful
+        throw(e);
+      }
+    }
 }
 
 describe('basic tests', () => {
