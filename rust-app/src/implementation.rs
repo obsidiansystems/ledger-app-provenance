@@ -53,13 +53,29 @@ pub struct FutureTrampoline {
     }
 pub struct FutureTrampolineRunner;
 
-pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>>(ft: &'static RefCell<FutureTrampoline>, mut fut: F) -> impl Future<Output = A> + 'a {
+#[pin_project]
+pub struct NoinlineFut<F: Future>(#[pin] F);
+
+impl<F: Future> Future for NoinlineFut<F> {
+    type Output = F::Output;
+    #[inline(never)]
+    fn poll(self: Pin<&mut Self>, cx: &mut Context) -> core::task::Poll<Self::Output> {
+        self.project().0.poll(cx)
+    }
+}
+
+const fn size_of_val_c<T>(_: &T) -> usize {
+    core::mem::size_of::<T>()
+}
+
+pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(ft: &'static RefCell<FutureTrampoline>, fut: FF) -> impl Future<Output = A> + 'a {
     async move {
     let mut receiver = None;
     let rcv_ptr: *mut Option<A> = &mut receiver;
-    let mut computation = async { unsafe { *rcv_ptr = Some(fut.await); } };
+    let mut computation = async { unsafe { *rcv_ptr = Some(fut().await); } };
     let dfut : Pin<&mut (dyn Future<Output = ()> + '_)> = unsafe { Pin::new_unchecked(&mut computation) };
     let mut computation_unbound : Pin<&mut (dyn Future<Output = ()> + 'static)> = unsafe { core::mem::transmute(dfut) };
+
 
     core::future::poll_fn(|_| {
         match core::mem::take(&mut receiver) {
@@ -116,7 +132,7 @@ impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
 impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TrampolineParse<S> where S::Output: 'static + Clone {
     type State<'c> = impl Future<Output = Self::Output>;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
-            run_fut(trampoline(), self.0.parse(input, length))
+            run_fut(trampoline(), move || self.0.parse(input, length))
     }
 }
 
@@ -306,23 +322,43 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
                         send:
-                            Preaction(
+                            TrampolineParse(Preaction(
                                 || { write_scroller("Transfer", |w| Ok(())) },
                                 MsgSendInterp {
                                     field_from_address: show_string!(120, "From address"),
                                     field_to_address: show_string!(120, "To address"),
                                     field_amount: show_coin()
-                                }),
+                                })),
+                        multi_send: TrampolineParse(Preaction(
+                                || { write_scroller("Multi-send", |w| Ok(())) },
+                                MsgMultiSendInterp {
+                                    field_inputs: InputInterp { 
+                                        field_address: show_string!(120, "From address"),
+                                        field_coins: show_coin()
+                                    },
+                                    field_outputs: OutputInterp {
+                                        field_address: show_string!(120, "To address"),
+                                        field_coins: show_coin()
+                                    },
+                                })),
                         delegate:
-                            Preaction(
+                            TrampolineParse(Preaction(
                                 || { write_scroller("Delegate", |w| Ok(())) },
                                 MsgDelegateInterp {
                                     field_amount: show_coin(),
                                     field_delegator_address: show_string!(120, "Delegator Address"),
                                     field_validator_address: show_string!(120, "Validator Address"),
-                                }),
-                        deposit:
-                            (MsgDepositInterp {
+                                })),
+                        undelegate:
+                            TrampolineParse(Preaction(
+                                || { write_scroller("Undelegate", |w| Ok(())) },
+                                MsgUndelegateInterp {
+                                    field_amount: show_coin(),
+                                    field_delegator_address: show_string!(120, "Delegator Address"),
+                                    field_validator_address: show_string!(120, "Validator Address"),
+                                })),
+                        deposit: // Disabled for now, while we work out an issue where the compiler seems to do the wrong thing.
+                            TrampolineParse(MsgDepositInterp {
                                 field_amount: show_coin(),
                                 field_depositor: show_string!(120, "Depositor Address"),
                                 field_proposal_id: 
@@ -331,7 +367,7 @@ const TXN_MESSAGES_PARSER : impl LengthDelimitedParser<Transaction, LengthTrack<
                                                 write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
                                         }
                                     )
-                            })
+                            }),
                     },
                     field_memo: DropInterp,
                     field_timeout_height: DropInterp,
@@ -350,7 +386,9 @@ const HASHER : impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, 
 any_of! {
     MessagesInterp {
         Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
+        MultiSend: MsgMultiSend = b"/cosmos.bank.v1beta1.MsgMultiSend",
         Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
+        Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
         Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
     }
     }
@@ -405,7 +443,7 @@ impl AsyncAPDU for Sign {
                 PRIVKEY_PARSER.parse(&mut key).await
             }).await;*/
 
-            let sig = run_fut(trampoline(), async {
+            let sig = run_fut(trampoline(), || async {
                 if let Ok(privkey) = get_private_key(&path) {
                     let prompt_fn = || {
                         let pubkey = get_pubkey(&path).ok()?;

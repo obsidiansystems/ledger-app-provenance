@@ -99,7 +99,7 @@ function testTransaction(path: string, txn: string, prompts: any[]) {
     let sig = await sendCommandAndAccept(
       async (client : Common) => {
 
-        let pubkey = (await client.getPublicKey(path)).publicKey;
+        //let pubkey = (await client.getPublicKey(path)).publicKey;
 
         // We don't want the prompts from getPublicKey in our result
         await Axios.delete("http://localhost:5000/events");
