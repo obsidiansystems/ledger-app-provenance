@@ -1,16 +1,16 @@
 #![no_std]
 #![allow(incomplete_features)]
+#![feature(const_fn_fn_ptr_basics)]
+#![feature(const_fn_trait_bound)]
+#![feature(const_impl_trait)]
+#![feature(const_mut_refs)]
+#![feature(future_poll_fn)]
+#![feature(generic_associated_types)]
+#![feature(impl_trait_in_bindings)]
+#![feature(min_type_alias_impl_trait)]
 #![feature(rustc_attrs)]
 #![feature(str_internals)]
 #![feature(try_trait)]
-#![feature(min_type_alias_impl_trait)]
-#![feature(impl_trait_in_bindings)]
-#![feature(const_fn_fn_ptr_basics)]
-#![feature(const_mut_refs)]
-#![feature(generic_associated_types)]
-#![feature(future_poll_fn)]
-#![feature(const_fn_trait_bound)]
-#![feature(const_impl_trait)]
 #![cfg_attr(all(target_os = "nanos", test), no_main)]
 #![cfg_attr(target_os = "nanos", feature(custom_test_frameworks))]
 #![reexport_test_harness_main = "test_main"]
@@ -42,6 +42,9 @@ pub mod crypto_helpers;
 
 #[cfg(all(target_os = "nanos"))]
 pub mod implementation;
+
+#[cfg(all(target_os = "nanos"))]
+pub mod trampolines;
 
 #[cfg(all(target_os = "nanos", test))]
 use core::panic::PanicInfo;

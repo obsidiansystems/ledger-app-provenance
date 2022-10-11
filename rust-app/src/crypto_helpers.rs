@@ -5,6 +5,7 @@ use nanos_sdk::bindings::*;
 use nanos_sdk::ecc::{CurvesId};
 use nanos_sdk::io::SyscallError;
 
+#[allow(unused_imports)]
 use ledger_log::*;
 use arrayvec::ArrayVec;
 use bech32::*;
