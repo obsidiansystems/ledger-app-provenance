@@ -8,20 +8,21 @@ use ledger_prompts_ui::RootMenu;
 
 use nanos_sdk::io;
 nanos_sdk::set_panic!(nanos_sdk::exiting_panic);
+use core::mem::MaybeUninit;
 
 use provenance::*;
+use provenance::trampolines::*;
 
-static mut COMM_CELL : Option<RefCell<io::Comm>> = None;
-
-static mut HOST_IO_STATE : Option<RefCell<HostIOState>> = None;
-static mut STATES_BACKING : ParsersState<'static> = ParsersState::NoState;
+static mut COMM_CELL : MaybeUninit<RefCell<io::Comm>> = MaybeUninit::uninit();
+static mut HOST_IO_STATE : MaybeUninit<RefCell<HostIOState>> = MaybeUninit::uninit();
+static mut STATES_BACKING : MaybeUninit<Option<APDUsFuture>> = MaybeUninit::uninit();
 
 #[inline(never)]
 unsafe fn initialize() {
-    STATES_BACKING = ParsersState::NoState;
-    COMM_CELL = Some(RefCell::new(io::Comm::new()));
-    let comm = COMM_CELL.as_ref().unwrap();
-    HOST_IO_STATE = Some(RefCell::new(HostIOState {
+    STATES_BACKING.write(None);
+    COMM_CELL.write(RefCell::new(io::Comm::new()));
+    let comm = COMM_CELL.assume_init_ref();
+    HOST_IO_STATE.write(RefCell::new(HostIOState {
         comm: comm,
         requested_block: None,
         sent_command: None,
@@ -38,9 +39,9 @@ fn noinline<A>(f: impl FnOnce() -> A) -> A {
 #[no_mangle]
 extern "C" fn sample_main() {
     unsafe { initialize(); }
-    let comm = unsafe { COMM_CELL.as_ref().unwrap() };
-    let host_io = HostIO(unsafe { HOST_IO_STATE.as_ref().unwrap() });
-    let mut states = unsafe { Pin::new_unchecked( &mut STATES_BACKING ) };
+    let comm = unsafe { COMM_CELL.assume_init_ref() };
+    let host_io = HostIO(unsafe { HOST_IO_STATE.assume_init_ref() });
+    let mut states = unsafe { Pin::new_unchecked( STATES_BACKING.assume_init_mut() ) };
 
     let mut idle_menu = RootMenu::new([ concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit" ]);
     let mut busy_menu = RootMenu::new([ "Working...", "Cancel" ]);
@@ -48,13 +49,13 @@ extern "C" fn sample_main() {
     info!("Provenance App {}", env!("CARGO_PKG_VERSION"));
     info!("State sizes\ncomm: {}\nstates: {}\nhostio: {}"
           , core::mem::size_of::<io::Comm>()
-          , core::mem::size_of::<ParsersState>()
+          , core::mem::size_of::<APDUsFuture>()
           , core::mem::size_of::<HostIOState>());
 
     let // Draw some 'welcome' screen
-        menu = |states : &ParsersState, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
+        menu = |states : &Option<_>, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
             match states {
-                ParsersState::NoState => idle.show(),
+                None => idle.show(),
                 _ => busy.show(),
             }
         };
@@ -67,7 +68,8 @@ extern "C" fn sample_main() {
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
-                match handle_apdu(host_io, ins, &mut states) {
+                match poll_apdu_handlers(&mut states, ins, host_io, &mut FutureTrampolineRunner, handle_apdu_async) {
+                    // handle_apdu(host_io, ins, &mut states) {
                     Ok(()) => {
                         trace!("APDU accepted; sending response");
                         comm.borrow_mut().reply_ok();
@@ -80,13 +82,13 @@ extern "C" fn sample_main() {
             }
             io::Event::Button(btn) => {
                 trace!("Button received");
-                match states.is_no_state() {
+                match states.is_none() {
                     true => {match noinline(|| idle_menu.update(btn)) {
                         Some(1) => { info!("Exiting app at user direction via root menu"); nanos_sdk::exit_app(0) },
                         _ => (),
                     } }
                     false => { match noinline(|| busy_menu.update(btn)) {
-                        Some(1) => { info!("Resetting at user direction via busy menu"); noinline(|| reset_parsers_state(&mut states)) }
+                        Some(1) => { info!("Resetting at user direction via busy menu"); noinline(|| states.set(None)) }
                         _ => (),
                     } }
                 };
@@ -100,53 +102,4 @@ extern "C" fn sample_main() {
     }
 }
 
-#[repr(u8)]
-#[derive(Debug)]
-enum Ins {
-    GetVersion,
-    GetPubkey,
-    Sign,
-    GetVersionStr,
-    Exit
-}
 
-impl From<u8> for Ins {
-    fn from(ins: u8) -> Ins {
-        match ins {
-            0 => Ins::GetVersion,
-            2 => Ins::GetPubkey,
-            3 => Ins::Sign,
-            0xfe => Ins::GetVersionStr,
-            0xff => Ins::Exit,
-            _ => panic!(),
-        }
-    }
-}
-
-use nanos_sdk::io::Reply;
-
-#[inline(never)]
-fn handle_apdu<'a: 'b, 'b>(io: HostIO, ins: Ins, state: &'b mut Pin<&'a mut ParsersState<'a>>) -> Result<(), Reply> {
-
-    let comm = io.get_comm();
-    if comm?.rx == 0 {
-        return Err(io::StatusWords::NothingReceived.into());
-    }
-
-    match ins {
-        Ins::GetVersion => {
-
-        }
-        Ins::GetPubkey => {
-            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress)?
-        }
-        Ins::Sign => {
-            trace!("Handling sign");
-            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, Sign)?
-        }
-        Ins::GetVersionStr => {
-        }
-        Ins::Exit => nanos_sdk::exit_app(0),
-    }
-    Ok(())
-}

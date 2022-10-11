@@ -1,10 +1,10 @@
 #![no_std]
 #![allow(incomplete_features)]
+#![feature(const_mut_refs)]
+#![feature(future_poll_fn)]
+#![feature(generic_associated_types)]
 #![feature(rustc_attrs)]
 #![feature(str_internals)]
-#![feature(const_mut_refs)]
-#![feature(generic_associated_types)]
-#![feature(future_poll_fn)]
 #![feature(type_alias_impl_trait)]
 #![cfg_attr(all(target_family = "bolos", test), no_main)]
 #![cfg_attr(target_family = "bolos", feature(custom_test_frameworks))]
@@ -37,6 +37,9 @@ pub mod crypto_helpers;
 
 #[cfg(all(target_family = "bolos"))]
 pub mod implementation;
+
+#[cfg(all(target_family = "bolos"))]
+pub mod trampolines;
 
 #[cfg(all(target_family = "bolos", test))]
 use core::panic::PanicInfo;
