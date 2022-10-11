@@ -99,7 +99,7 @@ function testTransaction(path: string, txn: string, prompts: any[]) {
     let sig = await sendCommandAndAccept(
       async (client : Common) => {
 
-        let pubkey = (await client.getPublicKey(path)).publicKey;
+        //let pubkey = (await client.getPublicKey(path)).publicKey;
 
         // We don't want the prompts from getPublicKey in our result
         await Axios.delete("http://localhost:5000/events");
@@ -209,7 +209,7 @@ describe("Protobufs tests", function() {
         },
       ])
   );
-  it.skip("Can sign a deposit transaction",
+  it("Can sign a deposit transaction",
     testTransaction("44'/505'/0'",
       "0a660a640a1e2f636f736d6f732e676f762e763162657461312e4d73674465706f7369741242084b1229747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781a130a056e68617368120a3530303030303030303012560a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a0208011852120210001a00",
       [
