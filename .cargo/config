@@ -13,7 +13,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
-  "-Z", "mir-opt-level=3",
+  "-Z", "mir-opt-level=4",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanosp -k 1.0.3 "
@@ -26,7 +26,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
-  "-Z", "mir-opt-level=3",
+  "-Z", "mir-opt-level=4",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanos "
@@ -39,7 +39,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
-  "-Z", "mir-opt-level=3",
+  "-Z", "mir-opt-level=4",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanox "

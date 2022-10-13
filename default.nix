@@ -69,6 +69,7 @@ rec {
                 extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                   "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
                   "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
+                  "-Z" "mir-opt-level=4"
                 ] ++ (if (device == "nanos") then
                   [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanos_layout.ld" ]
                 else if (device == "nanosplus") then
@@ -109,6 +110,7 @@ rec {
     echo ${device} > $dest/device
     cp app_${device}.json $dest/app.json
     cp app.hex $dest
+    cp ${appExe} $out/provenance/app.elf
     cp ${./tarball-default.nix} $dest/default.nix
     cp ${./tarball-shell.nix} $dest/shell.nix
     cp ${./rust-app/crab.gif} $dest/crab.gif
