@@ -82,6 +82,7 @@ rec {
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/script.ld"
                 "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
+                "-Z" "mir-opt-level=4"
               ];
               COSMOS_SDK = cosmos-sdk;
               nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ [
@@ -125,6 +126,7 @@ rec {
 
     mkdir -p $out/provenance
     cp app.json app.hex $out/provenance
+    cp ${rootCrate}/bin/provenance $out/provenance/app.elf
     cp ${./tarball-default.nix} $out/provenance/default.nix
     cp ${./tarball-shell.nix} $out/provenance/shell.nix
     cp ${./rust-app/crab.gif} $out/provenance/crab.gif

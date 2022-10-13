@@ -13,6 +13,7 @@ rustflags = [
   "-C", "lto",
   "-C", "embed-bitcode",
   "-Z", "dump-mir=GenFuture",
+  "-Z", "emit-stack-sizes",
   #"-Z", "print-llvm-passes",
   "--cfg", "target_os=\"nanos\"",
   "--emit=obj,llvm-ir,llvm-bc"
