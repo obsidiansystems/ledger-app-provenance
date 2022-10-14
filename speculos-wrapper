@@ -8,7 +8,8 @@ echo "Speculos Wrapper called with $*"
 MOCHA_ARGS=""
 
 run_ts_tests() {
-    speculos "$@" --display headless &
+    EXE="$(speculos --display headless "$@" |& grep EXE: | cut -d' ' -f2)"
+    speculos "${@:1:$#-1}" $EXE --display headless &
     SPECULOS=$!
     until wget -O/dev/null -o/dev/null http://localhost:5000/; do sleep 0.1; done;
     cd ../ts-tests;
