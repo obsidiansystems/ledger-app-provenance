@@ -16,7 +16,7 @@ rec {
     super = protobufOverrides pkgs attrs;
     self = super // {
       COSMOS_SDK = cosmos-sdk;
-      nativeBuildInputs = (attrs.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
+      nativeBuildInputs = (super.nativeBuildInputs or []) ++ (with pkgs.buildPackages; [
         buf
       ]);
     };
