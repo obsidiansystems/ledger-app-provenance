@@ -190,6 +190,15 @@ const TXN_MESSAGES_PARSER : TxnMessagesParser =
                                     field_delegator_address: show_string!(120, "Delegator Address"),
                                     field_validator_address: show_string!(120, "Validator Address"),
                                 })),
+                        begin_redelegate:
+                            TrampolineParse(Preaction(
+                                || { write_scroller("Redelegate", |_| Ok(())) },
+                                MsgBeginRedelegateInterp {
+                                    field_amount: show_coin(),
+                                    field_delegator_address: show_string!(120, "Delegator Address"),
+                                    field_validator_src_address: show_string!(120, "From Validator"),
+                                    field_validator_dst_address: show_string!(120, "To Validator"),
+                                })),
                         deposit:
                             TrampolineParse(MsgDepositInterp {
                                 field_amount: show_coin(),
@@ -223,6 +232,7 @@ any_of! {
         MultiSend: MsgMultiSend = b"/cosmos.bank.v1beta1.MsgMultiSend",
         Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
         Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
+        BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
         Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
     }
     }
