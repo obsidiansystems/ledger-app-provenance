@@ -27,6 +27,7 @@ fn main() -> std::io::Result<()> {
         .arg("--type=cosmos.bank.v1beta1.MsgMultiSend")
         .arg("--type=cosmos.staking.v1beta1.MsgDelegate")
         .arg("--type=cosmos.staking.v1beta1.MsgUndelegate")
+        .arg("--type=cosmos.staking.v1beta1.MsgBeginRedelegate")
         .arg("--type=cosmos.gov.v1beta1.MsgDeposit")
         .arg(format!("--output={}", buf_out_file.display()))
         .output()?;
