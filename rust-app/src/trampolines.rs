@@ -26,8 +26,25 @@ pub fn trampoline() -> &'static RefCell<FutureTrampoline> {
     }
 }
 
+
+// Trampolined and TrampolinedFuture provide a matchable name fragment for static analysis of
+// trampoline-executed futures, to connect with handle_fut_trampoline below.
+pub trait TrampolinedFuture {
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()>;
+}
+
+#[pin_project]
+pub struct Trampolined<F: Future>(#[pin] F);
+
+impl<F: Future<Output = ()>> TrampolinedFuture for Trampolined<F> {
+    #[inline(never)]
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {
+        self.project().0.poll(cx)
+    }
+}
+
 pub struct FutureTrampoline {
-    pub fut: Option<Pin<&'static mut (dyn Future<Output = ()> + 'static)>>
+    pub fut: Option<Pin<&'static mut (dyn TrampolinedFuture + 'static)>>
     }
 pub struct FutureTrampolineRunner;
 
@@ -46,9 +63,9 @@ pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> 
     async move {
     let mut receiver = None;
     let rcv_ptr: *mut Option<A> = &mut receiver;
-    let mut computation = async { unsafe { *rcv_ptr = Some(fut().await); } };
-    let dfut : Pin<&mut (dyn Future<Output = ()> + '_)> = unsafe { Pin::new_unchecked(&mut computation) };
-    let mut computation_unbound : Pin<&mut (dyn Future<Output = ()> + 'static)> = unsafe { core::mem::transmute(dfut) };
+    let mut computation = Trampolined(async { unsafe { *rcv_ptr = Some(fut().await); } });
+    let dfut : Pin<&mut (dyn TrampolinedFuture + '_)> = unsafe { Pin::new_unchecked(&mut computation) };
+    let mut computation_unbound : Pin<&mut (dyn TrampolinedFuture + 'static)> = unsafe { core::mem::transmute(dfut) };
 
 
     core::future::poll_fn(|_| {
@@ -71,9 +88,13 @@ pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> 
     }
 }
 
-impl AsyncTrampoline for FutureTrampolineRunner {
-    fn handle_command(&mut self) -> AsyncTrampolineResult {
-
+// handle_fut_trampoline is a bare function without mangling so that we can insert it as a caller
+// to all TrampolinedFuture poll functions, to reconstruct the missing dyn trait edge in the call
+// graph.
+//
+#[inline(never)]
+#[no_mangle]
+fn handle_fut_trampoline() -> AsyncTrampolineResult {
         error!("Running trampolines");
         let mut the_fut = match trampoline().try_borrow_mut() {
             Ok(mut futref) => match &mut *futref {
@@ -94,6 +115,11 @@ impl AsyncTrampoline for FutureTrampolineRunner {
             }
             None => { AsyncTrampolineResult::NothingPending }
         }
+}
+
+impl AsyncTrampoline for FutureTrampolineRunner {
+    fn handle_command(&mut self) -> AsyncTrampolineResult {
+        handle_fut_trampoline()
     }
 }
 
