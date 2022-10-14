@@ -22,6 +22,8 @@ rec {
     };
   in self;
 
+  appName = "provenance";
+
   makeApp = { rootFeatures ? [ "default" ], release ? true, device }:
     let collection = alamgu.perDevice.${device};
     in import ./Cargo.nix {
@@ -33,7 +35,7 @@ rec {
           ((collection.buildRustCrateForPkgsLedger pkgs).override {
             defaultCrateOverrides = pkgs.defaultCrateOverrides // {
               proto-gen = protobufOverrides pkgs;
-              provenance = attrs: let
+              ${appName} = attrs: let
                 sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
               in bufCosmosOverrides pkgs attrs // {
                 preHook = collection.gccLibsPreHook;
@@ -102,7 +104,7 @@ rec {
 
     cargo-ledger --use-prebuilt ${appExe} --hex-next-to-json ledger ${device}
 
-    dest=$out/provenance
+    dest=$out/${appName}
     mkdir -p $dest
 
     # Create a file to indicate what device this is for
@@ -123,7 +125,7 @@ rec {
     exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
   '';
 
-  runTests = { appExe, device, speculosCmd }: pkgs.runCommandNoCC "run-tests-${device}" {
+  runTests = { appExe, device, variant ? "", speculosCmd }: pkgs.runCommandNoCC "run-tests-${device}${variant}" {
     nativeBuildInputs = [
       pkgs.wget alamgu.speculos.speculos testScript
     ];
@@ -146,38 +148,37 @@ rec {
 
   appForDevice = device : rec {
     rootCrate = (makeApp { inherit device; }).rootCrate.build;
-    appExe = rootCrate + "/bin/provenance";
-
     rootCrate-with-logging = (makeApp {
       inherit device;
       release = false;
       rootFeatures = [ "default" "speculos" "extra_debug" ];
     }).rootCrate.build;
 
-    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (bufCosmosOverrides alamgu.ledgerPkgs);
+    appExe = rootCrate + "/bin/" + appName;
 
     tarSrc = makeTarSrc { inherit appExe device; };
     tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''
-      tar -czvhf $out -C ${tarSrc} provenance
+      tar -czvhf $out -C ${tarSrc} ${appName}
     '';
 
     loadApp = pkgs.writeScriptBin "load-app" ''
       #!/usr/bin/env bash
-      cd ${tarSrc}/provenance
-      ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/provenance/app.json
+      cd ${tarSrc}/${appName}
+      ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/${appName}/app.json
     '';
 
-    speculosCmd =
-      if (device == "nanos") then "speculos -m nanos"
-      else if (device == "nanosplus") then "speculos  -m nanosp -k 1.0.3"
-      else if (device == "nanox") then "speculos -m nanox"
-      else throw ("Unknown target device: `${device}'");
+    speculosCmd = {
+      nanos = "speculos -m nanos";
+      nanosplus = "speculos  -m nanosp -k 1.0.3";
+      nanox = "speculos -m nanox";
+    }.${device} or (throw "Unknown target device: `${device}'");
 
+    test = runTests { inherit appExe speculosCmd device; };
     test-with-loging = runTests {
       inherit speculosCmd device;
-      appExe = rootCrate-with-logging + "/bin/provenance";
+      appExe = rootCrate-with-logging + "/bin/" + appName;
+      variant = "-with-logging";
     };
-    test = runTests { inherit appExe speculosCmd device; };
 
     appShell = pkgs.mkShell {
       packages = [ loadApp alamgu.generic-cli pkgs.jq ];
