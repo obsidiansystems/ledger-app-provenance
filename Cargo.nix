@@ -128,8 +128,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/alamgu-async-block";
-          rev = "3e9a7a17bdde8d0563a85f8801193c11fc7be9ee";
-          sha256 = "0vq7y7c9l626z804i0i4bmyv95x08zxbz05ri3ib6fi9dvd55vfb";
+          rev = "7b2d3f3a1ba5163fbab74802f19f2db557601238";
+          sha256 = "0s1s1f60pc972pi4ndd4q9cr9jn8n7f06pgrccb9sn7zjczzk3w4";
         };
         dependencies = [
           {
