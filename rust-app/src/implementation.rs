@@ -4,18 +4,16 @@ use crate::interface::*;
 use arrayvec::{ArrayVec, ArrayString};
 use core::fmt::Write;
 use ledger_parser_combinators::any_of;
-use pin_project::pin_project;
-use ledger_parser_combinators::interp_parser::{
-    Action, DropInterp, Buffer,
-    DefaultInterp, ObserveBytes, SubInterp
+use ledger_parser_combinators::interp::{
+    Action, DropInterp,
+    DefaultInterp, ObserveBytes, SubInterp,
+    Buffer,
 };
-use pin_project::pin_project;
 use core::future::Future;
 use ledger_parser_combinators::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
-use ledger_parser_combinators::protobufs::schema;
 use nanos_sdk::ecc::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
 pub use crate::proto::cosmos::bank::v1beta1::*;
@@ -43,7 +41,7 @@ pub fn get_address_apdu(io: HostIO) -> impl Future<Output = ()> {
             error!("Handling getAddress trampoline call");
             let prompt_fn = || {
                 let pubkey = get_pubkey(&path).ok()?;
-                let pkh = get_pkh(pubkey).ok()?;
+                let pkh = get_pkh(&pubkey).ok()?;
                 error!("Prompting for {}", pkh);
                 write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
                 final_accept_prompt(&[])?;
@@ -216,7 +214,8 @@ const TXN_MESSAGES_PARSER : TxnMessagesParser =
     };
 
 
-const fn hasher_parser() -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)> { ObserveBytes(Hasher::new, Hasher::update, DropInterp) }
+type HasherParser = impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)>;
+const fn hasher_parser() -> HasherParser { ObserveBytes(Hasher::new, Hasher::update, DropInterp) }
 
 any_of! {
     MessagesInterp {
