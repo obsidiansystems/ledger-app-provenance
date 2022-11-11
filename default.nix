@@ -30,6 +30,13 @@ rec {
       inherit rootFeatures release;
       pkgs = collection.ledgerPkgs;
       buildRustCrateForPkgs = pkgs: let
+        wrapper = fun: let
+          isLedger = lib.elem "bolos" (pkgs.stdenv.hostPlatform.rustc.platform.target-family     or []) ;
+        in args: (collection.buildRustCrateForPkgsWrapper pkgs fun) (args // lib.optionalAttrs isLedger {
+            extraRustcOpts = [
+              "-C" "lto=yes"
+            ] ++ args.extraRustcOpts or [];
+          });
         fun = collection.buildRustCrateForPkgsWrapper
           pkgs
           ((collection.buildRustCrateForPkgsLedger pkgs).override {
