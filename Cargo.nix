@@ -445,8 +445,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
-          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
+          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
+          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -493,6 +493,10 @@ rec {
           {
             name = "paste";
             packageId = "paste";
+          }
+          {
+            name = "pin-project";
+            packageId = "pin-project";
           }
           {
             name = "trie-enum";
@@ -799,8 +803,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
-          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
+          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
+          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
         };
         dependencies = [
           {
