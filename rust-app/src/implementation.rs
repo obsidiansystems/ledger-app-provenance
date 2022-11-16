@@ -325,6 +325,15 @@ const TXN_MESSAGES_PARSER : TxnMessagesParser =
             BytesAsMessage(TxBody,
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
+                        default: RawAnyInterp {
+                            field_type_url: Preaction(
+                                                || { // if no_unsafe { None } else {
+                                                    write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                                                        //}
+                                                },
+                                                show_string!(120, "Type URL")),
+                            field_value: DropInterp
+                        },
                         send:
                             TrampolineParse(Preaction(
                                 || { write_scroller("Transfer", |w| Ok(())) },
