@@ -156,6 +156,8 @@ rec {
 
     appExe = rootCrate + "/bin/" + appName;
 
+    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (bufCosmosOverrides alamgu.ledgerPkgs);
+
     tarSrc = makeTarSrc { inherit appExe device; };
     tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''
       tar -czvhf $out -C ${tarSrc} ${appName}
