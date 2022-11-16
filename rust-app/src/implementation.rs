@@ -441,16 +441,16 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            {
-            let mut txn = LengthTrack(input[0].clone(), 0);
-            TXN_MESSAGES_PARSER.parse(&mut txn, length).await;
+            let mut known_txn = {
+              let mut txn = LengthTrack(input[0].clone(), 0);
+              TryFuture(TXN_MESSAGES_PARSER.parse(&mut txn, length)).await.is_some();
+            };
             trace!("Passed txn messages");
-            }
 
-            {
-            let mut txn = LengthTrack(input[0].clone(), 0);
-            TXN_PARSER.parse(&mut txn, length).await;
-            trace!("Passed txn");
+            if known_txn {
+              let mut txn = LengthTrack(input[0].clone(), 0);
+              known_txn = TryFuture(TXN_PARSER.parse(&mut txn, length)).await.is_some();
+              trace!("Passed txn");
             }
 
             let hash;
@@ -459,6 +459,10 @@ impl AsyncAPDU for Sign {
                 let mut txn = input[0].clone();
             hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
             trace!("Hashed txn");
+            }
+
+            if !known_txn {
+                if write_scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() { reject::<()>().await; };
             }
 
             let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
