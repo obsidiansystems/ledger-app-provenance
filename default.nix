@@ -3,7 +3,7 @@ rec {
 
   cosmos-sdk = alamgu.thunkSource ./dep/cosmos-sdk;
 
-  inherit (alamgu) lib pkgs crate2nix;
+  inherit (alamgu) lib pkgs crate2nix alamguLib;
 
   protobufOverrides = pkgs: attrs: {
     PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
@@ -29,9 +29,10 @@ rec {
     in import ./Cargo.nix {
       inherit rootFeatures release;
       pkgs = collection.ledgerPkgs;
-      buildRustCrateForPkgs = pkgs: let
-        isLedger = lib.elem "bolos" (pkgs.stdenv.hostPlatform.rustc.platform.target-family or []);
-        baseFun = (collection.buildRustCrateForPkgsLedger pkgs).override {
+      buildRustCrateForPkgs = alamguLib.combineWrappers [
+        # The callPackage of `buildRustPackage` overridden with various
+        # modified arguemnts.
+        (pkgs: (collection.buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
             proto-gen = protobufOverrides pkgs;
             ${appName} = attrs: let
@@ -79,8 +80,13 @@ rec {
               else throw ("Unknown target device: `${device}'"));
             };
           };
-        };
-        appFun = args: args // lib.optionalAttrs isLedger {
+        })
+
+        # Default Alamgu wrapper
+        alamguLib.extraArgsForAllCrates
+
+        # Another wrapper specific to this app, but applying to all packages
+        (pkgs: args: args // lib.optionalAttrs (alamguLib.platformIsBolos pkgs.stdenv.hostPlatform) {
           dependencies = map (d: d // { stdlib = true; }) [
             collection.ledgerCore
             collection.ledgerCompilerBuiltins
@@ -88,11 +94,8 @@ rec {
           extraRustcOpts = [
             "-C" "lto=yes"
           ] ++ args.extraRustcOpts or [];
-        };
-      in
-        collection.buildRustCrateForPkgsWrapper
-          pkgs
-          (args: baseFun (appFun args));
+        })
+      ];
   };
 
   makeTarSrc = { appExe, device }: pkgs.runCommandCC "make-tar-src-${device}" {
