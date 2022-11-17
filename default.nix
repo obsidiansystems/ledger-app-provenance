@@ -30,71 +30,69 @@ rec {
       inherit rootFeatures release;
       pkgs = collection.ledgerPkgs;
       buildRustCrateForPkgs = pkgs: let
-        wrapper = fun: let
-          isLedger = lib.elem "bolos" (pkgs.stdenv.hostPlatform.rustc.platform.target-family     or []) ;
-        in args: (collection.buildRustCrateForPkgsWrapper pkgs fun) (args // lib.optionalAttrs isLedger {
-            extraRustcOpts = [
-              "-C" "lto=yes"
-            ] ++ args.extraRustcOpts or [];
-          });
-        fun = collection.buildRustCrateForPkgsWrapper
-          pkgs
-          ((collection.buildRustCrateForPkgsLedger pkgs).override {
-            defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-              proto-gen = protobufOverrides pkgs;
-              ${appName} = attrs: let
-                sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
-              in bufCosmosOverrides pkgs attrs // {
-                preHook = collection.gccLibsPreHook;
-                preConfigure = let
-                  conf = pkgs.runCommand "fetch-buf" (let
-                    super = {
-                      outputHashMode = "recursive";
-                      outputHashAlgo = "sha256";
-                      outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
+        isLedger = lib.elem "bolos" (pkgs.stdenv.hostPlatform.rustc.platform.target-family or []);
+        baseFun = (collection.buildRustCrateForPkgsLedger pkgs).override {
+          defaultCrateOverrides = pkgs.defaultCrateOverrides // {
+            proto-gen = protobufOverrides pkgs;
+            ${appName} = attrs: let
+              sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
+            in bufCosmosOverrides pkgs attrs // {
+              preHook = collection.gccLibsPreHook;
+              preConfigure = let
+                conf = pkgs.runCommand "fetch-buf" (let
+                  super = {
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
 
-                      nativeBuildInputs = [
-                        pkgs.buildPackages.cacert pkgs.buildPackages.buf
-                      ];
-                    };
-                    self = super // protobufOverrides pkgs super;
-                  in self) ''
-                     mkdir -p $out
-                     HOME=$(mktemp -d)
-                     curl https://api.buf.build
-                     buf build ${cosmos-sdk} \
-                       --type=cosmos.tx.v1beta1.Tx \
-                       --type=cosmos.tx.v1beta1.SignDoc \
-                       --type=cosmos.tx.v1beta1.SignDoc \
-                       --type=cosmos.staking.v1beta1.MsgDelegate \
-                       --type=cosmos.gov.v1beta1.MsgDeposit \
-                       --output $out/buf_out.bin
-                     mv ~/.cache $out
-                  '';
-                in ''
-                  HOME=$(mktemp -d)
-                  cp -r --no-preserve=mode ${conf}/.cache ~/.cache
+                    nativeBuildInputs = [
+                      pkgs.buildPackages.cacert pkgs.buildPackages.buf
+                    ];
+                  };
+                  self = super // protobufOverrides pkgs super;
+                in self) ''
+                   mkdir -p $out
+                   HOME=$(mktemp -d)
+                   curl https://api.buf.build
+                   buf build ${cosmos-sdk} \
+                     --type=cosmos.tx.v1beta1.Tx \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.staking.v1beta1.MsgDelegate \
+                     --type=cosmos.gov.v1beta1.MsgDeposit \
+                     --output $out/buf_out.bin
+                   mv ~/.cache $out
                 '';
-                extraRustcOpts = attrs.extraRustcOpts or [] ++ [
-                  "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
-                  "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
-                ] ++ (if (device == "nanos") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanos_layout.ld" ]
-                else if (device == "nanosplus") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanosplus_layout.ld" ]
-                else if (device == "nanox") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanox_layout.ld" ]
-                else throw ("Unknown target device: `${device}'"));
-              };
+              in ''
+                HOME=$(mktemp -d)
+                cp -r --no-preserve=mode ${conf}/.cache ~/.cache
+              '';
+              extraRustcOpts = attrs.extraRustcOpts or [] ++ [
+                "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
+                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
+              ] ++ (if (device == "nanos") then
+                [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanos_layout.ld" ]
+              else if (device == "nanosplus") then
+                [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanosplus_layout.ld" ]
+              else if (device == "nanox") then
+                [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanox_layout.ld" ]
+              else throw ("Unknown target device: `${device}'"));
             };
-          });
-      in
-        args: fun (args // lib.optionalAttrs pkgs.stdenv.hostPlatform.isAarch32 {
+          };
+        };
+        appFun = args: args // lib.optionalAttrs isLedger {
           dependencies = map (d: d // { stdlib = true; }) [
             collection.ledgerCore
             collection.ledgerCompilerBuiltins
           ] ++ args.dependencies;
-        });
+          extraRustcOpts = [
+            "-C" "lto=yes"
+          ] ++ args.extraRustcOpts or [];
+        };
+      in
+        collection.buildRustCrateForPkgsWrapper
+          pkgs
+          (args: baseFun (appFun args));
   };
 
   makeTarSrc = { appExe, device }: pkgs.runCommandCC "make-tar-src-${device}" {
