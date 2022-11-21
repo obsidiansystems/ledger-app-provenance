@@ -86,9 +86,6 @@ rec {
             collection.ledgerCore
             collection.ledgerCompilerBuiltins
           ] ++ args.dependencies;
-          extraRustcOpts = [
-            "-C" "lto=yes"
-          ] ++ args.extraRustcOpts or [];
         })
       ];
   };
