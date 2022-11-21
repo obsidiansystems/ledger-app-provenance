@@ -70,9 +70,14 @@ pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> 
     let mut computation_unbound : Pin<&mut (dyn Future<Output = ()> + 'static)> = unsafe { core::mem::transmute(dfut) };
 
 
+    error!("Waiting for future in run_fut");
     core::future::poll_fn(|_| {
+        error!("run_fut poll_fn");
         match core::mem::take(&mut receiver) {
-            Some(r) => Poll::Ready(r),
+            Some(r) => {
+                error!("run_fut completing");
+                Poll::Ready(r)
+            },
             None => match ft.try_borrow_mut() {
                 Ok(ref mut ft_mut) => {
                     match ft_mut.fut {
@@ -102,6 +107,7 @@ impl AsyncTrampoline for FutureTrampolineRunner {
             },
             Err(_) => { error!("Case 2"); panic!("Nope"); }
         };
+        error!("Something is pending");
         match the_fut {
             Some(ref mut pinned) => {
                 let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
@@ -126,6 +132,21 @@ impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
     type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
             run_fut(trampoline(), move || self.0.parse(input, length))
+    }
+}
+
+struct TryParser<S>(S);
+
+impl<T, S: HasOutput<T>> HasOutput<T> for TryParser<S> {
+    type Output = bool; // Option<S::Output>;
+}
+
+impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TryParser<S> where S::Output: 'static {
+    type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
+    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
+        async move {
+            TryFuture(self.0.parse(input, length)).await.is_some()
+        }
     }
 }
 
@@ -279,9 +300,9 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>() -> impl Le
 }
 
 // Transaction parser; this should prompt the user a lot more than this.
-type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */;
+type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> + HasOutput<Transaction, Output = bool>;
 const TXN_PARSER : TxnParserType =
-    SignDocInterp {
+    TryParser(SignDocInterp {
         field_body_bytes:
             BytesAsMessage(TxBody,
                 TxBodyInterp {
@@ -297,7 +318,7 @@ const TXN_PARSER : TxnParserType =
             field_auth_info_bytes: DropInterp,
             field_chain_id: show_string!(20, "Chain ID"),
             field_account_number: DropInterp
-    };
+    });
 
 struct Preaction<S>(fn()->Option<()>, S);
 
@@ -318,13 +339,22 @@ impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimited
     }
 }
 
-type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> /*+ HasOutput<Transaction, Output = ()> */;
+type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> + HasOutput<Transaction, Output = bool>;
 const TXN_MESSAGES_PARSER : TxnMessagesParser =
-    SignDocUnorderedInterp {
+    TryParser(SignDocUnorderedInterp {
         field_body_bytes:
             BytesAsMessage(TxBody,
                 TxBodyUnorderedInterp {
                     field_messages: MessagesInterp {
+                        default: RawAnyInterp {
+                            field_type_url: Preaction(
+                                                || { // if no_unsafe { None } else {
+                                                    write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                                                        //}
+                                                },
+                                                show_string!(120, "Type URL")),
+                            field_value: DropInterp
+                        },
                         send:
                             TrampolineParse(Preaction(
                                 || { write_scroller("Transfer", |w| Ok(())) },
@@ -391,7 +421,7 @@ const TXN_MESSAGES_PARSER : TxnMessagesParser =
             field_auth_info_bytes: DropInterp,
             field_chain_id: DropInterp,
             field_account_number: DropInterp
-    };
+    });
 
 
 const fn hasher_parser() -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)> { ObserveBytes(Hasher::new, Hasher::update, DropInterp) }
@@ -432,16 +462,16 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            {
-            let mut txn = LengthTrack(input[0].clone(), 0);
-            TXN_MESSAGES_PARSER.parse(&mut txn, length).await;
+            let mut known_txn = {
+              let mut txn = LengthTrack(input[0].clone(), 0);
+              TrampolineParse(TXN_MESSAGES_PARSER).parse(&mut txn, length).await
+            };
             trace!("Passed txn messages");
-            }
 
-            {
-            let mut txn = LengthTrack(input[0].clone(), 0);
-            TXN_PARSER.parse(&mut txn, length).await;
-            trace!("Passed txn");
+            if known_txn {
+              let mut txn = LengthTrack(input[0].clone(), 0);
+              known_txn = TrampolineParse(TXN_PARSER).parse(&mut txn, length).await;
+              trace!("Passed txn");
             }
 
             let hash;
@@ -450,6 +480,10 @@ impl AsyncAPDU for Sign {
                 let mut txn = input[0].clone();
             hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
             trace!("Hashed txn");
+            }
+
+            if !known_txn {
+                if write_scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() { reject::<()>().await; };
             }
 
             let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
