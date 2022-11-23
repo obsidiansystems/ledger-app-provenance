@@ -125,6 +125,8 @@ rec {
     exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
   '';
 
+  apiPort = 5005;
+
   runTests = { appExe, device, variant ? "", speculosCmd }:
   pkgs.runCommandNoCC "run-tests-${device}${variant}" {
     nativeBuildInputs = [
@@ -136,7 +138,7 @@ rec {
     ${speculosCmd} ${appExe} --display headless &
     SPECULOS=$!
 
-    until wget -O/dev/null -o/dev/null http://localhost:5000; do sleep 0.1; done;
+    until wget -O/dev/null -o/dev/null http://localhost:${toString apiPort}; do sleep 0.1; done;
 
     ${testScript}/bin/mocha-wrapper
     rv=$?
