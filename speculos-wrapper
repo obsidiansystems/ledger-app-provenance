@@ -10,8 +10,8 @@ MOCHA_ARGS=""
 API_PORT=5005
 
 run_ts_tests() {
-    EXE="$(speculos --display headless "$@" |& grep EXE: | cut -d' ' -f2)"
-    speculos "${@:1:$#-1}" $EXE --display headless &
+    EXE="$(speculos --api-port "$API_PORT" --display headless "$@" |& grep EXE: | cut -d' ' -f2)"
+    speculos --api-port "$API_PORT" "${@:1:$#-1}" $EXE --display headless &
     SPECULOS=$!
     until wget -O/dev/null -o/dev/null http://localhost:$API_PORT/; do sleep 0.1; done;
     cd ../ts-tests;
@@ -36,6 +36,6 @@ case $last in
     ;;
   */deps/*) # Assume anything in the deps directory is a test, not the full app.
     echo "Matched *tests*"
-    speculos "$@" --display headless ;;
-  *) speculos "$@" ;;
+    speculos --api-port "$API_PORT" "$@" --display headless ;;
+  *) speculos --api-port "$API_PORT" "$@" ;;
 esac

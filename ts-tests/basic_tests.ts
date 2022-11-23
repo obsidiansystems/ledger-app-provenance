@@ -9,9 +9,9 @@ import { instantiate, Nacl } from "js-nacl";
 
 let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
 
-const API_PORT = 5005;
+const API_PORT: number = 5005;
 
-const BASE_URL = `http://127.0.0.1:${API_PORT}`;
+const BASE_URL: string = `http://127.0.0.1:${API_PORT}`;
 
 let setAcceptAutomationRules = async function() {
     await Axios.post(BASE_URL + "/automation", {
