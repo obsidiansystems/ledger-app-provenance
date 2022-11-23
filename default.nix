@@ -69,7 +69,7 @@ rec {
                 cp -r --no-preserve=mode ${conf}/.cache ~/.cache
               '';
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
-                "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
+                "-C" "linker=${sdk.lib}/lib/nanos_sdk.out/link_wrap.sh"
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/${device}_layout.ld"
               ];
