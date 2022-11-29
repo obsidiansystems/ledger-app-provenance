@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "nanos_sdk"
 version = "0.2.0"
-source = "git+https://github.com/alamgu/ledger-nanos-sdk?branch=memory-fixes#f31e07d7a1cf079c1066ebb90ce46c90464a5610"
+source = "git+https://github.com/alamgu/ledger-nanos-sdk?branch=memory-fixes#db519b117852baad163132c60ed362c97f99c9a9"
 dependencies = [
  "cc",
  "num-traits",
