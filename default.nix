@@ -47,7 +47,7 @@ rec {
                     outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
 
                     nativeBuildInputs = [
-                      pkgs.buildPackages.cacert pkgs.buildPackages.buf
+                      pkgs.buildPackages.cacert pkgs.buildPackages.buf pkgs.buildPackages.curl
                     ];
                   };
                   self = super // protobufOverrides pkgs super;
