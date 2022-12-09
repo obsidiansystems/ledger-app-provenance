@@ -22,6 +22,8 @@ use nanos_sdk::ecc::*;
 use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
 
 use alamgu_async_block::*;
+use core::cell::RefCell;
+use core::task::*;
 use ledger_log::*;
 
 use crate::trampolines::*;
