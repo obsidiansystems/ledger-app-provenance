@@ -1,27 +1,25 @@
 // use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
-use crate::crypto_helpers::{get_pubkey, get_pkh, Hasher, format_signature, compress_public_key};
+use crate::crypto_helpers::{compress_public_key, format_signature, get_pkh, get_pubkey, Hasher};
 use crate::interface::*;
-use arrayvec::{ArrayVec, ArrayString};
-use core::fmt::Write;
-use ledger_parser_combinators::any_of;
-use ledger_parser_combinators::interp::{
-    Action, DropInterp,
-    DefaultInterp, ObserveBytes, SubInterp,
-    Buffer,
-};
-use core::future::Future;
-use ledger_parser_combinators::async_parser::*;
-use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
-use ledger_parser_combinators::protobufs::async_parser::*;
-use ledger_parser_combinators::protobufs::schema::Bytes;
-use nanos_sdk::ecc::*;
-pub use crate::proto::cosmos::tx::v1beta1::*;
 pub use crate::proto::cosmos::bank::v1beta1::*;
 pub use crate::proto::cosmos::base::v1beta1::*;
-pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
+pub use crate::proto::cosmos::staking::v1beta1::*;
+pub use crate::proto::cosmos::tx::v1beta1::*;
+use arrayvec::{ArrayString, ArrayVec};
+use core::fmt::Write;
+use core::future::Future;
+use ledger_parser_combinators::any_of;
+use ledger_parser_combinators::async_parser::*;
+use ledger_parser_combinators::interp::{
+    Action, Buffer, DefaultInterp, DropInterp, ObserveBytes, SubInterp,
+};
+use ledger_parser_combinators::protobufs::async_parser::*;
+use ledger_parser_combinators::protobufs::schema::Bytes;
+use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
+use nanos_sdk::ecc::*;
 
-use ledger_prompts_ui::{ScrollerError, write_scroller, final_accept_prompt};
+use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
 
 use alamgu_async_block::*;
 use ledger_log::*;
@@ -34,12 +32,14 @@ impl<T, S: HasOutput<T>> HasOutput<T> for TryParser<S> {
     type Output = bool; // Option<S::Output>;
 }
 
-impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TryParser<S> where S::Output: 'static {
+impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
+    LengthDelimitedParser<T, BS> for TryParser<S>
+where
+    S::Output: 'static,
+{
     type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
-        async move {
-            TryFuture(self.0.parse(input, length)).await.is_some()
-        }
+        async move { TryFuture(self.0.parse(input, length)).await.is_some() }
     }
 }
 
@@ -58,7 +58,9 @@ pub fn get_address_apdu(io: HostIO) -> impl Future<Output = ()> {
                 let pubkey = get_pubkey(&path).ok()?;
                 let pkh = get_pkh(&pubkey).ok()?;
                 error!("Prompting for {}", pkh);
-                write_scroller("Provide Public Key", |w| Ok(write!(w, "For Address {}", pkh)?))?;
+                write_scroller("Provide Public Key", |w| {
+                    Ok(write!(w, "For Address {}", pkh)?)
+                })?;
                 final_accept_prompt(&[])?;
                 Some((pubkey, pkh))
             };
@@ -105,51 +107,59 @@ macro_rules! show_string {
     }
 }
 
-const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>() -> impl LengthDelimitedParser<Coin, BS> {
+const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
+) -> impl LengthDelimitedParser<Coin, BS> {
     Action(
         CoinUnorderedInterp {
             field_denom: Buffer::<20>,
-            field_amount: Buffer::<100>
+            field_amount: Buffer::<100>,
         },
-    move |CoinValue { field_denom, field_amount }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
-        // Consider shifting the decimals for nhash to hash here.
-        write_scroller( "Amount", |w| {
-            let x = core::str::from_utf8(field_amount.as_ref().ok_or(ScrollerError)?.as_slice())?;
-            let y = core::str::from_utf8(field_denom.as_ref().ok_or(ScrollerError)?.as_slice())?;
-            write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
-        })
-    }
+        move |CoinValue {
+                  field_denom,
+                  field_amount,
+              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
+            // Consider shifting the decimals for nhash to hash here.
+            write_scroller("Amount", |w| {
+                let x =
+                    core::str::from_utf8(field_amount.as_ref().ok_or(ScrollerError)?.as_slice())?;
+                let y =
+                    core::str::from_utf8(field_denom.as_ref().ok_or(ScrollerError)?.as_slice())?;
+                write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
+            })
+        },
     )
 }
 
 // Transaction parser; this should prompt the user a lot more than this.
-type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> + HasOutput<Transaction, Output = bool>;
-const TXN_PARSER : TxnParserType =
-    TryParser(SignDocInterp {
-        field_body_bytes:
-            BytesAsMessage(TxBody,
-                TxBodyInterp {
-                    field_messages: DropInterp,
-                    field_memo: show_string!(ifnonempty, 128, "Memo"), // DropInterp,
-                    field_timeout_height: DropInterp,
-                    field_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
-                    field_non_critical_extension_options: DropInterp,// Action(DropInterp, |_| { None::<()> }),
-                }
-            ),
-            // We could verify that our signature matters with these, but not part of the defining
-            // what will the transaction _do_.
-            field_auth_info_bytes: DropInterp,
-            field_chain_id: show_string!(20, "Chain ID"),
-            field_account_number: DropInterp
-    });
+type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
+    + HasOutput<Transaction, Output = bool>;
+const TXN_PARSER: TxnParserType = TryParser(SignDocInterp {
+    field_body_bytes: BytesAsMessage(
+        TxBody,
+        TxBodyInterp {
+            field_messages: DropInterp,
+            field_memo: show_string!(ifnonempty, 128, "Memo"), // DropInterp,
+            field_timeout_height: DropInterp,
+            field_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
+            field_non_critical_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
+        },
+    ),
+    // We could verify that our signature matters with these, but not part of the defining
+    // what will the transaction _do_.
+    field_auth_info_bytes: DropInterp,
+    field_chain_id: show_string!(20, "Chain ID"),
+    field_account_number: DropInterp,
+});
 
-struct Preaction<S>(fn()->Option<()>, S);
+struct Preaction<S>(fn() -> Option<()>, S);
 
 impl<T, S: HasOutput<T>> HasOutput<T> for Preaction<S> {
     type Output = S::Output;
 }
 
-impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimitedParser<Schema, BS> for Preaction<S> {
+impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimitedParser<Schema, BS>
+    for Preaction<S>
+{
     type State<'c> = impl Future<Output = Self::Output> where S: 'c, BS: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
         async move {
@@ -162,110 +172,111 @@ impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimited
     }
 }
 
-type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> + HasOutput<Transaction, Output = bool>;
-const TXN_MESSAGES_PARSER : TxnMessagesParser =
-    TryParser(SignDocUnorderedInterp {
-        field_body_bytes:
-            BytesAsMessage(TxBody,
-                TxBodyUnorderedInterp {
-                    field_messages: MessagesInterp {
-                        default: RawAnyInterp {
-                            field_type_url: Preaction(
-                                                || { // if no_unsafe { None } else {
-                                                    write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
-                                                        //}
-                                                },
-                                                show_string!(120, "Type URL")),
-                            field_value: DropInterp
+type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
+    + HasOutput<Transaction, Output = bool>;
+const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp {
+    field_body_bytes: BytesAsMessage(
+        TxBody,
+        TxBodyUnorderedInterp {
+            field_messages: MessagesInterp {
+                default: RawAnyInterp {
+                    field_type_url: Preaction(
+                        || {
+                            // if no_unsafe { None } else {
+                            write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                            //}
                         },
-                        send:
-                            TrampolineParse(Preaction(
-                                || { write_scroller("Transfer", |_| Ok(())) },
-                                MsgSendInterp {
-                                    field_from_address: show_string!(120, "From address"),
-                                    field_to_address: show_string!(120, "To address"),
-                                    field_amount: show_coin()
-                                })),
-                        multi_send: TrampolineParse(Preaction(
-                                || { write_scroller("Multi-send", |_| Ok(())) },
-                                MsgMultiSendInterp {
-                                    field_inputs: InputInterp { 
-                                        field_address: show_string!(120, "From address"),
-                                        field_coins: show_coin()
-                                    },
-                                    field_outputs: OutputInterp {
-                                        field_address: show_string!(120, "To address"),
-                                        field_coins: show_coin()
-                                    },
-                                })),
-                        delegate:
-                            TrampolineParse(Preaction(
-                                || { write_scroller("Delegate", |_| Ok(())) },
-                                MsgDelegateInterp {
-                                    field_amount: show_coin(),
-                                    field_delegator_address: show_string!(120, "Delegator Address"),
-                                    field_validator_address: show_string!(120, "Validator Address"),
-                                })),
-                        undelegate:
-                            TrampolineParse(Preaction(
-                                || { write_scroller("Undelegate", |_| Ok(())) },
-                                MsgUndelegateInterp {
-                                    field_amount: show_coin(),
-                                    field_delegator_address: show_string!(120, "Delegator Address"),
-                                    field_validator_address: show_string!(120, "Validator Address"),
-                                })),
-                        begin_redelegate:
-                            TrampolineParse(Preaction(
-                                || { write_scroller("Redelegate", |_| Ok(())) },
-                                MsgBeginRedelegateInterp {
-                                    field_amount: show_coin(),
-                                    field_delegator_address: show_string!(120, "Delegator Address"),
-                                    field_validator_src_address: show_string!(120, "From Validator"),
-                                    field_validator_dst_address: show_string!(120, "To Validator"),
-                                })),
-                        deposit:
-                            TrampolineParse(MsgDepositInterp {
-                                field_amount: show_coin(),
-                                field_depositor: show_string!(120, "Depositor Address"),
-                                field_proposal_id: 
-                                    Action(
-                                        DefaultInterp, |value: u64| {
-                                                write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
-                                        }
-                                    )
-                            }),
+                        show_string!(120, "Type URL"),
+                    ),
+                    field_value: DropInterp,
+                },
+                send: TrampolineParse(Preaction(
+                    || write_scroller("Transfer", |_| Ok(())),
+                    MsgSendInterp {
+                        field_from_address: show_string!(120, "From address"),
+                        field_to_address: show_string!(120, "To address"),
+                        field_amount: show_coin(),
                     },
-                    field_memo: DropInterp,
-                    field_timeout_height: DropInterp,
-                    field_extension_options: DropInterp,
-                    field_non_critical_extension_options: DropInterp
-                }
-            ),
-            field_auth_info_bytes: DropInterp,
-            field_chain_id: DropInterp,
-            field_account_number: DropInterp
-    });
+                )),
+                multi_send: TrampolineParse(Preaction(
+                    || write_scroller("Multi-send", |_| Ok(())),
+                    MsgMultiSendInterp {
+                        field_inputs: InputInterp {
+                            field_address: show_string!(120, "From address"),
+                            field_coins: show_coin(),
+                        },
+                        field_outputs: OutputInterp {
+                            field_address: show_string!(120, "To address"),
+                            field_coins: show_coin(),
+                        },
+                    },
+                )),
+                delegate: TrampolineParse(Preaction(
+                    || write_scroller("Delegate", |_| Ok(())),
+                    MsgDelegateInterp {
+                        field_amount: show_coin(),
+                        field_delegator_address: show_string!(120, "Delegator Address"),
+                        field_validator_address: show_string!(120, "Validator Address"),
+                    },
+                )),
+                undelegate: TrampolineParse(Preaction(
+                    || write_scroller("Undelegate", |_| Ok(())),
+                    MsgUndelegateInterp {
+                        field_amount: show_coin(),
+                        field_delegator_address: show_string!(120, "Delegator Address"),
+                        field_validator_address: show_string!(120, "Validator Address"),
+                    },
+                )),
+                begin_redelegate: TrampolineParse(Preaction(
+                    || write_scroller("Redelegate", |_| Ok(())),
+                    MsgBeginRedelegateInterp {
+                        field_amount: show_coin(),
+                        field_delegator_address: show_string!(120, "Delegator Address"),
+                        field_validator_src_address: show_string!(120, "From Validator"),
+                        field_validator_dst_address: show_string!(120, "To Validator"),
+                    },
+                )),
+                deposit: TrampolineParse(MsgDepositInterp {
+                    field_amount: show_coin(),
+                    field_depositor: show_string!(120, "Depositor Address"),
+                    field_proposal_id: Action(DefaultInterp, |value: u64| {
+                        write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
+                    }),
+                }),
+            },
+            field_memo: DropInterp,
+            field_timeout_height: DropInterp,
+            field_extension_options: DropInterp,
+            field_non_critical_extension_options: DropInterp,
+        },
+    ),
+    field_auth_info_bytes: DropInterp,
+    field_chain_id: DropInterp,
+    field_account_number: DropInterp,
+});
 
-
-type HasherParser = impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)>;
-const fn hasher_parser() -> HasherParser { ObserveBytes(Hasher::new, Hasher::update, DropInterp) }
+type HasherParser =
+    impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)>;
+const fn hasher_parser() -> HasherParser {
+    ObserveBytes(Hasher::new, Hasher::update, DropInterp)
+}
 
 any_of! {
-    MessagesInterp {
-        Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
-        MultiSend: MsgMultiSend = b"/cosmos.bank.v1beta1.MsgMultiSend",
-        Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
-        Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
-        BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
-        Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
-    }
-    }
+MessagesInterp {
+    Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
+    MultiSend: MsgMultiSend = b"/cosmos.bank.v1beta1.MsgMultiSend",
+    Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
+    Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
+    BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
+    Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
+}
+}
 
-type BipPathParserType = impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output=ArrayVec<u32, 10>>;
-const BIP_PATH_PARSER : BipPathParserType =
-    Action(SubInterp(DefaultInterp),
-    |path: ArrayVec<u32, 10>| {
-        if path.len()<2 || path[0] != 0x8000002c || path[1] != 0x800001f9 {
+type BipPathParserType =
+    impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output = ArrayVec<u32, 10>>;
+const BIP_PATH_PARSER: BipPathParserType =
+    Action(SubInterp(DefaultInterp), |path: ArrayVec<u32, 10>| {
+        if path.len() < 2 || path[0] != 0x8000002c || path[1] != 0x800001f9 {
             None
         } else {
             Some(path)
@@ -280,7 +291,9 @@ pub fn sign_apdu(io: HostIO) -> impl Future<Output = ()> {
 
         let mut known_txn = {
             let mut txn = LengthTrack(input[0].clone(), 0);
-            TrampolineParse(TXN_MESSAGES_PARSER).parse(&mut txn, length).await
+            TrampolineParse(TXN_MESSAGES_PARSER)
+                .parse(&mut txn, length)
+                .await
         };
         trace!("Passed txn messages");
 
@@ -299,7 +312,9 @@ pub fn sign_apdu(io: HostIO) -> impl Future<Output = ()> {
         }
 
         if !known_txn {
-            if write_scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() { reject::<()>().await; };
+            if write_scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
+                reject::<()>().await;
+            };
         }
 
         let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
@@ -311,9 +326,13 @@ pub fn sign_apdu(io: HostIO) -> impl Future<Output = ()> {
                 write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
                 final_accept_prompt(&[])
             };
-            if prompt_fn().is_none() { reject::<()>().await; }
+            if prompt_fn().is_none() {
+                reject::<()>().await;
+            }
             format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
-        } ).await {
+        })
+        .await
+        {
             io.result_final(&sig).await;
         } else {
             reject::<()>().await;
@@ -326,21 +345,15 @@ pub type APDUsFuture = impl Future<Output = ()>;
 #[inline(never)]
 pub fn handle_apdu_async(io: HostIO, ins: Ins) -> APDUsFuture {
     async move {
-    match ins {
-        Ins::GetVersion => {
-
+        match ins {
+            Ins::GetVersion => {}
+            Ins::GetPubkey => run_fut(trampoline(), move || get_address_apdu(io)).await,
+            Ins::Sign => {
+                trace!("Handling sign");
+                run_fut(trampoline(), move || sign_apdu(io)).await
+            }
+            Ins::GetVersionStr => {}
+            Ins::Exit => nanos_sdk::exit_app(0),
         }
-        Ins::GetPubkey => {
-            run_fut(trampoline(), move || get_address_apdu(io)).await
-        }
-        Ins::Sign => {
-            trace!("Handling sign");
-            run_fut(trampoline(), move || sign_apdu(io)).await
-        }
-        Ins::GetVersionStr => {
-        }
-        Ins::Exit => nanos_sdk::exit_app(0),
-    }
     }
 }
-

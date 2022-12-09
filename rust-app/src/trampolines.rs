@@ -1,21 +1,20 @@
-use core::pin::Pin;
-use pin_project::pin_project;
-use core::future::Future;
-use ledger_parser_combinators::async_parser::*;
-use ledger_parser_combinators::protobufs::async_parser::*;
-pub use crate::proto::cosmos::tx::v1beta1::*;
 pub use crate::proto::cosmos::bank::v1beta1::*;
 pub use crate::proto::cosmos::base::v1beta1::*;
-pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
+pub use crate::proto::cosmos::staking::v1beta1::*;
+pub use crate::proto::cosmos::tx::v1beta1::*;
+use core::future::Future;
+use core::pin::Pin;
+use ledger_parser_combinators::async_parser::*;
+use ledger_parser_combinators::protobufs::async_parser::*;
+use pin_project::pin_project;
 
-
-use core::task::*;
-use core::cell::RefCell;
 use alamgu_async_block::*;
+use core::cell::RefCell;
+use core::task::*;
 use ledger_log::*;
 
-pub static mut ASYNC_TRAMPOLINE : Option<RefCell<FutureTrampoline>> = None;
+pub static mut ASYNC_TRAMPOLINE: Option<RefCell<FutureTrampoline>> = None;
 
 pub fn trampoline() -> &'static RefCell<FutureTrampoline> {
     unsafe {
@@ -25,7 +24,6 @@ pub fn trampoline() -> &'static RefCell<FutureTrampoline> {
         }
     }
 }
-
 
 // Trampolined and TrampolinedFuture provide a matchable name fragment for static analysis of
 // trampoline-executed futures, to connect with handle_fut_trampoline below.
@@ -44,8 +42,8 @@ impl<F: Future<Output = ()>> TrampolinedFuture for Trampolined<F> {
 }
 
 pub struct FutureTrampoline {
-    pub fut: Option<Pin<&'static mut (dyn TrampolinedFuture + 'static)>>
-    }
+    pub fut: Option<Pin<&'static mut (dyn TrampolinedFuture + 'static)>>,
+}
 pub struct FutureTrampolineRunner;
 
 #[pin_project]
@@ -59,31 +57,38 @@ impl<F: Future> Future for NoinlineFut<F> {
     }
 }
 
-pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(ft: &'static RefCell<FutureTrampoline>, fut: FF) -> impl Future<Output = A> + 'a {
+pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(
+    ft: &'static RefCell<FutureTrampoline>,
+    fut: FF,
+) -> impl Future<Output = A> + 'a {
     async move {
-    let mut receiver = None;
-    let rcv_ptr: *mut Option<A> = &mut receiver;
-    let mut computation = Trampolined(async { unsafe { *rcv_ptr = Some(fut().await); } });
-    let dfut : Pin<&mut (dyn TrampolinedFuture + '_)> = unsafe { Pin::new_unchecked(&mut computation) };
-    let mut computation_unbound : Pin<&mut (dyn TrampolinedFuture + 'static)> = unsafe { core::mem::transmute(dfut) };
+        let mut receiver = None;
+        let rcv_ptr: *mut Option<A> = &mut receiver;
+        let mut computation = Trampolined(async {
+            unsafe {
+                *rcv_ptr = Some(fut().await);
+            }
+        });
+        let dfut: Pin<&mut (dyn TrampolinedFuture + '_)> =
+            unsafe { Pin::new_unchecked(&mut computation) };
+        let mut computation_unbound: Pin<&mut (dyn TrampolinedFuture + 'static)> =
+            unsafe { core::mem::transmute(dfut) };
 
-    core::future::poll_fn(|_| {
-        match core::mem::take(&mut receiver) {
+        core::future::poll_fn(|_| match core::mem::take(&mut receiver) {
             Some(r) => Poll::Ready(r),
             None => match ft.try_borrow_mut() {
-                Ok(ref mut ft_mut) => {
-                    match ft_mut.fut {
-                        Some(_) => Poll::Pending,
-                        None => {
-                            ft_mut.fut = Some(unsafe { core::mem::transmute(computation_unbound.as_mut()) });
-                            Poll::Pending
-                        }
+                Ok(ref mut ft_mut) => match ft_mut.fut {
+                    Some(_) => Poll::Pending,
+                    None => {
+                        ft_mut.fut =
+                            Some(unsafe { core::mem::transmute(computation_unbound.as_mut()) });
+                        Poll::Pending
                     }
-                }
+                },
                 Err(_) => Poll::Pending,
-            }
-        }
-    }).await
+            },
+        })
+        .await
     }
 }
 
@@ -94,26 +99,29 @@ pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> 
 #[inline(never)]
 #[no_mangle]
 fn handle_fut_trampoline() -> AsyncTrampolineResult {
-        error!("Running trampolines");
-        let mut the_fut = match trampoline().try_borrow_mut() {
-            Ok(mut futref) => match &mut *futref {
-                FutureTrampoline { fut: ref mut pinned } => {
-                    core::mem::take(pinned)
-                }
-            },
-            Err(_) => { error!("Case 2"); panic!("Nope"); }
-        };
-        match the_fut {
-            Some(ref mut pinned) => {
-                let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
-                let mut ctxd = Context::from_waker(&waker);
-                match pinned.as_mut().poll(&mut ctxd) {
-                    Poll::Pending => AsyncTrampolineResult::Pending,
-                    Poll::Ready(()) => AsyncTrampolineResult::Resolved
-                }
-            }
-            None => { AsyncTrampolineResult::NothingPending }
+    error!("Running trampolines");
+    let mut the_fut = match trampoline().try_borrow_mut() {
+        Ok(mut futref) => match &mut *futref {
+            FutureTrampoline {
+                fut: ref mut pinned,
+            } => core::mem::take(pinned),
+        },
+        Err(_) => {
+            error!("Case 2");
+            panic!("Nope");
         }
+    };
+    match the_fut {
+        Some(ref mut pinned) => {
+            let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
+            let mut ctxd = Context::from_waker(&waker);
+            match pinned.as_mut().poll(&mut ctxd) {
+                Poll::Pending => AsyncTrampolineResult::Pending,
+                Poll::Ready(()) => AsyncTrampolineResult::Resolved,
+            }
+        }
+        None => AsyncTrampolineResult::NothingPending,
+    }
 }
 
 impl AsyncTrampoline for FutureTrampolineRunner {
@@ -128,9 +136,13 @@ impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
     type Output = S::Output;
 }
 
-impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>> LengthDelimitedParser<T, BS> for TrampolineParse<S> where S::Output: 'static + Clone {
+impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
+    LengthDelimitedParser<T, BS> for TrampolineParse<S>
+where
+    S::Output: 'static + Clone,
+{
     type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
-            run_fut(trampoline(), move || self.0.parse(input, length))
+        run_fut(trampoline(), move || self.0.parse(input, length))
     }
 }
