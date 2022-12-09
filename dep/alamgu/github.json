@@ -1,8 +1,8 @@
 {
   "owner": "alamgu",
   "repo": "alamgu",
-  "branch": "provenance-tweaks",
+  "branch": "proper-loader",
   "private": false,
-  "rev": "d7200c274bf69253b0ab688628f0d33959066300",
-  "sha256": "1qyz49vxki6s3qk0l2z9h6lkkj6imbpqz2ijvacxgc9bjf09935p"
+  "rev": "a0b68deed2cc6dd6e1673b9c05ae2520a683147b",
+  "sha256": "1gzc8lydqnvh0qkw0x4s8kx025g9w15cr3zvwg4xpm330mwvnngg"
 }

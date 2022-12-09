@@ -2,21 +2,21 @@ use crate::info;
 use core::default::Default;
 use core::fmt;
 use nanos_sdk::bindings::*;
-use nanos_sdk::ecc::{CurvesId};
+use nanos_sdk::ecc::*;
 use nanos_sdk::io::SyscallError;
 
-use ledger_log::*;
 use arrayvec::ArrayVec;
 use bech32::*;
 
 pub const BIP32_PATH: [u32; 5] = nanos_sdk::ecc::make_bip32_path(b"m/44'/535348'/0'/0/0");
-
+/*
 /// Helper function that derives the seed over secp256k1
 pub fn bip32_derive_secp256k1(path: &[u32]) -> Result<[u8; 32], SyscallError> {
     let mut raw_key = [0u8; 32];
-    nanos_sdk::ecc::bip32_derive(CurvesId::Secp256k1, path, &mut raw_key)?;
+    nanos_sdk::ecc::bip32_derive(CurvesId::Secp256k1, path, &mut raw_key);
     Ok(raw_key)
 }
+*/
 
 macro_rules! call_c_api_function {
     ($($call:tt)*) => {
@@ -33,14 +33,7 @@ macro_rules! call_c_api_function {
     }
 }
 
-/// Helper function that signs with ECDSA in deterministic nonce,
-/// using SHA256
-#[allow(dead_code)]
-pub fn detecdsa_sign(
-    m: &[u8],
-    ec_k: &cx_ecfp_private_key_t,
-) -> Option<[u8;64]> {
-    let (signature, length) = nanos_sdk::ecc::ecdsa_sign(ec_k, CX_RND_RFC6979 | CX_LAST, CX_SHA256, m)?;
+pub fn format_signature<const K: usize>((signature, length): &([u8; K], u32)) -> Option<[u8; 64]> {
     let mut r: *const u8 = core::ptr::null();
     let mut r_len: usize = 0;
     let mut s: *const u8 = core::ptr::null();
@@ -49,7 +42,7 @@ pub fn detecdsa_sign(
     let mut result_buffer: [u8;64] = [0;64];
 
     unsafe {
-        let flag = cx_ecfp_decode_sig_der(signature.as_ptr(), length, 73,
+        let flag = cx_ecfp_decode_sig_der(signature.as_ptr(), *length, 73,
                                           &mut r, &mut r_len as *mut usize as *mut u32,
                                           &mut s, &mut s_len as *mut usize as *mut u32);
 
@@ -68,20 +61,26 @@ pub fn detecdsa_sign(
     Some(result_buffer)
 }
 
-pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], SyscallError> {
-    let raw_key = bip32_derive_secp256k1(path)?;
-    let mut ec_k = nanos_sdk::ecc::ec_init_key(CurvesId::Secp256k1, &raw_key)?;
-    let uncompressed_pk = nanos_sdk::ecc::ec_get_pubkey(CurvesId::Secp256k1, &mut ec_k)?;
-    Ok(compress_public_key(uncompressed_pk))
+pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], CxError> {
+    Ok(compress_public_key(Secp256k1::from_bip32(path).public_key()?))
 }
 
+/*
+pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], SyscallError> {
+    Secp256k1::from_bip32(path).public_key()
+}
+
+/*
 #[allow(dead_code)]
 pub fn get_private_key(
     path: &[u32],
 ) -> Result<nanos_sdk::bindings::cx_ecfp_private_key_t, SyscallError> {
+    let sk = Secp256k1::from_bip32(path);
     let raw_key = bip32_derive_secp256k1(path)?;
     nanos_sdk::ecc::ec_init_key(CurvesId::Secp256k1, &raw_key)
 }
+*/
+*/
 
 // Public Key Hash type; update this to match the target chain's notion of an address and how to
 // format one.
@@ -89,7 +88,7 @@ pub fn get_private_key(
 pub struct PKH(pub [u8; 20]);
 
 #[allow(dead_code)]
-pub fn get_pkh(key: [u8; 33]) -> Result<PKH, SyscallError> {
+pub fn get_pkh(key: &[u8; 33]) -> Result<PKH, SyscallError> {
     let mut temp = [0; 32];
     unsafe {
         let _len: size_t = cx_hash_sha256(
@@ -193,10 +192,10 @@ extern "C" {
       ) -> u32;
 }
 
-fn compress_public_key(uncompressed: nanos_sdk::bindings::cx_ecfp_public_key_t) -> [u8;33] {
+pub fn compress_public_key(uncompressed: nanos_sdk::ecc::ECPublicKey<65, 'W'>) -> [u8;33] {
     let mut compressed: [u8; 33] = [0; 33];
 
-    compressed[0] = if uncompressed.W[64] & 1 == 1 { 0x03 } else { 0x02 }; // "Compress" public key in place
-    compressed[1..33].copy_from_slice(&uncompressed.W[1..33]);
+    compressed[0] = if uncompressed.pubkey[64] & 1 == 1 { 0x03 } else { 0x02 }; // "Compress" public key in place
+    compressed[1..33].copy_from_slice(&uncompressed.pubkey[1..33]);
     compressed
 }

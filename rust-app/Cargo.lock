@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "alamgu-async-block"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/alamgu-async-block?branch=rust-1.53#7e8e0a2ed0b983ae727b712fb684adda02dd36f0"
+source = "git+https://github.com/alamgu/alamgu-async-block?branch=main#3e9a7a17bdde8d0563a85f8801193c11fc7be9ee"
 dependencies = [
  "arrayvec",
  "ledger-log",
@@ -43,12 +43,6 @@ name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
-
-[[package]]
-name = "base64"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
 name = "bech32"
@@ -83,12 +77,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "cty"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
-
-[[package]]
 name = "either"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -116,9 +104,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.5"
+version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd48d33ec7f05fbfa152300fdad764757cbded343c1aa1cff2fbaf4134851803"
+checksum = "bff49e947297f3312447abdca79f45f4738097cc82b06e72054d2223f601f1b9"
 dependencies = [
  "typenum",
  "version_check",
@@ -144,28 +132,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-
-[[package]]
-name = "ledger-crypto-helpers"
-version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-crypto-helpers?branch=patchable#f448b0e72db3f8be01f482de2fa3e42aa8056591"
-dependencies = [
- "arrayvec",
- "base64",
- "ledger-log",
- "nanos_sdk",
- "nanos_ui",
- "zeroize",
-]
-
-[[package]]
 name = "ledger-log"
-version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-log?branch=patchable#cd7ca8faad65561d0ff172de52ddc97bdbf4a95e"
+version = "0.2.0"
+source = "git+https://github.com/alamgu/ledger-log?branch=patchable#a7866800644226f0c1edd269adfadff2d78d3ae5"
 dependencies = [
  "arrayvec",
  "nanos_sdk",
@@ -174,24 +143,25 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#b07b8512bc2840d41c5a311e3db28af5b53fe280"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#009bbffe8ce57fb857cc5f2766d28f058e0c1ca5"
 dependencies = [
  "arrayvec",
  "bstringify",
  "enum-init",
  "generic-array",
  "ledger-log",
- "log",
+ "nanos_sdk",
  "num-derive",
  "num-traits",
  "paste",
+ "pin-project",
  "trie-enum",
 ]
 
 [[package]]
 name = "ledger-prompts-ui"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-prompts-ui?branch=patchable#c015f9f7a3a73d8ee7d4613491e7129b2cf7fc11"
+source = "git+https://github.com/alamgu/ledger-prompts-ui?branch=patchable#00878775ef7515ed33c1eabcf8d67894fd8019a8"
 dependencies = [
  "arrayvec",
  "ledger-log",
@@ -201,9 +171,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.126"
+version = "0.2.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
+checksum = "c0f80d65747a3e43d1596c7c5492d95d5edddaabd45a7fcdb02b95f644164966"
 
 [[package]]
 name = "log"
@@ -225,18 +195,18 @@ dependencies = [
 
 [[package]]
 name = "nanos_sdk"
-version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-nanos-sdk?branch=use-ambient-compiler-and-target#1d358edd6cddbdcd4d6deb29f856b40e7e863c07"
+version = "0.2.0"
+source = "git+https://github.com/alamgu/ledger-nanos-sdk?branch=memory-fixes#63781fa238ae7a100f9888ddf8b17b4ce96d0497"
 dependencies = [
  "cc",
- "cty",
  "num-traits",
+ "rand_core",
 ]
 
 [[package]]
 name = "nanos_ui"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#1f0e67e01854c0b6c880c58474a4c3d7a348356b"
+source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#6eb8cad8dbe73651e7ac54b8511075a2646f5b8b"
 dependencies = [
  "nanos_sdk",
 ]
@@ -262,25 +232,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "paste"
-version = "1.0.7"
+name = "once_cell"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
+checksum = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1"
+
+[[package]]
+name = "paste"
+version = "1.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1de2e551fb905ac83f73f7aedf2f0cb4a0da7e35efa24a202a936269f1f18e1"
 
 [[package]]
 name = "pin-project"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78203e83c48cffbe01e4a2d35d566ca4de445d79a85372fc64e378bfc812a260"
+checksum = "ad29a609b6bcd67fee905812e544992d216af9d755757c05ed2d0e15a74c6ecc"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "710faf75e1b33345361201d36d04e98ac1ed8909151a017ed384700836104c74"
+checksum = "069bdb1e05adc7a8990dce9cc75370895fbe4e3d58b9b73bf1aee56359344a55"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -289,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.42"
+version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c278e965f1d8cf32d6e0e96de3d3e79712178ae67986d9cf9151f51e95aac89b"
+checksum = "7bd7356a8122b6c4a24a82b278680c73357984ca2fc79a0f9fa6dea7dced7c58"
 dependencies = [
  "unicode-ident",
 ]
@@ -299,7 +275,7 @@ dependencies = [
 [[package]]
 name = "proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#b07b8512bc2840d41c5a311e3db28af5b53fe280"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#009bbffe8ce57fb857cc5f2766d28f058e0c1ca5"
 dependencies = [
  "protobuf",
  "protoc-rust",
@@ -308,24 +284,24 @@ dependencies = [
 
 [[package]]
 name = "protobuf"
-version = "2.27.1"
+version = "2.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf7e6d18738ecd0902d30d1ad232c9125985a3422929b16c65517b38adc14f96"
+checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
 
 [[package]]
 name = "protobuf-codegen"
-version = "2.27.1"
+version = "2.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aec1632b7c8f2e620343439a7dfd1f3c47b18906c4be58982079911482b5d707"
+checksum = "033460afb75cf755fcfc16dfaed20b86468082a2ea24e05ac35ab4a099a017d6"
 dependencies = [
  "protobuf",
 ]
 
 [[package]]
 name = "protoc"
-version = "2.27.1"
+version = "2.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2ef1dc036942fac2470fdb8a911f125404ee9129e9e807f3d12d8589001a38f"
+checksum = "a0218039c514f9e14a5060742ecd50427f8ac4f85a6dc58f2ddb806e318c55ee"
 dependencies = [
  "log",
  "which",
@@ -333,9 +309,9 @@ dependencies = [
 
 [[package]]
 name = "protoc-rust"
-version = "2.27.1"
+version = "2.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a9e315121c8e7e21396e940a3d27f92280a6d28e3931213bf6cbfea76c5cc94"
+checksum = "22f8a182bb17c485f20bdc4274a8c39000a61024cfe461c799b50fec77267838"
 dependencies = [
  "protobuf",
  "protobuf-codegen",
@@ -350,7 +326,6 @@ dependencies = [
  "alamgu-async-block",
  "arrayvec",
  "bech32",
- "ledger-crypto-helpers",
  "ledger-log",
  "ledger-parser-combinators",
  "ledger-prompts-ui",
@@ -367,12 +342,18 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.20"
+version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
+checksum = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rand_core"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 
 [[package]]
 name = "redox_syscall"
@@ -413,9 +394,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.98"
+version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50aef8a904de4c23c788f104b7dddc7d6f79c647c7c8ce4cc8f73eb0ca773dd"
+checksum = "e90cde112c4b9690b8cbe810cba9ddd8bc1d7472e2cae317b69e9438c1cba7d2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -467,7 +448,7 @@ dependencies = [
 [[package]]
 name = "trie-enum"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/trie-enum?branch=main#ef2315fda4223affa3e3a2b5e5c5516a3160af25"
+source = "git+https://github.com/alamgu/trie-enum?branch=main#551bddc313f2af5c2dedb79f3d6de7328e34b208"
 dependencies = [
  "paste",
 ]
@@ -480,9 +461,9 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.2"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
+checksum = "dcc811dc4066ac62f84f11307873c4850cb653bfa9b1719cee2bd2204a4bc5dd"
 
 [[package]]
 name = "utf8-ranges"
@@ -498,13 +479,13 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "which"
-version = "4.2.5"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c4fb54e6113b6a8772ee41c3404fb0301ac79604489467e0a9ce1f3e97c24ae"
+checksum = "1c831fbbee9e129a8cf93e7747a82da9d95ba8e16621cae60ec2cdc849bacb7b"
 dependencies = [
  "either",
- "lazy_static",
  "libc",
+ "once_cell",
 ]
 
 [[package]]
