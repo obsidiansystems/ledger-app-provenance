@@ -12,7 +12,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-C", "opt-level=3",
   "-C", "lto",
-  "--emit=obj,llvm-ir,llvm-bc"
+  "--emit=metadata,link,obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanosp -k 1.0.3 "
 
@@ -23,7 +23,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-C", "opt-level=3",
   "-C", "lto",
-  "--emit=obj,llvm-ir,llvm-bc"
+  "--emit=metadata,link,obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanos "
 
@@ -34,7 +34,7 @@ rustflags = [
   "-C", "embed-bitcode",
   "-C", "opt-level=3",
   "-C", "lto",
-  "--emit=obj,llvm-ir,llvm-bc"
+  "--emit=metadata,link,obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanox "
 
