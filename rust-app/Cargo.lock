@@ -206,7 +206,7 @@ dependencies = [
 [[package]]
 name = "nanos_ui"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#1f0e67e01854c0b6c880c58474a4c3d7a348356b"
+source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#6eb8cad8dbe73651e7ac54b8511075a2646f5b8b"
 dependencies = [
  "nanos_sdk",
 ]
