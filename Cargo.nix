@@ -445,8 +445,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
-          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
+          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
+          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -493,6 +493,10 @@ rec {
           {
             name = "paste";
             packageId = "paste";
+          }
+          {
+            name = "pin-project";
+            packageId = "pin-project";
           }
           {
             name = "trie-enum";
@@ -610,8 +614,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-nanos-sdk";
-          rev = "c6e7314029593a5caa40b9df5a78bb54d308d161";
-          sha256 = "1iami49s435anrycwx2r20vl11xmxarl9l32gn9sic4hg5v45saz";
+          rev = "63781fa238ae7a100f9888ddf8b17b4ce96d0497";
+          sha256 = "1bmxb438asp9z9sfhks97c202sh2781kaf73awfa4alq7dxsk89r";
         };
         authors = [
           "yhql"
@@ -799,8 +803,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "d0a8374c5b6a826af89a0b8c66fdc703d0a90665";
-          sha256 = "08kx8lqrwz62chachzffsbs07rip14nc7l20xgs16bb615xgbj5w";
+          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
+          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
         };
         dependencies = [
           {
@@ -1460,20 +1464,7 @@ rec {
     */
     os = pkgs.rust.lib.toTargetOs platform;
     arch = pkgs.rust.lib.toTargetArch platform;
-    family =
-      if platform ? rustc.platform.target-family
-      then
-        (
-          /* Since https://github.com/rust-lang/rust/pull/84072
-             `target-family` is a list instead of single value.
-           */
-          let
-            f = platform.rustc.platform.target-family;
-          in
-          if builtins.isList f then f else [ f ]
-        )
-      else lib.optional platform.isUnix "unix"
-        ++ lib.optional platform.isWindows "windows";
+    family = pkgs.rust.lib.toTargetFamily platform;
     env = "gnu";
     endian =
       if platform.parsed.cpu.significantByte.name == "littleEndian"

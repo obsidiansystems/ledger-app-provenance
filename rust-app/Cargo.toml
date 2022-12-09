@@ -50,7 +50,7 @@ path = "bin-src/main.rs"
 [patch.crates-io]
 ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "unified-build-with-lib-bagl" }
+nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "memory-fixes" }
 ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable" }
 nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch = "patchable" }
 enum-init = { git = "https://github.com/alamgu/enum-init" }

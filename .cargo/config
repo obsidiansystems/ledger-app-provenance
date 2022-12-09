@@ -7,39 +7,36 @@ incremental = false
 
 [target.nanosplus]
 rustflags = [
-  "-C", "passes=ledger-ropi",
   "-C", "codegen-units=1",
 #  "-C", "save-temps", # Fixes incremental builds by keeping .bc and .ll files
   "-C", "embed-bitcode",
-  "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
   "-Z", "mir-opt-level=4",
+  "-C", "lto",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanosp -k 1.0.3 "
 
 [target.nanos]
 rustflags = [
-  "-C", "passes=ledger-ropi",
   "-C", "codegen-units=1",
 #  "-C", "save-temps", # Fixes incremental builds by keeping .bc and .ll files
   "-C", "embed-bitcode",
-  "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
   "-Z", "mir-opt-level=4",
+  "-C", "lto",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanos "
 
 [target.nanox]
 rustflags = [
-  "-C", "passes=ledger-ropi",
   "-C", "codegen-units=1",
 #  "-C", "save-temps", # Fixes incremental builds by keeping .bc and .ll files
   "-C", "embed-bitcode",
-  "-Z", "new-llvm-pass-manager=no",
   "-C", "opt-level=3",
   "-Z", "mir-opt-level=4",
+  "-C", "lto",
   "--emit=obj,llvm-ir,llvm-bc"
 ]
 runner = "./speculos-wrapper -m nanox "

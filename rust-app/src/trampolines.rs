@@ -67,7 +67,6 @@ pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> 
     let dfut : Pin<&mut (dyn TrampolinedFuture + '_)> = unsafe { Pin::new_unchecked(&mut computation) };
     let mut computation_unbound : Pin<&mut (dyn TrampolinedFuture + 'static)> = unsafe { core::mem::transmute(dfut) };
 
-
     core::future::poll_fn(|_| {
         match core::mem::take(&mut receiver) {
             Some(r) => Poll::Ready(r),
@@ -135,4 +134,3 @@ impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
             run_fut(trampoline(), move || self.0.parse(input, length))
     }
 }
-

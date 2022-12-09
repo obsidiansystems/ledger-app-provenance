@@ -3,7 +3,7 @@ rec {
 
   cosmos-sdk = alamgu.thunkSource ./dep/cosmos-sdk;
 
-  inherit (alamgu) lib pkgs crate2nix;
+  inherit (alamgu) lib pkgs crate2nix alamguLib;
 
   protobufOverrides = pkgs: attrs: {
     PROTO_INCLUDE = "${pkgs.buildPackages.protobuf}/include";
@@ -29,66 +29,66 @@ rec {
     in import ./Cargo.nix {
       inherit rootFeatures release;
       pkgs = collection.ledgerPkgs;
-      buildRustCrateForPkgs = pkgs: let
-        fun = collection.buildRustCrateForPkgsWrapper
-          pkgs
-          ((collection.buildRustCrateForPkgsLedger pkgs).override {
-            defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-              proto-gen = protobufOverrides pkgs;
-              ${appName} = attrs: let
-                sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
-              in bufCosmosOverrides pkgs attrs // {
-                preHook = collection.gccLibsPreHook;
-                preConfigure = let
-                  conf = pkgs.runCommand "fetch-buf" (let
-                    super = {
-                      outputHashMode = "recursive";
-                      outputHashAlgo = "sha256";
-                      outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
+      buildRustCrateForPkgs = alamguLib.combineWrappers [
+        # The callPackage of `buildRustPackage` overridden with various
+        # modified arguemnts.
+        (pkgs: (collection.buildRustCrateForPkgsLedger pkgs).override {
+          defaultCrateOverrides = pkgs.defaultCrateOverrides // {
+            proto-gen = protobufOverrides pkgs;
+            ${appName} = attrs: let
+              sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
+            in bufCosmosOverrides pkgs attrs // {
+              preHook = collection.gccLibsPreHook;
+              preConfigure = let
+                conf = pkgs.runCommand "fetch-buf" (let
+                  super = {
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = "0c0wacvgb800acyw7n91dxll3fmibyhayi2l6ijl24sv1wykr3ni";
 
-                      nativeBuildInputs = [
-                        pkgs.buildPackages.cacert pkgs.buildPackages.buf
-                      ];
-                    };
-                    self = super // protobufOverrides pkgs super;
-                  in self) ''
-                     mkdir -p $out
-                     HOME=$(mktemp -d)
-                     curl https://api.buf.build
-                     buf build ${cosmos-sdk} \
-                       --type=cosmos.tx.v1beta1.Tx \
-                       --type=cosmos.tx.v1beta1.SignDoc \
-                       --type=cosmos.tx.v1beta1.SignDoc \
-                       --type=cosmos.staking.v1beta1.MsgDelegate \
-                       --type=cosmos.gov.v1beta1.MsgDeposit \
-                       --output $out/buf_out.bin
-                     mv ~/.cache $out
-                  '';
-                in ''
-                  HOME=$(mktemp -d)
-                  cp -r --no-preserve=mode ${conf}/.cache ~/.cache
+                    nativeBuildInputs = [
+                      pkgs.buildPackages.cacert pkgs.buildPackages.buf pkgs.buildPackages.curl
+                    ];
+                  };
+                  self = super // protobufOverrides pkgs super;
+                in self) ''
+                   mkdir -p $out
+                   HOME=$(mktemp -d)
+                   curl https://api.buf.build
+                   buf build ${cosmos-sdk} \
+                     --type=cosmos.tx.v1beta1.Tx \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.tx.v1beta1.SignDoc \
+                     --type=cosmos.staking.v1beta1.MsgDelegate \
+                     --type=cosmos.gov.v1beta1.MsgDeposit \
+                     --output $out/buf_out.bin
+                   mv ~/.cache $out
                 '';
-                extraRustcOpts = attrs.extraRustcOpts or [] ++ [
-                  "-C" "linker=${pkgs.stdenv.cc.targetPrefix}clang"
-                  "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
-                  "-Z" "mir-opt-level=4"
-                ] ++ (if (device == "nanos") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanos_layout.ld" ]
-                else if (device == "nanosplus") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanosplus_layout.ld" ]
-                else if (device == "nanox") then
-                  [ "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/nanox_layout.ld" ]
-                else throw ("Unknown target device: `${device}'"));
-              };
+              in ''
+                HOME=$(mktemp -d)
+                cp -r --no-preserve=mode ${conf}/.cache ~/.cache
+              '';
+              extraRustcOpts = attrs.extraRustcOpts or [] ++ [
+                "-C" "linker=${sdk.lib}/lib/nanos_sdk.out/link_wrap.sh"
+                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
+                "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/${device}_layout.ld"
+                "-Z" "mir-opt-level=4"
+              ];
             };
-          });
-      in
-        args: fun (args // lib.optionalAttrs pkgs.stdenv.hostPlatform.isAarch32 {
+          };
+        })
+
+        # Default Alamgu wrapper
+        alamguLib.extraArgsForAllCrates
+
+        # Another wrapper specific to this app, but applying to all packages
+        (pkgs: args: args // lib.optionalAttrs (alamguLib.platformIsBolos pkgs.stdenv.hostPlatform) {
           dependencies = map (d: d // { stdlib = true; }) [
             collection.ledgerCore
             collection.ledgerCompilerBuiltins
           ] ++ args.dependencies;
-        });
+        })
+      ];
   };
 
   makeTarSrc = { appExe, device }: pkgs.runCommandCC "make-tar-src-${device}" {
@@ -112,7 +112,7 @@ rec {
     echo ${device} > $dest/device
     cp app_${device}.json $dest/app.json
     cp app.hex $dest
-    cp ${appExe} $out/provenance/app.elf
+    cp ${appExe} $dest/app.elf
     cp ${./tarball-default.nix} $dest/default.nix
     cp ${./tarball-shell.nix} $dest/shell.nix
     cp ${./rust-app/crab.gif} $dest/crab.gif
@@ -127,36 +127,69 @@ rec {
     exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
   '';
 
-  runTests = { appExe, device, variant ? "", speculosCmd }: pkgs.runCommandNoCC "run-tests-${device}${variant}" {
+  apiPort = 5005;
+
+  runTests = { appExe, device, variant ? "", speculosCmd }:
+  pkgs.runCommandNoCC "run-tests-${device}${variant}" {
     nativeBuildInputs = [
       pkgs.wget alamgu.speculos.speculos testScript
     ];
   } ''
     mkdir $out
     (
-    ${speculosCmd} ${appExe} --display headless &
+    ${toString speculosCmd} ${appExe} --display headless &
     SPECULOS=$!
 
-    until wget -O/dev/null -o/dev/null http://localhost:5000; do sleep 0.1; done;
+    until wget -O/dev/null -o/dev/null http://localhost:${toString apiPort}; do sleep 0.1; done;
 
     ${testScript}/bin/mocha-wrapper
     rv=$?
     kill -9 $SPECULOS
-    exit $rv) | tee $out/short |& tee $out/full
+    exit $rv) | tee $out/short |& tee $out/full &
+    TESTS=$!
+    (sleep 3m; kill $TESTS) &
+    TESTKILLER=$!
+    wait $TESTS
     rv=$?
+    kill $TESTKILLER
     cat $out/short
     exit $rv
   '';
 
-  appForDevice = device : rec {
-    rootCrate = (makeApp { inherit device; }).rootCrate.build;
-    rootCrate-with-logging = (makeApp {
+  makeStackCheck = { rootCrate, device, memLimit, variant ? "" }:
+  pkgs.runCommandNoCC "stack-check-${device}${variant}" {
+    nativeBuildInputs = [ alamgu.stack-sizes ];
+  } ''
+    stack-sizes --mem-limit=${toString memLimit} ${rootCrate}/bin/${appName} ${rootCrate}/bin/*.o | tee $out
+  '';
+
+  appForDevice = device: rec {
+    app = makeApp { inherit device; };
+    app-with-logging = makeApp {
       inherit device;
       release = false;
       rootFeatures = [ "default" "speculos" "extra_debug" ];
-    }).rootCrate.build;
+    };
+
+    memLimit = {
+      nanos = 4500;
+      nanosplus = 400000;
+      nanox = 400000;
+    }.${device} or (throw "Unknown target device: `${device}'");
+
+    stack-check = makeStackCheck { inherit memLimit rootCrate device; };
+    stack-check-with-logging = makeStackCheck {
+      inherit memLimit device;
+      rootCrate = rootCrate-with-logging;
+      variant = "-with-logging";
+    };
+
+    rootCrate = app.rootCrate.build;
+    rootCrate-with-logging = app-with-logging.rootCrate.build;
 
     appExe = rootCrate + "/bin/" + appName;
+
+    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (bufCosmosOverrides alamgu.ledgerPkgs);
 
     tarSrc = makeTarSrc { inherit appExe device; };
     tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''
@@ -169,21 +202,28 @@ rec {
       ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/${appName}/app.json
     '';
 
-    speculosCmd = {
-      nanos = "speculos -m nanos";
-      nanosplus = "speculos  -m nanosp -k 1.0.3";
-      nanox = "speculos -m nanox";
+    tarballShell = import (tarSrc + "/${appName}/shell.nix");
+
+    speculosDeviceFlags = {
+      nanos = [ "-m" "nanos" ];
+      nanosplus = [ "-m" "nanosp" "-k" "1.0.3" ];
+      nanox = [ "-m" "nanox" ];
     }.${device} or (throw "Unknown target device: `${device}'");
 
+    speculosCmd = [
+      "speculos"
+      "--api-port" (toString apiPort)
+    ] ++ speculosDeviceFlags;
+
     test = runTests { inherit appExe speculosCmd device; };
-    test-with-loging = runTests {
+    test-with-logging = runTests {
       inherit speculosCmd device;
       appExe = rootCrate-with-logging + "/bin/" + appName;
       variant = "-with-logging";
     };
 
     appShell = pkgs.mkShell {
-      packages = [ loadApp alamgu.generic-cli pkgs.jq ];
+      packages = [ alamgu.ledgerctl loadApp alamgu.generic-cli pkgs.jq ];
     };
   };
 
