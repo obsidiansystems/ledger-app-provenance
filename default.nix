@@ -113,8 +113,8 @@ rec {
     cp app.hex $dest
     cp ${./tarball-default.nix} $dest/default.nix
     cp ${./tarball-shell.nix} $dest/shell.nix
-    cp ${./rust-app/crab.gif} $dest/crab.gif
-    cp ${./rust-app/crab-small.gif} $dest/crab-small.gif
+    cp ${./rust-app/provenance.gif} $dest/provenance.gif
+    cp ${./rust-app/provenance-small.gif} $dest/provenance-small.gif
   '');
 
   testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
