@@ -21,7 +21,7 @@ fn main() -> std::io::Result<()> {
         (_, _, true, _) => 1024 * 10,
         _ => 1024 * 7,
     };
-    println!("cargo:rustc-link-arg=--defsym=_reloc_size={}", reloc_size);
+    println!("cargo:rustc-link-arg=--defsym=_reloc_size={reloc_size}");
 
     // Cosmos repo path
     let cosmos = env::var("COSMOS_SDK").unwrap();
