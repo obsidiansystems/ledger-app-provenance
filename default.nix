@@ -187,7 +187,10 @@ rec {
 
     appExe = rootCrate + "/bin/" + appName;
 
-    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (bufCosmosOverrides alamgu.ledgerPkgs);
+    sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") app.rootCrate.build.dependencies;
+    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (attrs: (bufCosmosOverrides alamgu.ledgerPkgs attrs) // { shellHook = attrs.shellHook + ''
+    export PATH=${sdk}/lib/nanos_sdk.out:$PATH
+     ''; } );
 
     tarSrc = makeTarSrc { inherit appExe device; };
     tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''

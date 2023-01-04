@@ -23,12 +23,13 @@ dependencies = [
 [[package]]
 name = "alamgu-async-block"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/alamgu-async-block?branch=main#3e9a7a17bdde8d0563a85f8801193c11fc7be9ee"
+source = "git+https://github.com/alamgu/alamgu-async-block?branch=prompt-queueing#d9e0c7363825edccf3bde7f975041774b1729474"
 dependencies = [
  "arrayvec",
- "ledger-log",
+ "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log)",
  "ledger-parser-combinators",
  "nanos_sdk",
+ "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui)",
  "pin-project",
 ]
 
@@ -141,15 +142,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ledger-log"
+version = "0.2.0"
+source = "git+https://github.com/alamgu/ledger-log#02f702bbec9ca9802151fd261508580eb3826287"
+dependencies = [
+ "arrayvec",
+ "nanos_sdk",
+]
+
+[[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#009bbffe8ce57fb857cc5f2766d28f058e0c1ca5"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=async-split#64095a20da705adddaed009258f0fa1606349d89"
 dependencies = [
  "arrayvec",
  "bstringify",
  "enum-init",
  "generic-array",
- "ledger-log",
+ "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log)",
  "nanos_sdk",
  "num-derive",
  "num-traits",
@@ -161,12 +171,12 @@ dependencies = [
 [[package]]
 name = "ledger-prompts-ui"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-prompts-ui?branch=patchable#00878775ef7515ed33c1eabcf8d67894fd8019a8"
+source = "git+https://github.com/alamgu/ledger-prompts-ui#24d2f36da07131074211559cd28f235c3f7c9984"
 dependencies = [
  "arrayvec",
- "ledger-log",
+ "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log)",
  "nanos_sdk",
- "nanos_ui",
+ "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=use-lib-bagl-for-x-and-splus)",
 ]
 
 [[package]]
@@ -206,7 +216,15 @@ dependencies = [
 [[package]]
 name = "nanos_ui"
 version = "0.1.0"
-source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#6eb8cad8dbe73651e7ac54b8511075a2646f5b8b"
+source = "git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=use-lib-bagl-for-x-and-splus#6ab6938354e73d3a8aacc941e9c7bc7f83c1081e"
+dependencies = [
+ "nanos_sdk",
+]
+
+[[package]]
+name = "nanos_ui"
+version = "0.1.0"
+source = "git+https://github.com/obsidiansystems/ledger-nanos-ui#bab7dc5a40d2988f682e0ca9c04eb631d50934ca"
 dependencies = [
  "nanos_sdk",
 ]
@@ -242,6 +260,12 @@ name = "paste"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1de2e551fb905ac83f73f7aedf2f0cb4a0da7e35efa24a202a936269f1f18e1"
+
+[[package]]
+name = "pin-cell"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1f4c4ebd3c5f82080164b7d9cc8e505cd9536fda8c750b779daceb4b7180a7b"
 
 [[package]]
 name = "pin-project"
@@ -326,13 +350,14 @@ dependencies = [
  "alamgu-async-block",
  "arrayvec",
  "bech32",
- "ledger-log",
+ "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log?branch=patchable)",
  "ledger-parser-combinators",
  "ledger-prompts-ui",
  "nanos_sdk",
- "nanos_ui",
+ "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=use-lib-bagl-for-x-and-splus)",
  "num-derive",
  "num-traits",
+ "pin-cell",
  "pin-project",
  "proto-gen",
  "tempfile",
@@ -448,7 +473,7 @@ dependencies = [
 [[package]]
 name = "trie-enum"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/trie-enum?branch=main#551bddc313f2af5c2dedb79f3d6de7328e34b208"
+source = "git+https://github.com/alamgu/trie-enum#551bddc313f2af5c2dedb79f3d6de7328e34b208"
 dependencies = [
  "paste",
 ]

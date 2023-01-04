@@ -1,5 +1,7 @@
 #![cfg_attr(target_family = "bolos", no_std)]
 #![cfg_attr(target_family = "bolos", no_main)]
+#![feature(const_eval_limit)]
+#![const_eval_limit = "0"]
 
 #[cfg(not(target_family = "bolos"))]
 fn main() {}

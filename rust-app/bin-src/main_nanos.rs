@@ -1,5 +1,6 @@
 use core::cell::RefCell;
 use core::pin::Pin;
+use pin_cell::*;
 
 use alamgu_async_block::*;
 use provenance::implementation::*;
@@ -14,11 +15,9 @@ use provenance::*;
 static mut COMM_CELL: Option<RefCell<io::Comm>> = None;
 
 static mut HOST_IO_STATE: Option<RefCell<HostIOState>> = None;
-static mut STATES_BACKING: ParsersState<'static> = ParsersState::NoState;
 
 #[inline(never)]
 unsafe fn initialize() {
-    STATES_BACKING = ParsersState::NoState;
     COMM_CELL = Some(RefCell::new(io::Comm::new()));
     let comm = COMM_CELL.as_ref().unwrap();
     HOST_IO_STATE = Some(RefCell::new(HostIOState {
@@ -42,8 +41,10 @@ extern "C" fn sample_main() {
     }
     let comm = unsafe { COMM_CELL.as_ref().unwrap() };
     let host_io = HostIO(unsafe { HOST_IO_STATE.as_ref().unwrap() });
-    let mut states = unsafe { Pin::new_unchecked(&mut STATES_BACKING) };
 
+    let mut states_backing: PinCell<Option<APDUsFuture>> = PinCell::new(None);
+    let states : Pin<&PinCell<Option<APDUsFuture>>> = Pin::static_ref(unsafe { core::mem::transmute(&states_backing) } );
+    
     let mut idle_menu = RootMenu::new([concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit"]);
     let mut busy_menu = RootMenu::new(["Working...", "Cancel"]);
 
@@ -51,19 +52,19 @@ extern "C" fn sample_main() {
     info!(
         "State sizes\ncomm: {}\nstates: {}\nhostio: {}",
         core::mem::size_of::<io::Comm>(),
-        core::mem::size_of::<ParsersState>(),
+        core::mem::size_of::<APDUsFuture>(),
         core::mem::size_of::<HostIOState>()
     );
 
     let // Draw some 'welcome' screen
-        menu = |states : &ParsersState, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
-            match states {
-                ParsersState::NoState => idle.show(),
+        menu = |states : core::cell::Ref<'_, Option<APDUsFuture>>, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
+            match states.is_none() {
+                true => idle.show(),
                 _ => busy.show(),
             }
         };
 
-    noinline(|| menu(&states, &mut idle_menu, &mut busy_menu));
+    noinline(|| menu(states.borrow(), &mut idle_menu, &mut busy_menu));
     loop {
         // Wait for either a specific button push to exit the app
         // or an APDU command
@@ -71,7 +72,8 @@ extern "C" fn sample_main() {
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
-                match handle_apdu(host_io, ins, &mut states) {
+                let poll_rv = poll_apdu_handlers(PinMut::as_mut(&mut states.borrow_mut()), ins, host_io, FutureTrampolineRunner, handle_apdu_async);
+                match poll_rv {
                     Ok(()) => {
                         trace!("APDU accepted; sending response");
                         comm.borrow_mut().reply_ok();
@@ -79,12 +81,12 @@ extern "C" fn sample_main() {
                     }
                     Err(sw) => comm.borrow_mut().reply(sw),
                 };
-                noinline(|| menu(&states, &mut idle_menu, &mut busy_menu));
+                noinline(|| menu(states.borrow(), &mut idle_menu, &mut busy_menu));
                 trace!("Command done");
             }
             io::Event::Button(btn) => {
                 trace!("Button received");
-                match states.is_no_state() {
+                match states.borrow().is_none() {
                     true => match noinline(|| idle_menu.update(btn)) {
                         Some(1) => {
                             info!("Exiting app at user direction via root menu");
@@ -95,12 +97,12 @@ extern "C" fn sample_main() {
                     false => match noinline(|| busy_menu.update(btn)) {
                         Some(1) => {
                             info!("Resetting at user direction via busy menu");
-                            noinline(|| reset_parsers_state(&mut states))
+                            noinline(|| PinMut::as_mut(&mut states.borrow_mut()).set(None))
                         }
                         _ => (),
                     },
                 };
-                menu(&states, &mut idle_menu, &mut busy_menu);
+                menu(states.borrow(), &mut idle_menu, &mut busy_menu);
                 trace!("Button done");
             }
             io::Event::Ticker => {
@@ -110,29 +112,7 @@ extern "C" fn sample_main() {
     }
 }
 
-#[repr(u8)]
-#[derive(Debug)]
-enum Ins {
-    GetVersion,
-    GetPubkey,
-    Sign,
-    GetVersionStr,
-    Exit,
-}
-
-impl From<u8> for Ins {
-    fn from(ins: u8) -> Ins {
-        match ins {
-            0 => Ins::GetVersion,
-            2 => Ins::GetPubkey,
-            3 => Ins::Sign,
-            0xfe => Ins::GetVersionStr,
-            0xff => Ins::Exit,
-            _ => panic!(),
-        }
-    }
-}
-
+/*
 use nanos_sdk::io::Reply;
 
 #[inline(never)]
@@ -158,3 +138,4 @@ fn handle_apdu<'a: 'b, 'b>(
     }
     Ok(())
 }
+*/
