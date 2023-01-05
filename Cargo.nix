@@ -445,8 +445,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
-          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
+          rev = "314a251108f265529d968aa66423f9318d609c01";
+          sha256 = "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -640,7 +640,7 @@ rec {
         ];
         features = {
         };
-        resolvedDefaultFeatures = [ "speculos" ];
+        resolvedDefaultFeatures = [ "lib_bagl" "speculos" ];
       };
       "nanos_ui" = rec {
         crateName = "nanos_ui";
@@ -649,8 +649,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/obsidiansystems/ledger-nanos-ui";
-          rev = "1f0e67e01854c0b6c880c58474a4c3d7a348356b";
-          sha256 = "1rbk2ai9zvbjikbiqxv4y1i89vn4dfly17v5zyllg11aa10fb00p";
+          rev = "6eb8cad8dbe73651e7ac54b8511075a2646f5b8b";
+          sha256 = "12n2hqfdzxl987sbsgmb9a57m7vg8c42zpprlmavzmz8q531qd97";
         };
         authors = [
           "yhql"
@@ -659,6 +659,7 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
+            features = [ "lib_bagl" ];
           }
         ];
 
@@ -803,8 +804,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "009bbffe8ce57fb857cc5f2766d28f058e0c1ca5";
-          sha256 = "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k";
+          rev = "314a251108f265529d968aa66423f9318d609c01";
+          sha256 = "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw";
         };
         dependencies = [
           {

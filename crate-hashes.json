@@ -3,11 +3,11 @@
   "bech32 0.9.1 (git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature#79cb4998c277161aa41bd054cfab78423804291c)": "1dzxmkjga3yrkk5v8bqwl7a8k9gc4dmx9scgjs98z7qlikf7b4xx",
   "enum-init 0.1.0 (git+https://github.com/obsidiansystems/enum-init#a831c2fbbe00af926ae87c064bfe4da58d26777c)": "1daqa7i1778rpvk8d442flk6bak6jxi6hrcc5j4maaa7ipjc6xlr",
   "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log?branch=patchable#a7866800644226f0c1edd269adfadff2d78d3ae5)": "0q5rb4kfi4nmznvr6agakzlrnv8nzwrsb1knjicarga82jd602n3",
-  "ledger-parser-combinators 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#009bbffe8ce57fb857cc5f2766d28f058e0c1ca5)": "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k",
+  "ledger-parser-combinators 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#314a251108f265529d968aa66423f9318d609c01)": "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw",
   "ledger-prompts-ui 0.1.0 (git+https://github.com/alamgu/ledger-prompts-ui?branch=patchable#00878775ef7515ed33c1eabcf8d67894fd8019a8)": "1h5n4y89znbvn7b0ckk9s34dsm6g12ahwf38i1rjm04prrdfzsi5",
   "nanos_sdk 0.2.0 (git+https://github.com/alamgu/ledger-nanos-sdk?branch=memory-fixes#5d48e028bad62262ddde1d0b0331335bd3109286)": "0nayaj19qzng94yl0rwyiccj22mc6msb5lbxar4dljvdqhiildkr",
-  "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#1f0e67e01854c0b6c880c58474a4c3d7a348356b)": "1rbk2ai9zvbjikbiqxv4y1i89vn4dfly17v5zyllg11aa10fb00p",
-  "proto-gen 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#009bbffe8ce57fb857cc5f2766d28f058e0c1ca5)": "0q1m8cnqpwgy0sickb9mwpx3fkcbgch0dbf6v2prfj0x43kbqw4k",
+  "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=patchable#6eb8cad8dbe73651e7ac54b8511075a2646f5b8b)": "12n2hqfdzxl987sbsgmb9a57m7vg8c42zpprlmavzmz8q531qd97",
+  "proto-gen 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#314a251108f265529d968aa66423f9318d609c01)": "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw",
   "testmacro 0.1.0 (git+https://github.com/yhql/testmacro#29a16cb8718d61b67c6c391e60c8347c064e921e)": "0agl46ilx2psfvwvg8iwfmq203xapw435h03qskxqf5dnwhy1kir",
   "trie-enum 0.1.0 (git+https://github.com/alamgu/trie-enum?branch=main#551bddc313f2af5c2dedb79f3d6de7328e34b208)": "0ixqf9wqzw9a7scc2gw3bdn952grny5vkrgxgj78dqpnp5dy7h47"
 }
