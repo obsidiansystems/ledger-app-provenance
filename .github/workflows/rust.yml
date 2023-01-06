@@ -54,7 +54,7 @@ jobs:
       - uses: arduino/setup-protoc@v1
         with:
           version: '3.x'
-      - run: which protoc
+      - run: echo PROTO_INCLUDE=/opt/hostedtoolcache/protoc/*/*/include >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
