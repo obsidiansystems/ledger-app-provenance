@@ -10,7 +10,7 @@ resolver = "2"
 arrayvec = { version = "0.7.2", default-features = false }
 ledger-parser-combinators = { version = "*", features = ["logging"] }
 ledger-log = "*"
-# ledger-crypto-helpers = "*"
+ledger-crypto-helpers = "*"
 zeroize = { version = "1.5.2", default-features = false }
 pin-project = "1.0.10"
 num-traits = { version = "0.2.15", default-features = false }
@@ -48,6 +48,7 @@ test = false
 path = "bin-src/main.rs"
 
 [patch.crates-io]
+ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
 ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "memory-fixes" }
