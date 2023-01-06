@@ -22,12 +22,12 @@ use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use nanos_sdk::ecc::*;
 use pin_project::pin_project;
 
-use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
-use ledger_crypto_helpers::hasher::{Base64Hash, SHA256, Hasher};
 use alamgu_async_block::*;
 use core::cell::RefCell;
 use core::task::*;
+use ledger_crypto_helpers::hasher::{Base64Hash, Hasher, SHA256};
 use ledger_log::*;
+use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
 
 pub static mut ASYNC_TRAMPOLINE: Option<RefCell<FutureTrampoline>> = None;
 
@@ -502,7 +502,7 @@ impl AsyncAPDU for Sign {
                 trace!("Passed txn");
             }
 
-            let hash : Base64Hash<32>;
+            let hash: Base64Hash<32>;
 
             {
                 let mut txn = input[0].clone();
