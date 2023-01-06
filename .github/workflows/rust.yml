@@ -55,7 +55,7 @@ jobs:
         with:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo PROTO_INCLUDE=/opt/hostedtoolcache/protoc/*/*/include >> $GITHUB_ENV
+      - run: echo "PROTO_INCLUDE=$(readlink -e $(dirname $(which protoc))/../include)" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
