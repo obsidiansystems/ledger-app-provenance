@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
-    inputs: 
-      name: 
+    inputs:
+      name:
         description: 'Manually triggered'
 
 env:
@@ -51,6 +51,9 @@ jobs:
           repository: 'alamgu/ledger-nanos-sdk'
           ref: memory-fixes
           path: rsdk
+      - uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
