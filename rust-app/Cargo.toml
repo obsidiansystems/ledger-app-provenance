@@ -48,7 +48,7 @@ test = false
 path = "bin-src/main.rs"
 
 [patch.crates-io]
-ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
+ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "dn-fixes-for-new-rustc" }
 proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "memory-fixes" }
 ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable" }

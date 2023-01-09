@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#314a251108f265529d968aa66423f9318d609c01"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=dn-fixes-for-new-rustc#5d7345304274fcc737d82cb48da465dea85ff4e0"
 dependencies = [
  "arrayvec",
  "bstringify",
