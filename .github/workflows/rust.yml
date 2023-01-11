@@ -56,6 +56,7 @@ jobs:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "PROTO_INCLUDE=$(readlink -e $(dirname $(which protoc))/../include)" >> $GITHUB_ENV
+      - uses: bufbuild/buf-setup-action@v1.11.0
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -96,6 +97,7 @@ jobs:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "PROTO_INCLUDE=$(readlink -e $(dirname $(which protoc))/../include)" >> $GITHUB_ENV
+      - uses: bufbuild/buf-setup-action@v1.11.0
       - name: Install clang
         run: sudo apt-get update && sudo apt install -y clang
       - uses: actions-rs/toolchain@v1
