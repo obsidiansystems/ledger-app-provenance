@@ -24,7 +24,7 @@ dependencies = [
 [[package]]
 name = "alamgu-async-block"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/alamgu-async-block#c74ae4d6277dd0e8aa3adf5e3f6397749d939bf1"
+source = "git+https://github.com/alamgu/alamgu-async-block#383f99882b0b9b8fffa10dcbe05bc1f414aa1080"
 dependencies = [
  "arrayvec",
  "ledger-log",
