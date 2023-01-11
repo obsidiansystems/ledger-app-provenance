@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     ) {
         ("release", false, false, "nanosplus") => 1472,
         ("release", false, false, "nanos") => 768,
-        ("release", false, false, "nanox") => 768,
+        ("release", false, false, "nanox") => 1312,
         (_, _, true, _) => 1024 * 10,
         _ => 1024 * 7,
     };
