@@ -121,6 +121,23 @@ describe('basic tests', () => {
 
     await sendCommandAndAccept(async (client : Common) => {
       let rv = await client.getPublicKey("44'/505'/0'");
+      expect(Buffer.from(rv.address, 'hex').toString()).to.equal("pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd");
+      expect(rv.publicKey).to.equal("0368a7dc46a8c9e99872567b84cb6693b07f04ad25c9e8f8377654f4772d35cff1");
+      return;
+    }, [
+      { "header": "Provide Public Key", "prompt": "For Address pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd" },
+      {
+        "text": "Confirm",
+        "x": 43,
+        "y": 11,
+      },
+    ]);
+  });
+
+  it('provides a public key 2', async () => {
+
+    await sendCommandAndAccept(async (client : Common) => {
+      let rv = await client.getPublicKey("44'/505'");
       expect(Buffer.from(rv.address, 'hex').toString()).to.equal("pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x");
       expect(rv.publicKey).to.equal("03bd3617cd8eb3d36449f7a4f7df5bc89e24615d0bac4bc82b34fb56a2f377677e");
       return;
@@ -189,7 +206,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "With PKH",
-          "prompt": "pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
@@ -245,7 +262,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "With PKH",
-          "prompt": "pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
@@ -276,7 +293,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "With PKH",
-          "prompt": "pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
