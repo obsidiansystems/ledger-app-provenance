@@ -8,10 +8,11 @@ resolver = "2"
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-ledger-parser-combinators = { version = "*", features = ["logging"] }
-ledger-log = "*"
-ledger-crypto-helpers = "*"
+ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "async-2", features = ["logging"] }
+ledger-log = { git = "https://github.com/alamgu/ledger-log" }
+ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers" }
 zeroize = { version = "1.5.2", default-features = false }
+pin-cell = "0.2.0"
 pin-project = "1.0.10"
 num-traits = { version = "0.2.15", default-features = false }
 num-derive = "0.3.3"
@@ -26,20 +27,20 @@ speculos = [ "nanos_sdk/speculos", "ledger-log/speculos", "ledger-log/log_error"
 extra_debug = ["ledger-log/log_trace"]
 
 [target.'cfg(target_family = "bolos")'.dependencies]
-nanos_sdk = "*"
-nanos_ui = "*"
-ledger-prompts-ui = "*"
-alamgu-async-block = "*"
+nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
+nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" }
+ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui" }
+alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block" }
 
 [target.'cfg(target_family = "bolos")'.dev-dependencies.nanos_sdk]
-version = "*"
+git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git"
 features = [ "speculos" ]
 
 [dev-dependencies]
 testmacro = { git = "https://github.com/yhql/testmacro" }
 
 [build-dependencies]
-proto-gen = "*"
+proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
 tempfile = "3.2.0"
 
 [[bin]]
@@ -47,17 +48,12 @@ name = "provenance"
 test = false
 path = "bin-src/main.rs"
 
-[patch.crates-io]
-ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers", branch = "patchable" }
-ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
-nanos_sdk = { git = "https://github.com/alamgu/ledger-nanos-sdk", branch = "memory-fixes" }
-ledger-log = { git = "https://github.com/alamgu/ledger-log", branch = "patchable" }
-nanos_ui = { git = "https://github.com/obsidiansystems/ledger-nanos-ui", branch = "patchable" }
-enum-init = { git = "https://github.com/alamgu/enum-init" }
-ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui", branch = "patchable" }
-alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", branch = "main" }
-trie-enum = { git = "https://github.com/alamgu/trie-enum", branch = "main" }
+[patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
+git = "https://github.com/alamgu/ledger-nanos-sdk.git"
+branch = "memory-fixes"
+[patch."https://github.com/LedgerHQ/ledger-nanos-ui.git".nanos_ui]
+git = "https://github.com/obsidiansystems/ledger-nanos-ui"
+branch = "use-lib-bagl-for-x-and-splus"
 
 [package.metadata.nanos]
 name = "Provenance"
