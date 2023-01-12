@@ -104,6 +104,13 @@ jobs:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "PROTO_INCLUDE=$(readlink -e $(dirname $(which protoc))/../include)" >> $GITHUB_ENV
+      - name: Checkout Cosmos SDK
+        uses: actions/checkout@v3
+        with:
+          repository: 'cosmos/cosmos-sdk'
+          ref: 518003ec29455e0eeb3b46219a940d32b860973f # From Nix Thunk
+          path: 'cosmos-sdk'
+      - run: echo "COSMOS_SDK=$(readlink -e cosmos-sdk)" >> $GITHUB_ENV
       - uses: bufbuild/buf-setup-action@v1.11.0
       - name: Install clang
         run: sudo apt-get update && sudo apt install -y clang
