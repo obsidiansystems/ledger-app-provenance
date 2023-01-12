@@ -2,6 +2,7 @@ use core::cell::RefCell;
 use core::pin::Pin;
 
 use alamgu_async_block::*;
+use provenance::interface::*;
 use provenance::implementation::*;
 
 use ledger_prompts_ui::RootMenu;
@@ -106,29 +107,6 @@ extern "C" fn sample_main() {
             io::Event::Ticker => {
                 //trace!("Ignoring ticker event");
             }
-        }
-    }
-}
-
-#[repr(u8)]
-#[derive(Debug)]
-enum Ins {
-    GetVersion,
-    GetPubkey,
-    Sign,
-    GetVersionStr,
-    Exit,
-}
-
-impl From<u8> for Ins {
-    fn from(ins: u8) -> Ins {
-        match ins {
-            0 => Ins::GetVersion,
-            2 => Ins::GetPubkey,
-            3 => Ins::Sign,
-            0xfe => Ins::GetVersionStr,
-            0xff => Ins::Exit,
-            _ => panic!(),
         }
     }
 }

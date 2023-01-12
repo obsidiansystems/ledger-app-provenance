@@ -6,6 +6,7 @@ pub use crate::proto::cosmos::base::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
 pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
+use crate::utils::*;
 use arrayvec::{ArrayString, ArrayVec};
 use core::fmt::Write;
 use core::future::Future;
