@@ -6,6 +6,7 @@ pub use crate::proto::cosmos::base::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
 pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
+use crate::utils::*;
 use arrayvec::{ArrayString, ArrayVec};
 use core::fmt::Write;
 use core::future::Future;
@@ -141,7 +142,7 @@ impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
 where
     S::Output: 'static + Clone,
 {
-    type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
+    type State<'c> = impl Future<Output = Self::Output> + 'c where BS: 'c, S: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
         run_fut(trampoline(), move || self.0.parse(input, length))
     }
@@ -158,7 +159,7 @@ impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
 where
     S::Output: 'static,
 {
-    type State<'c> = impl Future<Output = Self::Output> where BS: 'c, S: 'c;
+    type State<'c> = impl Future<Output = Self::Output> + 'c where BS: 'c, S: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
         async move { TryFuture(self.0.parse(input, length)).await.is_some() }
     }
@@ -312,7 +313,7 @@ impl<T, S: HasOutput<T>, F: Future> HasOutput<T> for Preaction<S, F> {
 impl<Schema, S: LengthDelimitedParser<Schema, BS>, F: Future, BS: Readable> LengthDelimitedParser<Schema, BS>
     for Preaction<S, F>
 {
-    type State<'c> = impl Future<Output = Self::Output> where S: 'c, BS: 'c, F: 'c;
+    type State<'c> = impl Future<Output = Self::Output> + 'c where S: 'c, BS: 'c, F: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
         async move {
             self.0().await;

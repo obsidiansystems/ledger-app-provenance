@@ -35,6 +35,20 @@ rec {
         (pkgs: (collection.buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
             proto-gen = protobufOverrides pkgs;
+            nanos_sdk = attrs: {
+              passthru = (attrs.passthru or {}) // {
+                link_wrap = pkgs.buildPackages.stdenvNoCC.mkDerivation {
+                  name = "alamgu-linker-wrapper";
+                  dontUnpack = true;
+                  dontBuild = true;
+                  installPhase = ''
+                    mkdir -p "$out/bin"
+                    cp "${attrs.src}/scripts/link_wrap.sh" "$out/bin"
+                    chmod +x "$out/bin/link_wrap.sh"
+                  '';
+                };
+              };
+            };
             ${appName} = attrs: let
               sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") attrs.dependencies;
             in bufCosmosOverrides pkgs attrs // {
@@ -69,10 +83,11 @@ rec {
                 cp -r --no-preserve=mode ${conf}/.cache ~/.cache
               '';
               extraRustcOpts = attrs.extraRustcOpts or [] ++ [
-                "-C" "linker=${sdk.lib}/lib/nanos_sdk.out/link_wrap.sh"
+                "-C" "linker=${sdk.link_wrap}/bin/link_wrap.sh"
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/link.ld"
                 "-C" "link-arg=-T${sdk.lib}/lib/nanos_sdk.out/${device}_layout.ld"
               ];
+              passthru = (attrs.passthru or {}) // { inherit sdk; };
             };
           };
         })
@@ -187,10 +202,11 @@ rec {
 
     appExe = rootCrate + "/bin/" + appName;
 
-    sdk = lib.findFirst (p: lib.hasPrefix "rust_nanos_sdk" p.name) (builtins.throw "no sdk!") app.rootCrate.build.dependencies;
-    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (attrs: (bufCosmosOverrides alamgu.ledgerPkgs attrs) // { shellHook = attrs.shellHook + ''
-    export PATH=${sdk}/lib/nanos_sdk.out:$PATH
-     ''; } );
+    rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (old: let
+      super = bufCosmosOverrides alamgu.ledgerPkgs old;
+    in super // {
+      nativeBuildInputs = super.nativeBuildInputs ++ [ rootCrate.sdk.link_wrap ];
+    });
 
     tarSrc = makeTarSrc { inherit appExe device; };
     tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''

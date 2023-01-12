@@ -128,8 +128,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/alamgu-async-block";
-          rev = "3e9a7a17bdde8d0563a85f8801193c11fc7be9ee";
-          sha256 = "0vq7y7c9l626z804i0i4bmyv95x08zxbz05ri3ib6fi9dvd55vfb";
+          rev = "a560344d90974f76ca1621b1e41f48bb10ad70e1";
+          sha256 = "126kfs2jx1ihyf613hq2ki5z354hi304zzf2xzvkb3rkhgr0q131";
         };
         dependencies = [
           {
@@ -148,6 +148,10 @@ rec {
           {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
+          }
+          {
+            name = "nanos_ui";
+            packageId = "nanos_ui";
           }
           {
             name = "pin-project";
@@ -283,7 +287,7 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/obsidiansystems/enum-init";
+          url = "https://github.com/alamgu/enum-init";
           rev = "a831c2fbbe00af926ae87c064bfe4da58d26777c";
           sha256 = "1daqa7i1778rpvk8d442flk6bak6jxi6hrcc5j4maaa7ipjc6xlr";
         };
@@ -414,8 +418,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-log";
-          rev = "a7866800644226f0c1edd269adfadff2d78d3ae5";
-          sha256 = "0q5rb4kfi4nmznvr6agakzlrnv8nzwrsb1knjicarga82jd602n3";
+          rev = "02f702bbec9ca9802151fd261508580eb3826287";
+          sha256 = "03qic29qkvis54bgh40wwja89kcp6kz6acd0ifzyvcqxicpmikmy";
         };
         dependencies = [
           {
@@ -445,8 +449,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "314a251108f265529d968aa66423f9318d609c01";
-          sha256 = "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw";
+          rev = "f5771c29936dee436132a5448d480ef1315aca6b";
+          sha256 = "15haiqz09ggscwbf6navikavxsxc6vlyabsgyrpbxcdk8fvybp4k";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -479,7 +483,6 @@ rec {
             name = "nanos_sdk";
             packageId = "nanos_sdk";
             target = { target, features }: (builtins.elem "bolos" target."family");
-            features = [ "speculos" ];
           }
           {
             name = "num-derive";
@@ -503,14 +506,6 @@ rec {
             packageId = "trie-enum";
           }
         ];
-        devDependencies = [
-          {
-            name = "nanos_sdk";
-            packageId = "nanos_sdk";
-            target = {target, features}: (builtins.elem "bolos" target."family");
-            features = [ "speculos" ];
-          }
-        ];
         features = {
           "ledger-log" = [ "dep:ledger-log" ];
           "logging" = [ "ledger-log" ];
@@ -524,8 +519,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-prompts-ui";
-          rev = "00878775ef7515ed33c1eabcf8d67894fd8019a8";
-          sha256 = "1h5n4y89znbvn7b0ckk9s34dsm6g12ahwf38i1rjm04prrdfzsi5";
+          rev = "24d2f36da07131074211559cd28f235c3f7c9984";
+          sha256 = "0gy73gv2vrajyrzigr2iwfnw0gmj1wfpig0xlbhw1vpkpjg23w0q";
         };
         dependencies = [
           {
@@ -613,9 +608,9 @@ rec {
         edition = "2021";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/alamgu/ledger-nanos-sdk";
-          rev = "5d48e028bad62262ddde1d0b0331335bd3109286";
-          sha256 = "0nayaj19qzng94yl0rwyiccj22mc6msb5lbxar4dljvdqhiildkr";
+          url = "https://github.com/alamgu/ledger-nanos-sdk.git";
+          rev = "796bbe1479c06df73b3014edd94964d1b41b51b3";
+          sha256 = "1wykmy7wsvmwlks7drc4vis3s9c42rj4gs62jpxn9h6kpq8f0517";
         };
         authors = [
           "yhql"
@@ -649,8 +644,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/obsidiansystems/ledger-nanos-ui";
-          rev = "6eb8cad8dbe73651e7ac54b8511075a2646f5b8b";
-          sha256 = "12n2hqfdzxl987sbsgmb9a57m7vg8c42zpprlmavzmz8q531qd97";
+          rev = "6ab6938354e73d3a8aacc941e9c7bc7f83c1081e";
+          sha256 = "0pi2albb8ly52c9y451w872lxz3b7ivi9s1hfpld46qi8q7m5v2h";
         };
         authors = [
           "yhql"
@@ -737,6 +732,17 @@ rec {
         procMacro = true;
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
+        ];
+
+      };
+      "pin-cell" = rec {
+        crateName = "pin-cell";
+        version = "0.2.0";
+        edition = "2018";
+        sha256 = "0yqa32vv9knsg6vm1ix8zlv9bk85wp49qzab2s021y65sgmw9x71";
+        authors = [
+          "Without Boats <boats@mozilla.com>"
+          "dignifiedquire <me@dignifiedquire.com>"
         ];
 
       };
@@ -975,6 +981,10 @@ rec {
             name = "num-traits";
             packageId = "num-traits";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "pin-cell";
+            packageId = "pin-cell";
           }
           {
             name = "pin-project";

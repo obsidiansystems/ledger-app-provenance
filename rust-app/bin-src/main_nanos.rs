@@ -4,6 +4,7 @@ use pin_cell::*;
 
 use alamgu_async_block::*;
 use provenance::implementation::*;
+use provenance::interface::*;
 
 use ledger_prompts_ui::RootMenu;
 
