@@ -2,8 +2,8 @@ use core::cell::RefCell;
 use core::pin::Pin;
 
 use alamgu_async_block::*;
-use provenance::interface::*;
 use provenance::implementation::*;
+use provenance::interface::*;
 
 use ledger_prompts_ui::RootMenu;
 
