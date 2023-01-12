@@ -64,6 +64,8 @@ jobs:
           path: 'cosmos-sdk'
       - run: echo "COSMOS_SDK=$(readlink -e cosmos-sdk)" >> $GITHUB_ENV
       - uses: bufbuild/buf-setup-action@v1.11.0
+        with:
+          github_token: ${{ github.token }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -112,6 +114,8 @@ jobs:
           path: 'cosmos-sdk'
       - run: echo "COSMOS_SDK=$(readlink -e cosmos-sdk)" >> $GITHUB_ENV
       - uses: bufbuild/buf-setup-action@v1.11.0
+        with:
+          github_token: ${{ github.token }}
       - name: Install clang
         run: sudo apt-get update && sudo apt install -y clang
       - uses: actions-rs/toolchain@v1
