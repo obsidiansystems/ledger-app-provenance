@@ -33,7 +33,7 @@ extern "C" fn sample_main() {
 pub mod interface;
 
 #[cfg(all(target_family = "bolos"))]
-pub mod crypto_helpers;
+mod crypto_helpers;
 
 #[cfg(all(target_family = "bolos"))]
 pub mod utils;

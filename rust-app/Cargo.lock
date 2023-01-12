@@ -47,6 +47,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "base64"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
+
+[[package]]
 name = "bech32"
 version = "0.9.1"
 source = "git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature#79cb4998c277161aa41bd054cfab78423804291c"
@@ -131,6 +137,19 @@ checksum = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 dependencies = [
  "winapi 0.2.8",
  "winapi-build",
+]
+
+[[package]]
+name = "ledger-crypto-helpers"
+version = "0.2.0"
+source = "git+https://github.com/alamgu/ledger-crypto-helpers#4236733f0dcb2965af225ac406f42b9b4841ee64"
+dependencies = [
+ "arrayvec",
+ "base64",
+ "ledger-log",
+ "nanos_sdk",
+ "nanos_ui",
+ "zeroize",
 ]
 
 [[package]]
@@ -334,6 +353,7 @@ dependencies = [
  "alamgu-async-block",
  "arrayvec",
  "bech32",
+ "ledger-crypto-helpers",
  "ledger-log",
  "ledger-parser-combinators",
  "ledger-prompts-ui",

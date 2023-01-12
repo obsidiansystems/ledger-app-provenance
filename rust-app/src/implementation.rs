@@ -1,5 +1,5 @@
 // use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
-use crate::crypto_helpers::{compress_public_key, format_signature, get_pkh, get_pubkey, Hasher};
+use crate::crypto_helpers::{compress_public_key, format_signature, get_pkh, get_pubkey};
 use crate::interface::*;
 pub use crate::proto::cosmos::bank::v1beta1::*;
 pub use crate::proto::cosmos::base::v1beta1::*;
@@ -23,12 +23,12 @@ use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use nanos_sdk::ecc::*;
 use pin_project::pin_project;
 
-use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
-
 use alamgu_async_block::*;
 use core::cell::RefCell;
 use core::task::*;
+use ledger_crypto_helpers::hasher::{Base64Hash, Hasher, SHA256};
 use ledger_log::*;
+use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
 
 pub static mut ASYNC_TRAMPOLINE: Option<RefCell<FutureTrampoline>> = None;
 
@@ -448,9 +448,9 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
 });
 
 const fn hasher_parser(
-) -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (Hasher, Option<()>)>
+) -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (SHA256, Option<()>)>
 {
-    ObserveBytes(Hasher::new, Hasher::update, DropInterp)
+    ObserveBytes(SHA256::new, SHA256::update, DropInterp)
 }
 
 any_of! {
@@ -503,7 +503,7 @@ impl AsyncAPDU for Sign {
                 trace!("Passed txn");
             }
 
-            let hash;
+            let hash: Base64Hash<32>;
 
             {
                 let mut txn = input[0].clone();
