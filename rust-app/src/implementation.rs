@@ -6,7 +6,6 @@ pub use crate::proto::cosmos::base::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
 pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
-use crate::utils::*;
 use arrayvec::{ArrayString, ArrayVec};
 use core::fmt::Write;
 use core::future::Future;
@@ -17,7 +16,6 @@ use ledger_parser_combinators::interp::{
     Action, Buffer, DefaultInterp, DropInterp, ObserveBytes, SubInterp,
 };
 use ledger_parser_combinators::protobufs::async_parser::*;
-use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use nanos_sdk::ecc::*;
@@ -55,10 +53,6 @@ impl<F: Future> Future for NoinlineFut<F> {
     fn poll(self: Pin<&mut Self>, cx: &mut Context) -> core::task::Poll<Self::Output> {
         self.project().0.poll(cx)
     }
-}
-
-const fn size_of_val_c<T>(_: &T) -> usize {
-    core::mem::size_of::<T>()
 }
 
 pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(
@@ -383,7 +377,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     field_value: DropInterp,
                 },
                 send: TrampolineParse(Preaction(
-                    || write_scroller("Transfer", |w| Ok(())),
+                    || write_scroller("Transfer", |_w| Ok(())),
                     MsgSendInterp {
                         field_from_address: show_string!(120, "From address"),
                         field_to_address: show_string!(120, "To address"),
@@ -391,7 +385,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
-                    || write_scroller("Multi-send", |w| Ok(())),
+                    || write_scroller("Multi-send", |_w| Ok(())),
                     MsgMultiSendInterp {
                         field_inputs: InputInterp {
                             field_address: show_string!(120, "From address"),
@@ -404,7 +398,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 delegate: TrampolineParse(Preaction(
-                    || write_scroller("Delegate", |w| Ok(())),
+                    || write_scroller("Delegate", |_w| Ok(())),
                     MsgDelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -412,7 +406,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 undelegate: TrampolineParse(Preaction(
-                    || write_scroller("Undelegate", |w| Ok(())),
+                    || write_scroller("Undelegate", |_w| Ok(())),
                     MsgUndelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
