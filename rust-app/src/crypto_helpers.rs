@@ -1,4 +1,3 @@
-use crate::info;
 use core::default::Default;
 use core::fmt;
 use nanos_sdk::bindings::*;
@@ -7,16 +6,6 @@ use nanos_sdk::io::SyscallError;
 
 use arrayvec::ArrayVec;
 use bech32::*;
-
-pub const BIP32_PATH: [u32; 5] = nanos_sdk::ecc::make_bip32_path(b"m/44'/535348'/0'/0/0");
-/*
-/// Helper function that derives the seed over secp256k1
-pub fn bip32_derive_secp256k1(path: &[u32]) -> Result<[u8; 32], SyscallError> {
-    let mut raw_key = [0u8; 32];
-    nanos_sdk::ecc::bip32_derive(CurvesId::Secp256k1, path, &mut raw_key);
-    Ok(raw_key)
-}
-*/
 
 macro_rules! call_c_api_function {
     ($($call:tt)*) => {
@@ -130,67 +119,6 @@ impl fmt::Display for PKH {
         self.0.write_base32(&mut temp).unwrap();
         encode_to_fmt_anycase(f, "pb", temp, Variant::Bech32).unwrap() // Don't assume that
                                                                        // this works.
-    }
-}
-
-struct HexSlice<'a>(&'a [u8]);
-
-// You can choose to implement multiple traits, like Lower and UpperHex
-impl fmt::Display for HexSlice<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in self.0 {
-            // Decide if you want to pad the value or have spaces inbetween, etc.
-            write!(f, "{:02X}", byte)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone)]
-pub struct Hasher(cx_sha256_s);
-
-impl Hasher {
-    pub fn new() -> Hasher {
-        let mut rv = cx_sha256_s::default();
-        unsafe { cx_sha256_init_no_throw(&mut rv) };
-        Self(rv)
-    }
-
-    pub fn update(&mut self, bytes: &[u8]) {
-        unsafe {
-            info!(
-                "HASHING: {}\n{:?}",
-                HexSlice(bytes),
-                core::str::from_utf8(bytes)
-            );
-            cx_hash_update(
-                &mut self.0 as *mut cx_sha256_s as *mut cx_hash_t,
-                bytes.as_ptr(),
-                bytes.len() as u32,
-            );
-        }
-    }
-
-    pub fn finalize(&mut self) -> Hash {
-        let mut rv = <[u8; 32]>::default();
-        unsafe {
-            cx_hash_final(
-                &mut self.0 as *mut cx_sha256_s as *mut cx_hash_t,
-                rv.as_mut_ptr(),
-            )
-        };
-        Hash(rv)
-    }
-}
-
-pub struct Hash(pub [u8; 32]);
-
-impl fmt::Display for Hash {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in self.0 {
-            write!(f, "{:02X}", byte)?;
-        }
-        Ok(())
     }
 }
 
