@@ -44,8 +44,9 @@ extern "C" fn sample_main() {
     let host_io = HostIO(unsafe { HOST_IO_STATE.as_ref().unwrap() });
 
     let mut states_backing: PinCell<Option<APDUsFuture>> = PinCell::new(None);
-    let states : Pin<&PinCell<Option<APDUsFuture>>> = Pin::static_ref(unsafe { core::mem::transmute(&states_backing) } );
-    
+    let states: Pin<&PinCell<Option<APDUsFuture>>> =
+        Pin::static_ref(unsafe { core::mem::transmute(&states_backing) });
+
     let mut idle_menu = RootMenu::new([concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit"]);
     let mut busy_menu = RootMenu::new(["Working...", "Cancel"]);
 
@@ -73,7 +74,13 @@ extern "C" fn sample_main() {
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
-                let poll_rv = poll_apdu_handlers(PinMut::as_mut(&mut states.borrow_mut()), ins, host_io, FutureTrampolineRunner, handle_apdu_async);
+                let poll_rv = poll_apdu_handlers(
+                    PinMut::as_mut(&mut states.borrow_mut()),
+                    ins,
+                    host_io,
+                    FutureTrampolineRunner,
+                    handle_apdu_async,
+                );
                 match poll_rv {
                     Ok(()) => {
                         trace!("APDU accepted; sending response");

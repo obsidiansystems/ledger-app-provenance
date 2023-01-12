@@ -1,5 +1,7 @@
 // use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
-use crate::crypto_helpers::{compress_public_key, format_signature, get_pkh, get_pubkey, Hasher, Hash};
+use crate::crypto_helpers::{
+    compress_public_key, format_signature, get_pkh, get_pubkey, Hash, Hasher,
+};
 use crate::interface::*;
 pub use crate::proto::cosmos::bank::v1beta1::*;
 pub use crate::proto::cosmos::base::v1beta1::*;
@@ -25,8 +27,8 @@ use pin_project::pin_project;
 
 // use ledger_prompts_ui::{final_accept_prompt, ScrollerError};
 
-use alamgu_async_block::*;
 use alamgu_async_block::prompts::*;
+use alamgu_async_block::*;
 use core::cell::RefCell;
 use core::task::*;
 use ledger_log::*;
@@ -120,12 +122,10 @@ impl AsyncTrampoline for FutureTrampolineRunner {
         };
         error!("Something is pending");
         match the_fut {
-            Some(ref mut pinned) => {
-                match poll_with_trivial_context(pinned.as_mut()) {
-                    Poll::Pending => AsyncTrampolineResult::Pending,
-                    Poll::Ready(()) => AsyncTrampolineResult::Resolved,
-                }
-            }
+            Some(ref mut pinned) => match poll_with_trivial_context(pinned.as_mut()) {
+                Poll::Pending => AsyncTrampolineResult::Pending,
+                Poll::Ready(()) => AsyncTrampolineResult::Resolved,
+            },
             None => AsyncTrampolineResult::NothingPending,
         }
     }
@@ -207,7 +207,6 @@ async fn get_address_apdu(io: HostIO) {
     };
 }
 
-
 #[derive(Copy, Clone)]
 pub struct Sign;
 
@@ -269,15 +268,19 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
             field_amount: Buffer::<100>,
         },
         async move |CoinValue {
-                  field_denom,
-                  field_amount,
-              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
+                        field_denom,
+                        field_amount,
+                    }: CoinValue<
+            Option<ArrayVec<u8, 20>>,
+            Option<ArrayVec<u8, 100>>,
+        >| {
             // Consider shifting the decimals for nhash to hash here.
-                  let x =
-                      core::str::from_utf8(field_amount.as_ref()?.as_slice()).ok()?;
-                  let y =
-                      core::str::from_utf8(field_denom.as_ref()?.as_slice()).ok()?;
-            get_msgs_prompts().add_prompt("Amount", format_args!("{} {}", x, y)).await.ok()?;
+            let x = core::str::from_utf8(field_amount.as_ref()?.as_slice()).ok()?;
+            let y = core::str::from_utf8(field_denom.as_ref()?.as_slice()).ok()?;
+            get_msgs_prompts()
+                .add_prompt("Amount", format_args!("{} {}", x, y))
+                .await
+                .ok()?;
             Some(())
         },
     )
@@ -310,8 +313,8 @@ impl<T, S: HasOutput<T>, F: Future> HasOutput<T> for Preaction<S, F> {
     type Output = S::Output;
 }
 
-impl<Schema, S: LengthDelimitedParser<Schema, BS>, F: Future, BS: Readable> LengthDelimitedParser<Schema, BS>
-    for Preaction<S, F>
+impl<Schema, S: LengthDelimitedParser<Schema, BS>, F: Future, BS: Readable>
+    LengthDelimitedParser<Schema, BS> for Preaction<S, F>
 {
     type State<'c> = impl Future<Output = Self::Output> + 'c where S: 'c, BS: 'c, F: 'c;
     fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
@@ -322,13 +325,13 @@ impl<Schema, S: LengthDelimitedParser<Schema, BS>, F: Future, BS: Readable> Leng
     }
 }
 
-static mut MESSAGES_PROMPTS : Option<PromptQueue> = None;
+static mut MESSAGES_PROMPTS: Option<PromptQueue> = None;
 
 fn get_msgs_prompts() -> &'static mut PromptQueue {
     unsafe { MESSAGES_PROMPTS.as_mut().unwrap() }
 }
 
-static mut TXN_PROMPTS : Option<PromptQueue> = None;
+static mut TXN_PROMPTS: Option<PromptQueue> = None;
 
 fn get_txn_prompts() -> &'static mut PromptQueue {
     unsafe { TXN_PROMPTS.as_mut().unwrap() }
@@ -341,7 +344,7 @@ fn init_prompts(io: HostIO) {
     }
 }
 
-const BLANK_FORMAT : core::fmt::Arguments = format_args!("");
+const BLANK_FORMAT: core::fmt::Arguments = format_args!("");
 
 type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
     + HasOutput<Transaction, Output = bool>;
@@ -353,7 +356,9 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                 default: RawAnyInterp {
                     field_type_url: Preaction(
                         async || {
-                            get_msgs_prompts().add_prompt("Unknown", format_args!("Message")).await;
+                            get_msgs_prompts()
+                                .add_prompt("Unknown", format_args!("Message"))
+                                .await;
                             // if no_unsafe { None } else {
                             // write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
                             //}
@@ -363,7 +368,11 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     field_value: DropInterp,
                 },
                 send: TrampolineParse(Preaction(
-                    async || get_msgs_prompts().add_prompt("Transfer", BLANK_FORMAT).await, // write_scroller("Transfer", |w| Ok(())),
+                    async || {
+                        get_msgs_prompts()
+                            .add_prompt("Transfer", BLANK_FORMAT)
+                            .await
+                    }, // write_scroller("Transfer", |w| Ok(())),
                     MsgSendInterp {
                         field_from_address: show_string!(get_msgs_prompts, 120, "From address"),
                         field_to_address: show_string!(get_msgs_prompts, 120, "To address"),
@@ -371,7 +380,11 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
-                    async || get_msgs_prompts().add_prompt("Multi-send", BLANK_FORMAT).await,
+                    async || {
+                        get_msgs_prompts()
+                            .add_prompt("Multi-send", BLANK_FORMAT)
+                            .await
+                    },
                     // || write_scroller("Multi-send", |w| Ok(())),
                     MsgMultiSendInterp {
                         field_inputs: InputInterp {
@@ -385,36 +398,79 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 delegate: TrampolineParse(Preaction(
-                    async || get_msgs_prompts().add_prompt("Delegate", BLANK_FORMAT).await,
+                    async || {
+                        get_msgs_prompts()
+                            .add_prompt("Delegate", BLANK_FORMAT)
+                            .await
+                    },
                     // || write_scroller("Delegate", |w| Ok(())),
                     MsgDelegateInterp {
                         field_amount: show_coin(),
-                        field_delegator_address: show_string!(get_msgs_prompts, 120, "Delegator Address"),
-                        field_validator_address: show_string!(get_msgs_prompts, 120, "Validator Address"),
+                        field_delegator_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "Delegator Address"
+                        ),
+                        field_validator_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "Validator Address"
+                        ),
                     },
                 )),
                 undelegate: TrampolineParse(Preaction(
-                    async || get_msgs_prompts().add_prompt("Undelegate", BLANK_FORMAT).await,
+                    async || {
+                        get_msgs_prompts()
+                            .add_prompt("Undelegate", BLANK_FORMAT)
+                            .await
+                    },
                     MsgUndelegateInterp {
                         field_amount: show_coin(),
-                        field_delegator_address: show_string!(get_msgs_prompts, 120, "Delegator Address"),
-                        field_validator_address: show_string!(get_msgs_prompts, 120, "Validator Address"),
+                        field_delegator_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "Delegator Address"
+                        ),
+                        field_validator_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "Validator Address"
+                        ),
                     },
                 )),
                 begin_redelegate: TrampolineParse(Preaction(
-                    async || get_msgs_prompts().add_prompt("Redelegate", BLANK_FORMAT).await,
+                    async || {
+                        get_msgs_prompts()
+                            .add_prompt("Redelegate", BLANK_FORMAT)
+                            .await
+                    },
                     MsgBeginRedelegateInterp {
                         field_amount: show_coin(),
-                        field_delegator_address: show_string!(get_msgs_prompts, 120, "Delegator Address"),
-                        field_validator_src_address: show_string!(get_msgs_prompts, 120, "From Validator"),
-                        field_validator_dst_address: show_string!(get_msgs_prompts, 120, "To Validator"),
+                        field_delegator_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "Delegator Address"
+                        ),
+                        field_validator_src_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "From Validator"
+                        ),
+                        field_validator_dst_address: show_string!(
+                            get_msgs_prompts,
+                            120,
+                            "To Validator"
+                        ),
                     },
                 )),
                 deposit: TrampolineParse(MsgDepositInterp {
                     field_amount: show_coin(),
                     field_depositor: show_string!(get_msgs_prompts, 120, "Depositor Address"),
                     field_proposal_id: FutAction(DefaultInterp, async move |value: u64| {
-                        get_msgs_prompts().add_prompt("Proposal ID", format_args!("{}", value)).await.ok()
+                        get_msgs_prompts()
+                            .add_prompt("Proposal ID", format_args!("{}", value))
+                            .await
+                            .ok()
                     }),
                 }),
             },
@@ -462,7 +518,7 @@ async fn sign_apdu(io: HostIO) {
     let length = usize::from_le_bytes(input[0].read().await);
     init_prompts(io);
     trace!("Passed length");
-    let hash = Hash([ 0; 32 ]);
+    let hash = Hash([0; 32]);
 
     let mut known_txn = {
         let mut txn = LengthTrack(input[0].clone(), 0);
@@ -489,25 +545,28 @@ async fn sign_apdu(io: HostIO) {
     let mut final_prompts = PromptQueue::new(io);
 
     if !known_txn {
-        final_prompts.add_prompt("Blind sign", format_args!("Hash: {}", hash)).await;
+        final_prompts
+            .add_prompt("Blind sign", format_args!("Hash: {}", hash))
+            .await;
     } else {
         final_prompts.append(get_msgs_prompts()).await;
         final_prompts.append(get_txn_prompts()).await;
     }
 
     let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
-    
+
     {
         let sk = Secp256k1::from_bip32(&path);
-        let pkh = (|| { get_pkh(&compress_public_key(sk.public_key().ok()?)).ok() })().unwrap();
-        final_prompts.add_prompt("With PKH", format_args!("{}", pkh)).await;
+        let pkh = (|| get_pkh(&compress_public_key(sk.public_key().ok()?)).ok())().unwrap();
+        final_prompts
+            .add_prompt("With PKH", format_args!("{}", pkh))
+            .await;
     }
 
     match final_prompts.show().await {
-        Ok(true) => { }
-        _ => { reject().await }
+        Ok(true) => {}
+        _ => reject().await,
     }
-
 
     if let Some(sig) = run_fut(trampoline(), || async {
         let sk = Secp256k1::from_bip32(&path);
@@ -532,21 +591,18 @@ pub fn handle_apdu_async(io: HostIO, ins: Ins) -> APDUsFuture {
     trace!("Constructing future");
     async move {
         trace!("Dispatching");
-    match ins {
-        Ins::GetVersion => {
-
+        match ins {
+            Ins::GetVersion => {}
+            Ins::GetPubkey => {
+                NoinlineFut(get_address_apdu(io)).await;
+            }
+            Ins::Sign => {
+                trace!("Handling sign");
+                NoinlineFut(sign_apdu(io)).await;
+            }
+            Ins::GetVersionStr => {}
+            Ins::Exit => nanos_sdk::exit_app(0),
+            _ => {}
         }
-        Ins::GetPubkey => {
-            NoinlineFut(get_address_apdu(io)).await;
-        }
-        Ins::Sign => {
-            trace!("Handling sign");
-            NoinlineFut(sign_apdu(io)).await;
-        }
-        Ins::GetVersionStr => {
-        }
-        Ins::Exit => nanos_sdk::exit_app(0),
-        _ => { }
-    }
     }
 }
