@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import Axios from 'axios';
 import { Common } from "hw-app-obsidian-common";
-import * as blake2b from "blake2b";
-import { instantiate, Nacl } from "js-nacl";
+import { ecdsaVerify } from 'secp256k1';
+import { createHash } from 'crypto';
 
 describe('basic tests', () => {
 
@@ -48,28 +48,22 @@ describe('basic tests', () => {
   });
 });
 
-let nacl : Nacl =null;
-
-instantiate(n => { nacl=n; });
-
 function testTransaction(path: string, txn: string, prompts: any[]) {
   return async () => {
     let sig = await sendCommandAndAccept(
       async (client : Common) => {
 
-        //let pubkey = (await client.getPublicKey(path)).publicKey;
+        let pubkey = (await client.getPublicKey(path)).publicKey;
 
         // We don't want the prompts from getPublicKey in our result
         await Axios.delete(BASE_URL + "/events");
 
         let sig = await client.signTransaction(path, Buffer.from(txn, "hex").toString("hex"));
         expect(sig.signature.length).to.equal(128);
-        // Skip verifying the signature
-        /*
-        let hash = blake2b(32).update(Buffer.from(txn, "utf-8")).digest();
-        let pass = nacl.crypto_sign_verify_detached(Buffer.from(sig.signature, 'hex'), hash, Buffer.from(pubkey, 'hex'));
+
+        let hash = createHash('sha256').update(Buffer.from(txn,"hex")).digest();
+        let pass = ecdsaVerify(Buffer.from(sig.signature, 'hex'), hash, Buffer.from(pubkey, 'hex'));
         expect(pass).to.equal(true);
-        */
       }, prompts);
   }
 }
