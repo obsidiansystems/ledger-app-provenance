@@ -72,7 +72,7 @@ extern "C" fn sample_main() {
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
-                match handle_apdu(host_io, ins, &mut states) {
+                match handle_apdu(comm, host_io, ins, &mut states) {
                     Ok(()) => {
                         trace!("APDU accepted; sending response");
                         comm.borrow_mut().reply_ok();
@@ -115,17 +115,26 @@ use nanos_sdk::io::Reply;
 
 #[inline(never)]
 fn handle_apdu<'a: 'b, 'b>(
+    comm: &RefCell<io::Comm>,
     io: HostIO,
     ins: Ins,
     state: &'b mut Pin<&'a mut ParsersState<'a>>,
 ) -> Result<(), Reply> {
-    let comm = io.get_comm();
-    if comm?.rx == 0 {
+    let comm_ = io.get_comm();
+    if comm_?.rx == 0 {
         return Err(io::StatusWords::NothingReceived.into());
     }
 
     match ins {
-        Ins::GetVersion => {}
+        Ins::GetVersion => {
+            comm.borrow_mut().append(&[LedgerToHostCmd::ResultFinal as u8]);
+            comm.borrow_mut().append(&[
+                env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap(),
+                env!("CARGO_PKG_VERSION_MINOR").parse().unwrap(),
+                env!("CARGO_PKG_VERSION_PATCH").parse().unwrap(),
+            ]);
+            comm.borrow_mut().append(b"Provenance");
+        }
         Ins::GetPubkey => poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress)?,
         Ins::Sign => {
             trace!("Handling sign");
