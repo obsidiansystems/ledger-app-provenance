@@ -302,7 +302,7 @@ dependencies = [
 [[package]]
 name = "proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#314a251108f265529d968aa66423f9318d609c01"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#72a83411024973bfcaa51c2c91f3811d8bf25e44"
 dependencies = [
  "protobuf",
  "protoc-rust",

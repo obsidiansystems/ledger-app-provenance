@@ -8,7 +8,7 @@
   "ledger-prompts-ui 0.1.0 (git+https://github.com/alamgu/ledger-prompts-ui#c1b6ab13769735d3412fa9c3edf59b6ad5e68d1e)": "0n8hiw4ambwdw6pg61j9clpnzn8mz3d6fzkb1f2ia64zydbdf6gs",
   "nanos_sdk 0.2.0 (git+https://github.com/alamgu/ledger-nanos-sdk.git?branch=memory-fixes-pending#100b25ddfb6049f6520d46657cf13a36a3fdeae9)": "04qvp396fs4cwbkx8j03lqzysaiw78mwvqfmzarqrwq4k4qk7izm",
   "nanos_ui 0.1.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=use-lib-bagl-for-x-and-splus#6ab6938354e73d3a8aacc941e9c7bc7f83c1081e)": "0pi2albb8ly52c9y451w872lxz3b7ivi9s1hfpld46qi8q7m5v2h",
-  "proto-gen 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#314a251108f265529d968aa66423f9318d609c01)": "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw",
+  "proto-gen 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=add-gen#72a83411024973bfcaa51c2c91f3811d8bf25e44)": "17gsfs7k6q9xnhg1kf43ggwq91rhxwp8i43qw801nklv68rkfdcb",
   "testmacro 0.1.0 (git+https://github.com/yhql/testmacro#29a16cb8718d61b67c6c391e60c8347c064e921e)": "0agl46ilx2psfvwvg8iwfmq203xapw435h03qskxqf5dnwhy1kir",
   "trie-enum 0.1.0 (git+https://github.com/alamgu/trie-enum#0dedf0d0a941fc47b830d25d008f5ea42fdd3db4)": "0pcqn250n8ma94zy39blgvx8mxmdk1k6wzz03zs6bb4wfcv1y7pz"
 }

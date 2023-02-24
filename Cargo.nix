@@ -866,8 +866,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "314a251108f265529d968aa66423f9318d609c01";
-          sha256 = "09alys66qq5s2ad8cqd7vzv6a2s00cl2ci2yw3xqjnqfprpwz8lw";
+          rev = "72a83411024973bfcaa51c2c91f3811d8bf25e44";
+          sha256 = "17gsfs7k6q9xnhg1kf43ggwq91rhxwp8i43qw801nklv68rkfdcb";
         };
         dependencies = [
           {
