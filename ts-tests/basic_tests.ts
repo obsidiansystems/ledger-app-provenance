@@ -59,15 +59,17 @@ describe("Protobufs tests", function() {
       [
         {
           "header": "Transfer",
-          "prompt": "",
+          "prompt": "HASH",
         },
         {
-          "header": "From address",
+          "header": "From",
           "prompt": "tp1g5ugfegkl5gmn049n5a9hgjn3ged0ekp8f2fwx",
+          "paginate": true,
         },
         {
-          "header": "To address",
+          "header": "To",
           "prompt": "tp1vxlcxp2vjnyjuw6mqn9d8cq62ceu6lllpushy6",
+          "paginate": true,
         },
         {
           "header": "Amount",
@@ -99,15 +101,17 @@ describe("Protobufs tests", function() {
       [
         {
           "header": "Transfer",
-          "prompt": "",
+          "prompt": "HASH",
         },
         {
-          "header": "From address",
+          "header": "From",
           "prompt": "tp1050wkzt7dr740jvp5xp96vjqamx5kp9jvpjvcu",
+          "paginate": true,
         },
         {
-          "header": "To address",
+          "header": "To",
           "prompt": "tp1g5ugfegkl5gmn049n5a9hgjn3ged0ekp8f2fwx",
+          "paginate": true,
         },
         {
           "header": "Amount",
