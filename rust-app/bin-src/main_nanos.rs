@@ -127,7 +127,8 @@ fn handle_apdu<'a: 'b, 'b>(
 
     match ins {
         Ins::GetVersion => {
-            comm.borrow_mut().append(&[LedgerToHostCmd::ResultFinal as u8]);
+            comm.borrow_mut()
+                .append(&[LedgerToHostCmd::ResultFinal as u8]);
             comm.borrow_mut().append(&[
                 env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap(),
                 env!("CARGO_PKG_VERSION_MINOR").parse().unwrap(),
