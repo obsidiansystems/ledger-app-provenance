@@ -15,9 +15,9 @@ fn main() -> std::io::Result<()> {
         extra_debug_print,
         target.as_str(),
     ) {
-        ("release", false, false, "nanosplus") => 1312,
-        ("release", false, false, "nanos") => 768,
-        ("release", false, false, "nanox") => 1312,
+        ("release", false, false, "nanosplus") => 1344,
+        ("release", false, false, "nanos") => 800,
+        ("release", false, false, "nanox") => 1344,
         (_, _, true, _) => 1024 * 10,
         _ => 1024 * 7,
     };

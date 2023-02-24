@@ -2,7 +2,7 @@ import { sendCommandAndAccept, BASE_URL } from "./common";
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import Axios from 'axios';
-import { Common } from "hw-app-obsidian-common";
+import { Common } from "hw-app-alamgu";
 import { ecdsaVerify } from 'secp256k1';
 import { createHash } from 'crypto';
 
@@ -17,8 +17,8 @@ describe('basic tests', () => {
 
     await sendCommandAndAccept(async (client : Common) => {
       let rv = await client.getPublicKey("44'/505'/0'");
-      expect(Buffer.from(rv.address, 'hex').toString()).to.equal("pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd");
-      expect(rv.publicKey).to.equal("0368a7dc46a8c9e99872567b84cb6693b07f04ad25c9e8f8377654f4772d35cff1");
+      expect(new Buffer(rv.address).toString()).to.equal("pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd");
+      expect(new Buffer(rv.publicKey).toString('hex')).to.equal("0368a7dc46a8c9e99872567b84cb6693b07f04ad25c9e8f8377654f4772d35cff1");
       return;
     }, []);
   });
@@ -27,30 +27,27 @@ describe('basic tests', () => {
 
     await sendCommandAndAccept(async (client : Common) => {
       let rv = await client.getPublicKey("44'/505'");
-      expect(Buffer.from(rv.address, 'hex').toString()).to.equal("pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x");
-      expect(rv.publicKey).to.equal("03bd3617cd8eb3d36449f7a4f7df5bc89e24615d0bac4bc82b34fb56a2f377677e");
+      expect(new Buffer(rv.address).toString()).to.equal("pb1hqrpuntc0yew7q7ts6h8hqvlccsqhhy3m62l7x");
+      expect(new Buffer(rv.publicKey).toString('hex')).to.equal("03bd3617cd8eb3d36449f7a4f7df5bc89e24615d0bac4bc82b34fb56a2f377677e");
       return;
     }, []);
   });
 });
 
-function testTransaction(path: string, txn: string, prompts: any[]) {
+function testTransaction(path: string, txn0: string, prompts: any[]) {
   return async () => {
-    let sig = await sendCommandAndAccept(
-      async (client : Common) => {
+    await sendCommandAndAccept(async (client : Common) => {
+      const txn = Buffer.from(txn0, "hex");
+      const { publicKey } = await client.getPublicKey(path);
+      // We don't want the prompts from getPublicKey in our result
+      await Axios.delete(BASE_URL + "/events");
 
-        let pubkey = (await client.getPublicKey(path)).publicKey;
-
-        // We don't want the prompts from getPublicKey in our result
-        await Axios.delete(BASE_URL + "/events");
-
-        let sig = await client.signTransaction(path, Buffer.from(txn, "hex").toString("hex"));
-        expect(sig.signature.length).to.equal(128);
-
-        let hash = createHash('sha256').update(Buffer.from(txn,"hex")).digest();
-        let pass = ecdsaVerify(Buffer.from(sig.signature, 'hex'), hash, Buffer.from(pubkey, 'hex'));
-        expect(pass).to.equal(true);
-      }, prompts);
+      const sig = await client.signTransaction(path, txn);
+      expect(sig.signature.length).to.equal(64);
+      const hash = createHash('sha256').update(txn).digest();
+      const pass = ecdsaVerify(sig.signature, hash, publicKey);
+      expect(pass).to.equal(true);
+    }, prompts);
   }
 }
 
@@ -180,34 +177,13 @@ describe("Protobufs tests", function() {
   );
 })
 
-// describe("Signing tests", function() {
-//   before( async function() {
-//     while(!nacl) await new Promise(r => setTimeout(r, 100));
-//   })
-
-//   it("can sign a transaction",
-//      testTransaction(
-//        "0",
-//        JSON.stringify({"testapp":true}),
-//        [
-//          {
-//            "header": "Transaction hash",
-//            "prompt": "a5dQl_ZMC3Onv0ldlZ9C-Nl75FXraTHpoipEGTdNzrQ",
-//          },
-//          {
-//            "header": "Sign for Address",
-//            "prompt": "7f916b907886913c6dd7ab62681fc52140afbc84"
-//          },
-//          {
-//            "text": "Sign Transaction?",
-//            "x": 19,
-//            "y": 11
-//          },
-//          {
-//            "text": "Confirm",
-//            "x": 43,
-//            "y": 11,
-//          }
-//        ]
-//      ));
-// });
+describe("get version tests", function() {
+  it("can get app version", async () => {
+    await sendCommandAndAccept(async (client : any) => {
+      var rv = await client.getVersion();
+      expect(rv.major).to.equal(0);
+      expect(rv.minor).to.equal(0);
+      expect(rv.patch).to.equal(1);
+      }, []);
+    });
+});

@@ -301,8 +301,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/enum-init";
-          rev = "a831c2fbbe00af926ae87c064bfe4da58d26777c";
-          sha256 = "1daqa7i1778rpvk8d442flk6bak6jxi6hrcc5j4maaa7ipjc6xlr";
+          rev = "5706da92215f1a5816d704229f8924d95d954a77";
+          sha256 = "0vh10l6glg4fry3z8am9skdlg2xcs0maqz5f24awwd9vl4ac6fv6";
         };
         procMacro = true;
         dependencies = [
@@ -474,8 +474,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-log";
-          rev = "02f702bbec9ca9802151fd261508580eb3826287";
-          sha256 = "03qic29qkvis54bgh40wwja89kcp6kz6acd0ifzyvcqxicpmikmy";
+          rev = "aa326b3078f5a470047b0d13bc2c00cec39e600c";
+          sha256 = "016j013zq38zci0dz60y3daz3l7bj3jd5w17r18gpj450jkxkmb6";
         };
         dependencies = [
           {
@@ -575,8 +575,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-prompts-ui";
-          rev = "24d2f36da07131074211559cd28f235c3f7c9984";
-          sha256 = "0gy73gv2vrajyrzigr2iwfnw0gmj1wfpig0xlbhw1vpkpjg23w0q";
+          rev = "c1b6ab13769735d3412fa9c3edf59b6ad5e68d1e";
+          sha256 = "0n8hiw4ambwdw6pg61j9clpnzn8mz3d6fzkb1f2ia64zydbdf6gs";
         };
         dependencies = [
           {
@@ -665,8 +665,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-nanos-sdk.git";
-          rev = "796bbe1479c06df73b3014edd94964d1b41b51b3";
-          sha256 = "1wykmy7wsvmwlks7drc4vis3s9c42rj4gs62jpxn9h6kpq8f0517";
+          rev = "100b25ddfb6049f6520d46657cf13a36a3fdeae9";
+          sha256 = "04qvp396fs4cwbkx8j03lqzysaiw78mwvqfmzarqrwq4k4qk7izm";
         };
         authors = [
           "yhql"
@@ -691,7 +691,7 @@ rec {
         ];
         features = {
         };
-        resolvedDefaultFeatures = [ "lib_bagl" "speculos" ];
+        resolvedDefaultFeatures = [ "lib_bagl" "pending_review_screen" "speculos" ];
       };
       "nanos_ui" = rec {
         crateName = "nanos_ui";
@@ -1080,9 +1080,10 @@ rec {
         ];
         features = {
           "extra_debug" = [ "ledger-log/log_trace" ];
+          "pending_review_screen" = [ "nanos_sdk/pending_review_screen" ];
           "speculos" = [ "nanos_sdk/speculos" "ledger-log/speculos" "ledger-log/log_error" "ledger-parser-combinators/logging" ];
         };
-        resolvedDefaultFeatures = [ "default" "extra_debug" "speculos" ];
+        resolvedDefaultFeatures = [ "default" "extra_debug" "pending_review_screen" "speculos" ];
       };
       "quote" = rec {
         crateName = "quote";
@@ -1349,8 +1350,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/trie-enum";
-          rev = "551bddc313f2af5c2dedb79f3d6de7328e34b208";
-          sha256 = "0ixqf9wqzw9a7scc2gw3bdn952grny5vkrgxgj78dqpnp5dy7h47";
+          rev = "0dedf0d0a941fc47b830d25d008f5ea42fdd3db4";
+          sha256 = "0pcqn250n8ma94zy39blgvx8mxmdk1k6wzz03zs6bb4wfcv1y7pz";
         };
         dependencies = [
           {

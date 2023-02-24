@@ -132,13 +132,12 @@ rec {
     cp ${./rust-app/provenance-small.gif} $dest/provenance-small.gif
   '');
 
-  testPackage = (import ./ts-tests/override.nix { inherit pkgs; }).package;
-
-  testScript = pkgs.writeShellScriptBin "mocha-wrapper" ''
-    cd ${testPackage}/lib/node_modules/*/
-    export NO_UPDATE_NOTIFIER=true
-    exec ${pkgs.nodejs-14_x}/bin/npm --offline test -- "$@"
-  '';
+  inherit
+    (import ./ts-tests { inherit pkgs; })
+    testModules
+    testScript
+    testPackage
+    ;
 
   apiPort = 5005;
 
@@ -150,6 +149,7 @@ rec {
   } ''
     mkdir $out
     (
+    set +e # Dont exit on error, do the cleanup/kill of background processes
     ${toString speculosCmd} ${appExe} --display headless &
     SPECULOS=$!
 
@@ -205,7 +205,11 @@ rec {
     rustShell = alamgu.perDevice.${device}.rustShell.overrideAttrs (old: let
       super = bufCosmosOverrides alamgu.ledgerPkgs old;
     in super // {
-      nativeBuildInputs = super.nativeBuildInputs ++ [ rootCrate.sdk.link_wrap ];
+      nativeBuildInputs = super.nativeBuildInputs ++ [
+        pkgs.yarn
+        pkgs.wget
+        rootCrate.sdk.link_wrap
+      ];
     });
 
     tarSrc = makeTarSrc { inherit appExe device; };

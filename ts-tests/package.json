@@ -1,9 +1,9 @@
 {
-  "name": "rust-app-ledger-tests",
+  "name": "alamgu-example-ledger-tests",
   "version": "0.0.1",
   "src": ".",
   "scripts": {
-    "test": "mocha --no-parallel -r ts-node/register *.ts"
+    "test": "mocha --no-parallel --require ts-node/register *.ts"
   },
   "dependencies": {
     "@ledgerhq/hw-transport": "^6.7.0",
@@ -17,7 +17,7 @@
     "bn.js": "^5.2.0",
     "node-fetch": "^3.0.0",
     "typescript": "^4.4.3",
-    "hw-app-obsidian-common": "git+https://github.com/alamgu/hw-app-obsidian-common",
+    "hw-app-alamgu": "git+https://github.com/alamgu/hw-app-alamgu",
     "secp256k1": "4.0.3",
     "@types/chai": "^4.2.22",
     "@types/js-nacl": "^1.3.0",
