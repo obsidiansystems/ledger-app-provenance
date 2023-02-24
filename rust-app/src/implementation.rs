@@ -377,12 +377,58 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     ),
                     field_value: DropInterp,
                 },
-                send: TrampolineParse(Preaction(
-                    || scroller("Transfer", |w| Ok(())),
-                    MsgSendInterp {
-                        field_from_address: show_string!(120, "From address"),
-                        field_to_address: show_string!(120, "To address"),
-                        field_amount: show_coin(),
+                send: TrampolineParse(Action(
+                    MsgSendUnorderedInterp {
+                        field_from_address: Buffer::<120>,
+                        field_to_address: Buffer::<120>,
+                        field_amount: CoinUnorderedInterp {
+                            field_denom: Buffer::<20>,
+                            field_amount: Buffer::<100>,
+                        },
+                    },
+                    |o: MsgSendValue<
+                        Option<ArrayVec<u8, 120>>,
+                        Option<ArrayVec<u8, 120>>,
+                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                    >|
+                     -> Option<()> {
+                        scroller("Transfer", |w| Ok(write!(w, "HASH")?));
+                        scroller_paginated("From", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_from_address
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                        });
+                        scroller_paginated("To", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_to_address.as_ref().ok_or(ScrollerError)?.as_slice(),
+                            )?;
+                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                        });
+                        scroller("Amount", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            let y = core::str::from_utf8(
+                                o.field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .field_denom
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
+                        })
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
