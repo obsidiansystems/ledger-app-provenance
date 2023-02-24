@@ -505,8 +505,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "a8f4fc4fa6951502393981f60ae1b984d9ae6c8b";
-          sha256 = "1mpckxgjnjwabv14ncjnfi9av5jnipka81rapszribhn7anqw4rr";
+          rev = "fb0206889da43d655ed201b904aa3b1f32a3ac9f";
+          sha256 = "0zv61qg0r4r9lp8vw3zfdknbbzdjlj3bcczwh04qwdwr3m8s2jkl";
         };
         authors = [
           "Jonathan D.K. Gibbons <jonored@gmail.com>"
@@ -560,6 +560,14 @@ rec {
           {
             name = "trie-enum";
             packageId = "trie-enum";
+          }
+        ];
+        devDependencies = [
+          {
+            name = "nanos_sdk";
+            packageId = "nanos_sdk";
+            target = {target, features}: (builtins.elem "bolos" target."family");
+            features = [ "speculos" ];
           }
         ];
         features = {
@@ -866,8 +874,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/alamgu/ledger-parser-combinators";
-          rev = "72a83411024973bfcaa51c2c91f3811d8bf25e44";
-          sha256 = "17gsfs7k6q9xnhg1kf43ggwq91rhxwp8i43qw801nklv68rkfdcb";
+          rev = "83765841ab8b8066479e6dd3adaffc59643490ed";
+          sha256 = "10xfkzdysmjqy24s28iq7fn9h9rmsfzk3fildwra2k30qknz970s";
         };
         dependencies = [
           {
