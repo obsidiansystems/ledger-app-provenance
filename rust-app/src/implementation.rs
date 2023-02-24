@@ -28,7 +28,7 @@ use core::cell::RefCell;
 use core::task::*;
 use ledger_crypto_helpers::hasher::{Base64Hash, Hasher, SHA256};
 use ledger_log::*;
-use ledger_prompts_ui::{final_accept_prompt, write_scroller, ScrollerError};
+use ledger_prompts_ui::{final_accept_prompt, ScrollerError};
 
 pub static mut ASYNC_TRAMPOLINE: Option<RefCell<FutureTrampoline>> = None;
 
@@ -265,7 +265,7 @@ macro_rules! show_string {
     => {
         Action(
             Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
-                write_scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
             }
         )
     };
@@ -274,7 +274,7 @@ macro_rules! show_string {
         Action(
             Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
                 if pkh.is_empty() { Some(()) } else {
-                    write_scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                    scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
                 }
             }
         )
@@ -285,7 +285,7 @@ macro_rules! show_string {
     // Buffer::<120>
     Action(
         Buffer::<120>, move |pkh| {
-                        write_scroller(msg, |w| Ok(write!(w, "{:?}", pkh)?))
+                        scroller(msg, |w| Ok(write!(w, "{:?}", pkh)?))
         }
     )
 }*/
@@ -306,7 +306,7 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
                   field_amount,
               }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
             // Consider shifting the decimals for nhash to hash here.
-            write_scroller("Amount", |w| {
+            scroller("Amount", |w| {
                 let x =
                     core::str::from_utf8(field_amount.as_ref().ok_or(ScrollerError)?.as_slice())?;
                 let y =
@@ -370,7 +370,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     field_type_url: Preaction(
                         || {
                             // if no_unsafe { None } else {
-                            write_scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                            scroller("Unknown", |w| Ok(write!(w, "Message")?))
                             //}
                         },
                         show_string!(120, "Type URL"),
@@ -378,7 +378,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     field_value: DropInterp,
                 },
                 send: TrampolineParse(Preaction(
-                    || write_scroller("Transfer", |w| Ok(())),
+                    || scroller("Transfer", |w| Ok(())),
                     MsgSendInterp {
                         field_from_address: show_string!(120, "From address"),
                         field_to_address: show_string!(120, "To address"),
@@ -386,7 +386,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
-                    || write_scroller("Multi-send", |w| Ok(())),
+                    || scroller("Multi-send", |w| Ok(())),
                     MsgMultiSendInterp {
                         field_inputs: InputInterp {
                             field_address: show_string!(120, "From address"),
@@ -399,7 +399,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 delegate: TrampolineParse(Preaction(
-                    || write_scroller("Delegate", |w| Ok(())),
+                    || scroller("Delegate", |w| Ok(())),
                     MsgDelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -407,7 +407,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 undelegate: TrampolineParse(Preaction(
-                    || write_scroller("Undelegate", |w| Ok(())),
+                    || scroller("Undelegate", |w| Ok(())),
                     MsgUndelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -415,7 +415,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 begin_redelegate: TrampolineParse(Preaction(
-                    || write_scroller("Redelegate", |_| Ok(())),
+                    || scroller("Redelegate", |_| Ok(())),
                     MsgBeginRedelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -427,7 +427,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     field_amount: show_coin(),
                     field_depositor: show_string!(120, "Depositor Address"),
                     field_proposal_id: Action(DefaultInterp, |value: u64| {
-                        write_scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
+                        scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
                     }),
                 }),
             },
@@ -507,7 +507,7 @@ impl AsyncAPDU for Sign {
             }
 
             if !known_txn {
-                if write_scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
+                if scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
                     reject::<()>().await;
                 };
             }
@@ -522,7 +522,7 @@ impl AsyncAPDU for Sign {
                 let sk = Secp256k1::from_bip32(&path);
                 let prompt_fn = || {
                     let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
-                    write_scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
+                    scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
                     final_accept_prompt(&[])
                 };
                 if prompt_fn().is_none() {
