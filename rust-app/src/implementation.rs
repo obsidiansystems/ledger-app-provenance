@@ -186,11 +186,6 @@ impl AsyncAPDU for GetAddress {
                 let prompt_fn = || {
                     let pubkey = get_pubkey(&path).ok()?; // Secp256k1::from_bip32(&path).public_key().ok()?;
                     let pkh = get_pkh(&pubkey).ok()?;
-                    error!("Prompting for {}", pkh);
-                    write_scroller("Provide Public Key", |w| {
-                        Ok(write!(w, "For Address {}", pkh)?)
-                    })?;
-                    final_accept_prompt(&[])?;
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
