@@ -527,7 +527,7 @@ impl AsyncAPDU for Sign {
                         .await
                 }
             })(input[0].clone()))
-                .await;
+            .await;
             trace!("Passed txn messages");
 
             if known_txn {
@@ -565,14 +565,14 @@ impl AsyncAPDU for Sign {
                     }
                     format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
                 })
-                    .await
+                .await
                 {
                     io.result_final(&sig).await;
                 } else {
                     reject::<()>().await;
                 }
             })(input))
-                .await
+            .await
         }
     }
 }
