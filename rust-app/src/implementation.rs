@@ -46,17 +46,6 @@ pub struct FutureTrampoline {
 }
 pub struct FutureTrampolineRunner;
 
-#[pin_project]
-pub struct NoinlineFut<F: Future>(#[pin] F);
-
-impl<F: Future> Future for NoinlineFut<F> {
-    type Output = F::Output;
-    #[inline(never)]
-    fn poll(self: Pin<&mut Self>, cx: &mut Context) -> core::task::Poll<Self::Output> {
-        self.project().0.poll(cx)
-    }
-}
-
 const fn size_of_val_c<T>(_: &T) -> usize {
     core::mem::size_of::<T>()
 }
