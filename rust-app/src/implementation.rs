@@ -46,17 +46,6 @@ pub struct FutureTrampoline {
 }
 pub struct FutureTrampolineRunner;
 
-#[pin_project]
-pub struct NoinlineFut<F: Future>(#[pin] F);
-
-impl<F: Future> Future for NoinlineFut<F> {
-    type Output = F::Output;
-    #[inline(never)]
-    fn poll(self: Pin<&mut Self>, cx: &mut Context) -> core::task::Poll<Self::Output> {
-        self.project().0.poll(cx)
-    }
-}
-
 const fn size_of_val_c<T>(_: &T) -> usize {
     core::mem::size_of::<T>()
 }
@@ -377,12 +366,58 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     ),
                     field_value: DropInterp,
                 },
-                send: TrampolineParse(Preaction(
-                    || scroller("Transfer", |w| Ok(())),
-                    MsgSendInterp {
-                        field_from_address: show_string!(120, "From address"),
-                        field_to_address: show_string!(120, "To address"),
-                        field_amount: show_coin(),
+                send: TrampolineParse(Action(
+                    MsgSendUnorderedInterp {
+                        field_from_address: Buffer::<120>,
+                        field_to_address: Buffer::<120>,
+                        field_amount: CoinUnorderedInterp {
+                            field_denom: Buffer::<20>,
+                            field_amount: Buffer::<100>,
+                        },
+                    },
+                    |o: MsgSendValue<
+                        Option<ArrayVec<u8, 120>>,
+                        Option<ArrayVec<u8, 120>>,
+                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                    >|
+                     -> Option<()> {
+                        scroller("Transfer", |w| Ok(write!(w, "HASH")?));
+                        scroller_paginated("From", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_from_address
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                        });
+                        scroller_paginated("To", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_to_address.as_ref().ok_or(ScrollerError)?.as_slice(),
+                            )?;
+                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                        });
+                        scroller("Amount", |w| {
+                            let x = core::str::from_utf8(
+                                o.field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            let y = core::str::from_utf8(
+                                o.field_amount
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .field_denom
+                                    .as_ref()
+                                    .ok_or(ScrollerError)?
+                                    .as_slice(),
+                            )?;
+                            write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
+                        })
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
@@ -484,12 +519,15 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            let mut known_txn = {
-                let mut txn = LengthTrack(input[0].clone(), 0);
-                TrampolineParse(TXN_MESSAGES_PARSER)
-                    .parse(&mut txn, length)
-                    .await
-            };
+            let mut known_txn = NoinlineFut((|mut bs: ByteStream| async move {
+                {
+                    let mut txn = LengthTrack(bs, 0);
+                    TrampolineParse(TXN_MESSAGES_PARSER)
+                        .parse(&mut txn, length)
+                        .await
+                }
+            })(input[0].clone()))
+            .await;
             trace!("Passed txn messages");
 
             if known_txn {
@@ -498,44 +536,43 @@ impl AsyncAPDU for Sign {
                 trace!("Passed txn");
             }
 
-            let hash: Base64Hash<32>;
+            NoinlineFut((|input: ArrayVec<ByteStream, 2>| async move {
+                let hash: Base64Hash<32>;
 
-            {
-                let mut txn = input[0].clone();
-                hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
-                trace!("Hashed txn");
-            }
+                {
+                    let mut txn = input[0].clone();
+                    hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
+                    trace!("Hashed txn");
+                }
 
-            if !known_txn {
-                if scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
-                    reject::<()>().await;
-                };
-            }
+                if !known_txn {
+                    if scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
+                        reject::<()>().await;
+                    };
+                }
 
-            let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
-            /*let path : ArrayVec<u32, 10> = run_fut(trampoline(), async move {
-                let mut key = input[1].clone();
-                PRIVKEY_PARSER.parse(&mut key).await
-            }).await;*/
+                let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
 
-            if let Some(sig) = run_fut(trampoline(), || async {
-                let sk = Secp256k1::from_bip32(&path);
-                let prompt_fn = || {
-                    let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
-                    scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
-                    final_accept_prompt(&[])
-                };
-                if prompt_fn().is_none() {
+                if let Some(sig) = run_fut(trampoline(), || async {
+                    let sk = Secp256k1::from_bip32(&path);
+                    let prompt_fn = || {
+                        let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
+                        scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
+                        final_accept_prompt(&[])
+                    };
+                    if prompt_fn().is_none() {
+                        reject::<()>().await;
+                    }
+                    format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
+                })
+                .await
+                {
+                    io.result_final(&sig).await;
+                } else {
                     reject::<()>().await;
                 }
-                format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
-            })
+            })(input))
             .await
-            {
-                io.result_final(&sig).await;
-            } else {
-                reject::<()>().await;
-            }
         }
     }
 }
