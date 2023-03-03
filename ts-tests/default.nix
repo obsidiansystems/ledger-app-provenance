@@ -8,13 +8,19 @@ let
   inherit (import (import ../dep/alamgu/thunk.nix) {}) thunkSource;
   yarnDepsNix = pkgs.runCommand "yarn-deps.nix" {} ''
     ${yarn2nix}/bin/yarn2nix --offline \
-      <(sed -e '/hw-app-alamgu/,/^$/d' ${./yarn.lock}) \
+      <(sed \
+        -e '/^"hw-app-alamgu/,/^$/d' \
+        -e '/^"hw-app-hash/,/^$/d' \
+        "${./yarn.lock}") \
       > $out
   '';
   yarnPackageNix = pkgs.runCommand "yarn-package.nix" {} ''
     # We sed hw-app-alamgu to a constant here, so that the package.json can be whatever; we're overriding it anyways.
     ${yarn2nix}/bin/yarn2nix --template \
-      <(sed 's/"hw-app-alamgu".*$/"hw-app-alamgu": "0.0.1",/' ${./package.json}) \
+      <(sed \
+        -e 's/"hw-app-alamgu".*$/"hw-app-alamgu": "0.0.1",/' \
+        -e 's/"hw-app-hash".*$/"hw-app-hash": "0.1.0",/' \
+        "${./package.json}") \
       > $out
   '';
   nixLib = yarn2nix.nixLib;
@@ -102,6 +108,32 @@ let
             (s."@ledgerhq/hw-transport@^6.3.0")
             (s."fast-sha256@^1.3.0")
             (s."typedoc@^0.22.7")
+          ];
+        };
+
+        "hw-app-hash@0.1.0" = super._buildNodePackage rec {
+          key = "hw-app-hash";
+          version = "0.0.1";
+          src = thunkSource ../dep/hw-app-hash;
+          buildPhase = ''
+            ln -s $nodeModules node_modules
+            node $nodeModules/.bin/tsc
+            node $nodeModules/.bin/tsc -m ES6 --outDir lib-es
+          '';
+          nodeModules = nixLib.linkNodeDeps {
+            name = "hw-app-hash";
+            dependencies = nodeBuildInputs ++ [
+              (s."@types/node@^16.10.3")
+              (s."typescript@^4.4.3")
+            ];
+          };
+          passthru = { inherit nodeModules; };
+          NODE_PATH = nodeModules;
+          nodeBuildInputs = [
+            (s."@ledgerhq/hw-transport@^6.3.0")
+            (s."fast-sha256@^1.3.0")
+            (s."typedoc@^0.22.7")
+            (s."hw-app-alamgu@0.0.1")
           ];
         };
 

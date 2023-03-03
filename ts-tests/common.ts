@@ -1,7 +1,7 @@
 import SpeculosTransport from '@ledgerhq/hw-transport-node-speculos';
 import Axios from 'axios';
 import Transport from "./http-transport";
-import { Common } from "hw-app-alamgu";
+import Provenance from "hw-app-hash";
 import { expect } from 'chai';
 
 let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
@@ -122,7 +122,7 @@ const sendCommandAndAccept = async function(command : any, prompts : any[]) {
   await Axios.delete(BASE_URL + "/events");
 
   let transport = await Transport.open(BASE_URL + "/apdu");
-  let client = new Common(transport, "rust-app");
+  let client = new Provenance(transport);
   client.sendChunks = client.sendWithBlocks; // Use Block protocol
   let err = null;
 
