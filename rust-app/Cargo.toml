@@ -16,7 +16,7 @@ pin-cell = "0.2.0"
 pin-project = "1.0.10"
 num-traits = { version = "0.2.15", default-features = false }
 num-derive = "0.3.3"
-bech32 = { git="https://github.com/obsidiansystems/rust-bech32", branch="std-feature", default-features=false, features=["arrayvec"] }
+bech32 = { git="https://github.com/obsidiansystems/rust-bech32", branch="std-feature-0", default-features=false, features=["arrayvec"] }
 
 # Pass --features speculos,ledger-log/log_info (or log_trace, etc) to enable
 # speculos logging and change log level.
