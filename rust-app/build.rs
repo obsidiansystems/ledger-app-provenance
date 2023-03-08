@@ -15,9 +15,9 @@ fn main() -> std::io::Result<()> {
         extra_debug_print,
         target.as_str(),
     ) {
-        ("release", false, false, "nanosplus") => 1344,
+        ("release", false, false, "nanosplus") => 2408,
         ("release", false, false, "nanos") => 800,
-        ("release", false, false, "nanox") => 1344,
+        ("release", false, false, "nanox") => 2408,
         (_, _, true, _) => 1024 * 10,
         _ => 1024 * 7,
     };
@@ -55,6 +55,6 @@ fn main() -> std::io::Result<()> {
 
     // Use the FileDescriptorSet binary file to generate rust code
     // under $OUT_DIR/proto
-    proto_gen::generate::generate_rust_code(&buf_out_file, Path::new("proto"));
+    ledger_proto_gen::generate::generate_rust_code(&buf_out_file, Path::new("proto"));
     Ok(())
 }

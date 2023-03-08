@@ -39,7 +39,7 @@ rec {
         # modified arguemnts.
         (pkgs: (collection.buildRustCrateForPkgsLedger pkgs).override {
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            proto-gen = protobufOverrides pkgs;
+            ledger-proto-gen = protobufOverrides pkgs;
             nanos_sdk = attrs: {
               passthru = (attrs.passthru or {}) // {
                 link_wrap = pkgs.buildPackages.stdenvNoCC.mkDerivation {
@@ -110,7 +110,7 @@ rec {
       ];
   };
 
-  makeTarSrc = { appExe, device }: pkgs.runCommandCC "make-tar-src-${device}" {
+  makeTarSrc = { appExe, device }: pkgs.runCommandCC "${appName}-${device}-tar-src" {
     nativeBuildInputs = [
       alamgu.cargo-ledger
       alamgu.ledgerRustPlatform.rust.cargo
@@ -218,7 +218,7 @@ rec {
     });
 
     tarSrc = makeTarSrc { inherit appExe device; };
-    tarball = pkgs.runCommandNoCC "app-tarball-${device}.tar.gz" { } ''
+    tarball = pkgs.runCommandNoCC "${appName}-${device}.tar.gz" { } ''
       tar -czvhf $out -C ${tarSrc} ${appName}
     '';
 

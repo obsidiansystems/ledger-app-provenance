@@ -41,7 +41,7 @@ features = [ "speculos" ]
 testmacro = { git = "https://github.com/yhql/testmacro" }
 
 [build-dependencies]
-proto-gen = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "add-gen" }
+ledger-proto-gen = { git = "https://github.com/alamgu/ledger-proto-gen" }
 tempfile = "3.2.0"
 
 [[bin]]
@@ -54,7 +54,7 @@ git = "https://github.com/alamgu/ledger-nanos-sdk.git"
 branch = "memory-fixes-pending"
 [patch."https://github.com/LedgerHQ/ledger-nanos-ui.git".nanos_ui]
 git = "https://github.com/obsidiansystems/ledger-nanos-ui"
-branch = "use-lib-bagl-for-x-and-splus"
+branch = "dn-make-from-pub"
 
 [package.metadata.nanos]
 name = "Provenance"
