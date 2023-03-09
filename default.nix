@@ -1,8 +1,13 @@
 { localSystem ? { system = builtins.currentSystem; }
 }:
 
-rec {
+let
   alamgu = import ./dep/alamgu { inherit localSystem; };
+  inherit (alamgu) lib pkgs crate2nix alamguLib;
+
+in rec {
+
+  inherit alamgu;
 
   cosmos-sdk = alamgu.thunkSource ./dep/cosmos-sdk;
 
@@ -267,6 +272,8 @@ rec {
   nanox = appForDevice "nanox";
 
   inherit (pkgs.nodePackages) node2nix;
+
+} // lib.optionalAttrs pkgs.stdenv.isLinux {
 
   provenanced = pkgs.stdenv.mkDerivation {
     name = "provenance-bin";
