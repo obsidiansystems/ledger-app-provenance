@@ -55,7 +55,7 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 [[package]]
 name = "bech32"
 version = "0.9.1"
-source = "git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature#79cb4998c277161aa41bd054cfab78423804291c"
+source = "git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature#5299cc1099d0aceb53efed696e89e73b225f7a0c"
 dependencies = [
  "arrayvec",
 ]
