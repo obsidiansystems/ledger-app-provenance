@@ -35,7 +35,20 @@ in rec {
   app-nix = alamgu.crate2nix-tools.generatedCargoNix {
     name = "${appName}-nix";
     src = builtins.filterSource (p: _: p != toString "./rust-app/target") ./rust-app;
+    additionalCrateHashes = builtins.fromJSON (builtins.readFile ./crate-hashes.json);
   };
+
+  makeLinkerScript = { pkgs, sdkSrc }:
+    pkgs.stdenvNoCC.mkDerivation {
+      name = "alamgu-linker-wrapper";
+      dontUnpack = true;
+      dontBuild = true;
+      installPhase = ''
+        mkdir -p "$out/bin"
+        cp "${sdkSrc}/scripts/link_wrap.sh" "$out/bin"
+        chmod +x "$out/bin/link_wrap.sh"
+      '';
+    };
 
   makeApp = { rootFeatures ? [ "default" ], release ? true, device }:
     let collection = alamgu.perDevice.${device};
@@ -50,15 +63,9 @@ in rec {
             ledger-proto-gen = protobufOverrides pkgs;
             nanos_sdk = attrs: {
               passthru = (attrs.passthru or {}) // {
-                link_wrap = pkgs.buildPackages.stdenvNoCC.mkDerivation {
-                  name = "alamgu-linker-wrapper";
-                  dontUnpack = true;
-                  dontBuild = true;
-                  installPhase = ''
-                    mkdir -p "$out/bin"
-                    cp "${attrs.src}/scripts/link_wrap.sh" "$out/bin"
-                    chmod +x "$out/bin/link_wrap.sh"
-                  '';
+                link_wrap = makeLinkerScript {
+                  pkgs = pkgs.buildPackages;
+                  sdkSrc = attrs.src;
                 };
               };
             };
@@ -125,6 +132,7 @@ in rec {
       alamgu.cargo-ledger
       alamgu.ledgerRustPlatform.rust.cargo
     ];
+    strictDeps = true;
   } (alamgu.cargoLedgerPreHook + ''
 
     cp ${./rust-app/Cargo.toml} ./Cargo.toml
@@ -134,8 +142,11 @@ in rec {
 
     cargo-ledger --use-prebuilt ${appExe} --hex-next-to-json ledger ${device}
 
-    dest=$out/${appName}
-    mkdir -p $dest
+    dest=$out/${appName}-${device}
+    mkdir -p $dest/dep
+
+    # Copy Alamgu build infra thunk
+    cp -r ${./dep/alamgu} $dest/dep/alamgu
 
     # Create a file to indicate what device this is for
     echo ${device} > $dest/device
@@ -165,6 +176,7 @@ in rec {
     nativeBuildInputs = [
       pkgs.wget alamgu.speculos.speculos testScript
     ];
+    strictDeps = true;
   } ''
     mkdir $out
     (
@@ -191,6 +203,7 @@ in rec {
   makeStackCheck = { rootCrate, device, memLimit, variant ? "" }:
   pkgs.runCommandNoCC "stack-check-${device}${variant}" {
     nativeBuildInputs = [ alamgu.stack-sizes ];
+    strictDeps = true;
   } ''
     stack-sizes --mem-limit=${toString memLimit} ${rootCrate}/bin/${appName} ${rootCrate}/bin/*.o | tee $out
   '';
@@ -227,27 +240,33 @@ in rec {
       nativeBuildInputs = super.nativeBuildInputs ++ [
         pkgs.yarn
         pkgs.wget
-        rootCrate.sdk.link_wrap
+        (makeLinkerScript {
+          inherit pkgs;
+          sdkSrc = alamgu.thunkSource ./dep/ledger-nanos-sdk;
+        })
       ];
     });
 
     tarSrc = makeTarSrc { inherit appExe device; };
-    tarball = pkgs.runCommandNoCC "${appName}-${device}.tar.gz" { } ''
-      tar -czvhf $out -C ${tarSrc} ${appName}
+    tarball = pkgs.runCommandNoCC "${appName}-${device}.tar.gz" {} ''
+      dir="${appName}-${device}"
+      cp -r "${tarSrc}/$dir" ./
+      chmod -R ugo+w "$dir"
+      tar -czvhf $out -C . "${appName}-${device}"
     '';
 
     loadApp = pkgs.writeScriptBin "load-app" ''
       #!/usr/bin/env bash
-      cd ${tarSrc}/${appName}
-      ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/${appName}/app.json
+      cd ${tarSrc}/${appName}-${device}
+      ${alamgu.ledgerctl}/bin/ledgerctl install -f ${tarSrc}/${appName}-${device}/app.json
     '';
 
-    tarballShell = import (tarSrc + "/${appName}/shell.nix");
+    tarballShell = import (tarSrc + "/${appName}-${device}/shell.nix");
 
     speculosDeviceFlags = {
       nanos = [ "-m" "nanos" ];
-      nanosplus = [ "-m" "nanosp" "-k" "1.0.3" ];
-      nanox = [ "-m" "nanox" ];
+      nanosplus = [ "-m" "nanosp" "-a" "1" ];
+      nanox = [ "-m" "nanox" "-a" "1" ];
     }.${device} or (throw "Unknown target device: `${device}'");
 
     speculosCmd = [
@@ -270,6 +289,21 @@ in rec {
   nanos = appForDevice "nanos";
   nanosplus = appForDevice "nanosplus";
   nanox = appForDevice "nanox";
+
+  cargoFmtCheck = pkgs.stdenv.mkDerivation {
+    pname = "cargo-fmt-${appName}";
+    inherit (nanos.rootCrate) version src;
+    nativeBuildInputs = [
+      pkgs.alamguRustPackages.cargo
+      pkgs.alamguRustPackages.rustfmt
+    ];
+    buildPhase = ''
+      cargo fmt --all --check
+    '';
+    installPhase = ''
+      touch "$out"
+    '';
+  };
 
   inherit (pkgs.nodePackages) node2nix;
 

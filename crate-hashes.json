@@ -1,0 +1,15 @@
+{
+  "alamgu-async-block 0.1.0 (git+https://github.com/alamgu/alamgu-async-block#14e13f0eea18a290ece866051dd068984d07613c)": "1j3r1lr4hdg2943i8cyyfrml5zm5j9npgbfvb4g2syg1bqn911lh",
+  "bech32 0.9.1 (git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature-0#79cb4998c277161aa41bd054cfab78423804291c)": "1dzxmkjga3yrkk5v8bqwl7a8k9gc4dmx9scgjs98z7qlikf7b4xx",
+  "enum-init 0.1.0 (git+https://github.com/alamgu/enum-init#5706da92215f1a5816d704229f8924d95d954a77)": "0vh10l6glg4fry3z8am9skdlg2xcs0maqz5f24awwd9vl4ac6fv6",
+  "include_gif 0.1.0 (git+https://github.com/LedgerHQ/sdk_include_gif#699d28c6157518c4493899e2eeaa8af08346e5e7)": "185gra3i4s8cbmdhrxk2fyww0l6zlmyf2l04zbkvl9n9b6hd04pl",
+  "ledger-crypto-helpers 0.2.0 (git+https://github.com/alamgu/ledger-crypto-helpers#23ddc944eb1a1a4a41de1880096c733be884c3d7)": "0rwb0qxir2yjx35a17lb3c62x72v8afh534rzhddcvmrwypv348b",
+  "ledger-log 0.2.0 (git+https://github.com/alamgu/ledger-log#a417ebe6a426bbc6f92e92272c944b89765c384d)": "1qg502avfqiy30k17xi8gwwnawx5p53v0rcd3c566s4s5ga746jb",
+  "ledger-parser-combinators 0.1.0 (git+https://github.com/alamgu/ledger-parser-combinators?branch=async-split-take-2#2dccafbdaab9332cb209c3bb14f5e594aed2c374)": "0fm0afp0y2lj4drm49ywk0imahps8qh7sffirgvc7fvnbggvvfwz",
+  "ledger-prompts-ui 0.1.0 (git+https://github.com/alamgu/ledger-prompts-ui#87c29519a43b5144058c97eb298a5297b342e0be)": "0vvj15z52gn2gc4dlf1afqri4y95w592yhv7iimjhyv3hda863vv",
+  "ledger-proto-gen 0.1.0 (git+https://github.com/alamgu/ledger-proto-gen#0e99e209be0b7485b2cee026030cbb689f85a6d2)": "05qkvidjg3x0ykr1rd8xxab6np6hbapzn99778p1nkfbg8sldz8v",
+  "nanos_sdk 0.2.0 (git+https://github.com/alamgu/ledger-nanos-sdk.git?branch=relocating-loader-w-fixes#27c4df41a062cfc5382ef733a7f26aff10d6c6f7)": "0zg82w7xj66caxw6zf1qslz5znfhpjl16ajjc1dn7f5m9h4lfg7c",
+  "nanos_ui 0.2.0 (git+https://github.com/obsidiansystems/ledger-nanos-ui?branch=dn-make-from-pub#7d68e90f7a35736a44b8ab9cb620ed4d6cbc4495)": "0qfp96v7ay9a9wy4slcw9fd7qcdml36vs7cycmyskg42mxm0yh6r",
+  "testmacro 0.1.0 (git+https://github.com/yhql/testmacro#29a16cb8718d61b67c6c391e60c8347c064e921e)": "0agl46ilx2psfvwvg8iwfmq203xapw435h03qskxqf5dnwhy1kir",
+  "trie-enum 0.1.0 (git+https://github.com/alamgu/trie-enum#0dedf0d0a941fc47b830d25d008f5ea42fdd3db4)": "0pcqn250n8ma94zy39blgvx8mxmdk1k6wzz03zs6bb4wfcv1y7pz"
+}

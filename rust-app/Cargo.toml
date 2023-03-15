@@ -8,9 +8,9 @@ resolver = "2"
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch = "async-2", features = ["logging"] }
-ledger-log = { git = "https://github.com/alamgu/ledger-log" }
 ledger-crypto-helpers = { git = "https://github.com/alamgu/ledger-crypto-helpers" }
+ledger-log = { git = "https://github.com/alamgu/ledger-log" }
+ledger-parser-combinators = { git = "https://github.com/alamgu/ledger-parser-combinators", branch="async-split-take-2" }
 zeroize = { version = "1.5.2", default-features = false }
 pin-cell = "0.2.0"
 pin-project = "1.0.10"
@@ -51,13 +51,14 @@ path = "bin-src/main.rs"
 
 [patch."https://github.com/LedgerHQ/ledger-nanos-sdk.git".nanos_sdk]
 git = "https://github.com/alamgu/ledger-nanos-sdk.git"
-branch = "memory-fixes-pending"
+branch = "relocating-loader-w-fixes"
 [patch."https://github.com/LedgerHQ/ledger-nanos-ui.git".nanos_ui]
 git = "https://github.com/obsidiansystems/ledger-nanos-ui"
 branch = "dn-make-from-pub"
 
 [package.metadata.nanos]
 name = "Provenance"
+api_level = "1"
 path = ["44'/505'"]
 curve = ["secp256k1"]
 flags = "0"

@@ -17,7 +17,6 @@ use ledger_parser_combinators::interp::{
     Action, Buffer, DefaultInterp, DropInterp, ObserveBytes, SubInterp,
 };
 use ledger_parser_combinators::protobufs::async_parser::*;
-use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use nanos_sdk::ecc::*;
@@ -173,7 +172,7 @@ impl AsyncAPDU for GetAddress {
             let _sig = {
                 error!("Handling getAddress trampoline call");
                 let prompt_fn = || {
-                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::from_bip32(&path).public_key().ok()?;
+                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::derive_from_path(&path).public_key().ok()?;
                     let pkh = get_pkh(&pubkey).ok()?;
                     Some((pubkey, pkh))
                 };
@@ -554,7 +553,7 @@ impl AsyncAPDU for Sign {
                 let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
 
                 if let Some(sig) = run_fut(trampoline(), || async {
-                    let sk = Secp256k1::from_bip32(&path);
+                    let sk = Secp256k1::derive_from_path(&path);
                     let prompt_fn = || {
                         let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
                         scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
