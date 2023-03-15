@@ -45,10 +45,6 @@ pub struct FutureTrampoline {
 }
 pub struct FutureTrampolineRunner;
 
-const fn size_of_val_c<T>(_: &T) -> usize {
-    core::mem::size_of::<T>()
-}
-
 pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(
     ft: &'static RefCell<FutureTrampoline>,
     fut: FF,
@@ -420,7 +416,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
-                    || scroller("Multi-send", |w| Ok(())),
+                    || scroller("Multi-send", |_| Ok(())),
                     MsgMultiSendInterp {
                         field_inputs: InputInterp {
                             field_address: show_string!(120, "From address"),
@@ -433,7 +429,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 delegate: TrampolineParse(Preaction(
-                    || scroller("Delegate", |w| Ok(())),
+                    || scroller("Delegate", |_| Ok(())),
                     MsgDelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -441,7 +437,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 undelegate: TrampolineParse(Preaction(
-                    || scroller("Undelegate", |w| Ok(())),
+                    || scroller("Undelegate", |_| Ok(())),
                     MsgUndelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -518,7 +514,7 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            let mut known_txn = NoinlineFut((|mut bs: ByteStream| async move {
+            let mut known_txn = NoinlineFut((|bs: ByteStream| async move {
                 {
                     let mut txn = LengthTrack(bs, 0);
                     TXN_MESSAGES_PARSER
