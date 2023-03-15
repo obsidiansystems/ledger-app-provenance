@@ -517,9 +517,7 @@ impl AsyncAPDU for Sign {
             let mut known_txn = NoinlineFut((|bs: ByteStream| async move {
                 {
                     let mut txn = LengthTrack(bs, 0);
-                    TXN_MESSAGES_PARSER
-                        .parse(&mut txn, length)
-                        .await
+                    TXN_MESSAGES_PARSER.parse(&mut txn, length).await
                 }
             })(input[0].clone()))
             .await;

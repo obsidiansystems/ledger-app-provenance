@@ -22,7 +22,9 @@ macro_rules! call_c_api_function {
     }
 }
 
-pub fn format_signature<const K: usize>((signature, length, _): &([u8; K], u32, u32)) -> Option<[u8; 64]> {
+pub fn format_signature<const K: usize>(
+    (signature, length, _): &([u8; K], u32, u32),
+) -> Option<[u8; 64]> {
     let mut r: *const u8 = core::ptr::null();
     let mut r_len: usize = 0;
     let mut s: *const u8 = core::ptr::null();
