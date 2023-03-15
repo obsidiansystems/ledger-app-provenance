@@ -1,6 +1,6 @@
 {
   "alamgu-async-block 0.1.0 (git+https://github.com/alamgu/alamgu-async-block#14e13f0eea18a290ece866051dd068984d07613c)": "1j3r1lr4hdg2943i8cyyfrml5zm5j9npgbfvb4g2syg1bqn911lh",
-  "bech32 0.9.1 (git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature-0#79cb4998c277161aa41bd054cfab78423804291c)": "1dzxmkjga3yrkk5v8bqwl7a8k9gc4dmx9scgjs98z7qlikf7b4xx",
+  "bech32 0.9.1 (git+https://github.com/obsidiansystems/rust-bech32?branch=std-feature-1#5299cc1099d0aceb53efed696e89e73b225f7a0c)": "10wajjkpv47mh0d30x50wwvyz181r1k0qfqh1jxg10k0gdg07x6j",
   "enum-init 0.1.0 (git+https://github.com/alamgu/enum-init#5706da92215f1a5816d704229f8924d95d954a77)": "0vh10l6glg4fry3z8am9skdlg2xcs0maqz5f24awwd9vl4ac6fv6",
   "include_gif 0.1.0 (git+https://github.com/LedgerHQ/sdk_include_gif#699d28c6157518c4493899e2eeaa8af08346e5e7)": "185gra3i4s8cbmdhrxk2fyww0l6zlmyf2l04zbkvl9n9b6hd04pl",
   "ledger-crypto-helpers 0.2.0 (git+https://github.com/alamgu/ledger-crypto-helpers#23ddc944eb1a1a4a41de1880096c733be884c3d7)": "0rwb0qxir2yjx35a17lb3c62x72v8afh534rzhddcvmrwypv348b",
