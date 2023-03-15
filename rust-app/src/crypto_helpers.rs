@@ -22,7 +22,9 @@ macro_rules! call_c_api_function {
     }
 }
 
-pub fn format_signature<const K: usize>((signature, length): &([u8; K], u32)) -> Option<[u8; 64]> {
+pub fn format_signature<const K: usize>(
+    (signature, length, _): &([u8; K], u32, u32),
+) -> Option<[u8; 64]> {
     let mut r: *const u8 = core::ptr::null();
     let mut r_len: usize = 0;
     let mut s: *const u8 = core::ptr::null();
@@ -58,13 +60,13 @@ pub fn format_signature<const K: usize>((signature, length): &([u8; K], u32)) ->
 
 pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], CxError> {
     Ok(compress_public_key(
-        Secp256k1::from_bip32(path).public_key()?,
+        Secp256k1::derive_from_path(path).public_key()?,
     ))
 }
 
 /*
 pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], SyscallError> {
-    Secp256k1::from_bip32(path).public_key()
+    Secp256k1::derive_from_path(path).public_key()
 }
 
 /*
@@ -72,7 +74,7 @@ pub fn get_pubkey(path: &[u32]) -> Result<[u8; 33], SyscallError> {
 pub fn get_private_key(
     path: &[u32],
 ) -> Result<nanos_sdk::bindings::cx_ecfp_private_key_t, SyscallError> {
-    let sk = Secp256k1::from_bip32(path);
+    let sk = Secp256k1::derive_from_path(path);
     let raw_key = bip32_derive_secp256k1(path)?;
     nanos_sdk::ecc::ec_init_key(CurvesId::Secp256k1, &raw_key)
 }

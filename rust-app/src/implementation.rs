@@ -17,7 +17,6 @@ use ledger_parser_combinators::interp::{
     Action, Buffer, DefaultInterp, DropInterp, ObserveBytes, SubInterp,
 };
 use ledger_parser_combinators::protobufs::async_parser::*;
-use ledger_parser_combinators::protobufs::schema;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use nanos_sdk::ecc::*;
@@ -45,10 +44,6 @@ pub struct FutureTrampoline {
     pub fut: Option<Pin<&'static mut (dyn Future<Output = ()> + 'static)>>,
 }
 pub struct FutureTrampolineRunner;
-
-const fn size_of_val_c<T>(_: &T) -> usize {
-    core::mem::size_of::<T>()
-}
 
 pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(
     ft: &'static RefCell<FutureTrampoline>,
@@ -173,7 +168,7 @@ impl AsyncAPDU for GetAddress {
             let _sig = {
                 error!("Handling getAddress trampoline call");
                 let prompt_fn = || {
-                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::from_bip32(&path).public_key().ok()?;
+                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::derive_from_path(&path).public_key().ok()?;
                     let pkh = get_pkh(&pubkey).ok()?;
                     Some((pubkey, pkh))
                 };
@@ -421,7 +416,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
-                    || scroller("Multi-send", |w| Ok(())),
+                    || scroller("Multi-send", |_| Ok(())),
                     MsgMultiSendInterp {
                         field_inputs: InputInterp {
                             field_address: show_string!(120, "From address"),
@@ -434,7 +429,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 delegate: TrampolineParse(Preaction(
-                    || scroller("Delegate", |w| Ok(())),
+                    || scroller("Delegate", |_| Ok(())),
                     MsgDelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -442,7 +437,7 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                     },
                 )),
                 undelegate: TrampolineParse(Preaction(
-                    || scroller("Undelegate", |w| Ok(())),
+                    || scroller("Undelegate", |_| Ok(())),
                     MsgUndelegateInterp {
                         field_amount: show_coin(),
                         field_delegator_address: show_string!(120, "Delegator Address"),
@@ -519,12 +514,10 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            let mut known_txn = NoinlineFut((|mut bs: ByteStream| async move {
+            let mut known_txn = NoinlineFut((|bs: ByteStream| async move {
                 {
                     let mut txn = LengthTrack(bs, 0);
-                    TrampolineParse(TXN_MESSAGES_PARSER)
-                        .parse(&mut txn, length)
-                        .await
+                    TXN_MESSAGES_PARSER.parse(&mut txn, length).await
                 }
             })(input[0].clone()))
             .await;
@@ -554,7 +547,7 @@ impl AsyncAPDU for Sign {
                 let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
 
                 if let Some(sig) = run_fut(trampoline(), || async {
-                    let sk = Secp256k1::from_bip32(&path);
+                    let sk = Secp256k1::derive_from_path(&path);
                     let prompt_fn = || {
                         let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
                         scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
