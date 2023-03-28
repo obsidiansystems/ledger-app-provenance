@@ -3,7 +3,8 @@
 #![test_runner(crate::my_runner)]
 #![no_main]
 
-use nanos_sdk::{debug_print, exit_app};
+use nanos_sdk::exit_app;
+use nanos_sdk::testing::debug_print;
 
 #[no_mangle]
 extern "C" fn sample_main() {
