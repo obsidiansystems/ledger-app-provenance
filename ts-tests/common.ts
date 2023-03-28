@@ -151,8 +151,8 @@ const sendCommandExpectFail = async function(command : any) {
   await Axios.delete(BASE_URL + "/events");
 
   const transport = await Transport.open(BASE_URL + "/apdu");
-  const client = new Common(transport, "alamgu-example");
-  // client.sendChunks = client.sendWithBlocks; // Use Block protocol
+  let client = new Provenance(transport);
+  client.sendChunks = client.sendWithBlocks; // Use Block protocol
 
   try { await command(client); } catch(e) {
     return;
