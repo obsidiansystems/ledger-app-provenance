@@ -1,5 +1,6 @@
 use core::cell::RefCell;
 use core::pin::Pin;
+use core::borrow::Borrow;
 
 use alamgu_async_block::*;
 use provenance::implementation::*;
@@ -68,7 +69,7 @@ states {
     };
 
     // Draw some 'welcome' screen
-    noinline(|| menu(&states, &idle_menu, &busy_menu));
+    noinline(|| menu(states.borrow(), &idle_menu, &busy_menu));
     loop {
         // Wait for either a specific button push to exit the app
         // or an APDU command
@@ -85,24 +86,24 @@ states {
                     Err(sw) => comm.borrow_mut().reply(sw),
                 };
                 // Reset BusyMenu if we are done handling APDU
-                match states {
+                match states.as_ref().get_ref() {
                     ParsersState::NoState => busy_menu = BusyMenu::Working,
                     _ => {}
                 };
-                noinline(|| menu(&states, &idle_menu, &busy_menu));
+                noinline(|| menu(states.borrow(), &idle_menu, &busy_menu));
                 trace!("Command done");
             }
             io::Event::Button(btn) => {
                 trace!("Button received");
                 match states.is_no_state() {
-                    true => match noinline(|| idle_menu.update(btn)) {
+                    true => match noinline(|| handle_menu_button_event(&mut idle_menu, btn)) {
                         Some(DoExitApp) => {
                             info!("Exiting app at user direction via root menu");
                             nanos_sdk::exit_app(0)
                         }
                         _ => (),
                     },
-                    false => match noinline(|| busy_menu.update(btn)) {
+                    false => match noinline(|| handle_menu_button_event(&mut busy_menu, btn)) {
                         Some(DoCancel) => {
                             info!("Resetting at user direction via busy menu");
                             noinline(|| reset_parsers_state(&mut states))
@@ -110,7 +111,7 @@ states {
                         _ => (),
                     },
                 };
-                menu(&states, &idle_menu, &busy_menu);
+                menu(states.borrow(), &idle_menu, &busy_menu);
                 trace!("Button done");
             }
             io::Event::Ticker => {
