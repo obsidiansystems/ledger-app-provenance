@@ -1,6 +1,6 @@
+use core::borrow::Borrow;
 use core::cell::RefCell;
 use core::pin::Pin;
-use core::borrow::Borrow;
 
 use alamgu_async_block::*;
 use provenance::implementation::*;
@@ -62,8 +62,7 @@ extern "C" fn sample_main() {
         core::mem::size_of::<HostIOState>()
     );
 
-    let menu = |states: &ParsersState, idle: &IdleMenuWithSettings, busy: &BusyMenu| match
-states {
+    let menu = |states: &ParsersState, idle: &IdleMenuWithSettings, busy: &BusyMenu| match states {
         ParsersState::NoState => show_menu(idle),
         _ => show_menu(busy),
     };
