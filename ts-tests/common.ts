@@ -4,7 +4,7 @@ import Transport from "./http-transport";
 import Provenance from "hw-app-hash";
 import { expect } from 'chai';
 
-let ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
+const ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
 
 const API_PORT: number = 5005;
 
@@ -146,4 +146,27 @@ const sendCommandAndAccept = async function(command : any, prompts : any[]) {
   }
 }
 
-export { sendCommandAndAccept, BASE_URL }
+const sendCommandExpectFail = async function(command : any) {
+  await setAcceptAutomationRules();
+  await Axios.delete(BASE_URL + "/events");
+
+  const transport = await Transport.open(BASE_URL + "/apdu");
+  let client = new Provenance(transport);
+  client.sendChunks = client.sendWithBlocks; // Use Block protocol
+
+  try { await command(client); } catch(e) {
+    return;
+  }
+  expect.fail("Command should have failed");
+}
+
+let toggleBlindSigningSettings = async function() {
+  await Axios.post(BASE_URL + "/button/right", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/right", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/left", {"action":"press-and-release"});
+}
+
+export { sendCommandAndAccept, BASE_URL, sendCommandExpectFail, toggleBlindSigningSettings }

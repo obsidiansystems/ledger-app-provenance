@@ -1,16 +1,19 @@
+use core::borrow::Borrow;
 use core::cell::RefCell;
 use core::pin::Pin;
 
 use alamgu_async_block::*;
 use provenance::implementation::*;
 use provenance::interface::*;
-
-use ledger_prompts_ui::RootMenu;
+use provenance::menu::*;
+use provenance::settings::*;
 
 use nanos_sdk::io;
 nanos_sdk::set_panic!(nanos_sdk::exiting_panic);
 
 use provenance::*;
+
+use ledger_prompts_ui::{handle_menu_button_event, show_menu};
 
 static mut COMM_CELL: Option<RefCell<io::Comm>> = None;
 
@@ -45,8 +48,11 @@ extern "C" fn sample_main() {
     let host_io = HostIO(unsafe { HOST_IO_STATE.as_ref().unwrap() });
     let mut states = unsafe { Pin::new_unchecked(&mut STATES_BACKING) };
 
-    let mut idle_menu = RootMenu::new([concat!("Provenance ", env!("CARGO_PKG_VERSION")), "Exit"]);
-    let mut busy_menu = RootMenu::new(["Working...", "Cancel"]);
+    let mut idle_menu = IdleMenuWithSettings {
+        idle_menu: IdleMenu::AppMain,
+        settings: Settings::new(),
+    };
+    let mut busy_menu = BusyMenu::Working;
 
     info!("Provenance App {}", env!("CARGO_PKG_VERSION"));
     info!(
@@ -56,19 +62,17 @@ extern "C" fn sample_main() {
         core::mem::size_of::<HostIOState>()
     );
 
-    let // Draw some 'welcome' screen
-        menu = |states : &ParsersState, idle : & mut RootMenu<2>, busy : & mut RootMenu<2>| {
-            match states {
-                ParsersState::NoState => idle.show(),
-                _ => busy.show(),
-            }
-        };
+    let menu = |states: &ParsersState, idle: &IdleMenuWithSettings, busy: &BusyMenu| match states {
+        ParsersState::NoState => show_menu(idle),
+        _ => show_menu(busy),
+    };
 
-    noinline(|| menu(&states, &mut idle_menu, &mut busy_menu));
+    // Draw some 'welcome' screen
+    noinline(|| menu(states.borrow(), &idle_menu, &busy_menu));
     loop {
         // Wait for either a specific button push to exit the app
         // or an APDU command
-        let evt = comm.borrow_mut().next_event();
+        let evt = comm.borrow_mut().next_event::<Ins>();
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
@@ -80,28 +84,33 @@ extern "C" fn sample_main() {
                     }
                     Err(sw) => comm.borrow_mut().reply(sw),
                 };
-                noinline(|| menu(&states, &mut idle_menu, &mut busy_menu));
+                // Reset BusyMenu if we are done handling APDU
+                match states.as_ref().get_ref() {
+                    ParsersState::NoState => busy_menu = BusyMenu::Working,
+                    _ => {}
+                };
+                noinline(|| menu(states.borrow(), &idle_menu, &busy_menu));
                 trace!("Command done");
             }
             io::Event::Button(btn) => {
                 trace!("Button received");
                 match states.is_no_state() {
-                    true => match noinline(|| idle_menu.update(btn)) {
-                        Some(1) => {
+                    true => match noinline(|| handle_menu_button_event(&mut idle_menu, btn)) {
+                        Some(DoExitApp) => {
                             info!("Exiting app at user direction via root menu");
                             nanos_sdk::exit_app(0)
                         }
                         _ => (),
                     },
-                    false => match noinline(|| busy_menu.update(btn)) {
-                        Some(1) => {
+                    false => match noinline(|| handle_menu_button_event(&mut busy_menu, btn)) {
+                        Some(DoCancel) => {
                             info!("Resetting at user direction via busy menu");
                             noinline(|| reset_parsers_state(&mut states))
                         }
                         _ => (),
                     },
                 };
-                menu(&states, &mut idle_menu, &mut busy_menu);
+                menu(states.borrow(), &idle_menu, &busy_menu);
                 trace!("Button done");
             }
             io::Event::Ticker => {
