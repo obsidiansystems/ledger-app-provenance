@@ -50,7 +50,7 @@ extern "C" fn sample_main() {
 
     let mut idle_menu = IdleMenuWithSettings {
         idle_menu: IdleMenu::AppMain,
-        settings: Settings::new(),
+        settings: Settings::default(),
     };
     let mut busy_menu = BusyMenu::Working;
 

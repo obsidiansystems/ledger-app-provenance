@@ -4,7 +4,21 @@ import Transport from "./http-transport";
 import Provenance from "hw-app-hash";
 import { expect } from 'chai';
 
-const ignoredScreens = [ "W e l c o m e", "Cancel", "Working...", "Exit", "Provenance 0.0.1"]
+export const VERSION = {
+  major: 0,
+  minor: 0,
+  patch: 1,
+};
+
+const ignoredScreens = [ "Cancel", "Working...", "Quit", "Version"
+
+                         /* App name and version */
+                         , "Provenance", `${VERSION.major}.${VERSION.minor}.${VERSION.patch}`
+
+                         , "Settings", "Blind Signing", "Enabled", "Disabled", "Back"
+                         /* The next ones are specifically for S+ in which OCR is broken */
+                         , "ettings", "Blind igning"
+                       ];
 
 const API_PORT: number = 5005;
 
@@ -162,10 +176,12 @@ const sendCommandExpectFail = async function(command : any) {
 
 let toggleBlindSigningSettings = async function() {
   await Axios.post(BASE_URL + "/button/right", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/right", {"action":"press-and-release"});
   await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
   await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
   await Axios.post(BASE_URL + "/button/right", {"action":"press-and-release"});
   await Axios.post(BASE_URL + "/button/both", {"action":"press-and-release"});
+  await Axios.post(BASE_URL + "/button/left", {"action":"press-and-release"});
   await Axios.post(BASE_URL + "/button/left", {"action":"press-and-release"});
 }
 

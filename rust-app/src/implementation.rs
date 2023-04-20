@@ -150,6 +150,9 @@ where
     }
 }
 
+// Need a path of length 5, as make_bip32_path panics with smaller paths
+pub const BIP32_PREFIX: [u32; 3] = nanos_sdk::ecc::make_bip32_path(b"m/44'/505'/0'");
+
 #[derive(Copy, Clone)]
 pub struct GetAddress; // (pub GetAddressImplT);
 
@@ -164,6 +167,12 @@ impl AsyncAPDU for GetAddress {
             let path = BIP_PATH_PARSER.parse(&mut input[0].clone()).await;
 
             error!("Got path");
+
+            if !path.starts_with(&BIP32_PREFIX[0..2]) {
+                reject::<()>().await;
+            }
+
+            error!("Accept path prefix");
 
             let _sig = {
                 error!("Handling getAddress trampoline call");
@@ -545,6 +554,12 @@ impl AsyncAPDU for Sign {
                 }
 
                 let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
+
+                if !path.starts_with(&BIP32_PREFIX[0..2]) {
+                    reject::<()>().await;
+                }
+
+                trace!("Accept path prefix");
 
                 if let Some(sig) = run_fut(trampoline(), || async {
                     let sk = Secp256k1::derive_from_path(&path);
