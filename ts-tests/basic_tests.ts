@@ -32,6 +32,30 @@ describe('basic tests', () => {
       return;
     }, []);
   });
+
+  it('does address verification', async () => {
+
+    await sendCommandAndAccept(async (client : Provenance) => {
+      const rv = await client.verifyAddress("44'/505'/0'");
+      expect(new Buffer(rv.address).toString()).to.equal("pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd");
+      expect(new Buffer(rv.publicKey).toString('hex')).to.equal("0368a7dc46a8c9e99872567b84cb6693b07f04ad25c9e8f8377654f4772d35cff1");
+      return;
+    }, [
+      {
+        "header": "Provide Public Key",
+        "prompt": "",
+      },
+      {
+        "header": "Address",
+        "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+      },
+      {
+        "text": "Confirm",
+        "x": "<patched>",
+        "y": "<patched>",
+      },
+    ]);
+  });
 });
 
 function testTransaction(path: string, txn0: string, prompts: any[]) {

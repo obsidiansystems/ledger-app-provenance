@@ -145,7 +145,12 @@ fn handle_apdu<'a: 'b, 'b>(
             ]);
             comm.borrow_mut().append(b"Provenance");
         }
-        Ins::GetPubkey => poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress)?,
+        Ins::VerifyAddress => {
+            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress::<true>)?
+        }
+        Ins::GetPubkey => {
+            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, GetAddress::<false>)?
+        }
         Ins::Sign => {
             trace!("Handling sign");
             poll_apdu_handler(state, io, &mut FutureTrampolineRunner, Sign)?
