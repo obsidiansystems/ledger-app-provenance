@@ -476,7 +476,60 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
             field_non_critical_extension_options: DropInterp,
         },
     ),
-    field_auth_info_bytes: DropInterp,
+    field_auth_info_bytes: BytesAsMessage(
+        AuthInfo,
+        AuthInfoUnorderedInterp {
+            field_signer_infos: DropInterp,
+            field_tip: DropInterp,
+            field_fee: Action(
+                FeeUnorderedInterp {
+                    field_amount: CoinUnorderedInterp {
+                        field_denom: Buffer::<20>,
+                        field_amount: Buffer::<100>,
+                    },
+                    field_gas_limit: DefaultInterp,
+                    field_payer: DropInterp,
+                    field_granter: DropInterp,
+                },
+                |o: FeeValue<
+                    Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                    Option<u64>,
+                    Option<()>,
+                    Option<()>,
+                >|
+                 -> Option<()> {
+                    scroller("Fees", |w| {
+                        let x = core::str::from_utf8(
+                            o.field_amount
+                                .as_ref()
+                                .ok_or(ScrollerError)?
+                                .field_amount
+                                .as_ref()
+                                .ok_or(ScrollerError)?
+                                .as_slice(),
+                        )?;
+                        let y = core::str::from_utf8(
+                            o.field_amount
+                                .as_ref()
+                                .ok_or(ScrollerError)?
+                                .field_denom
+                                .as_ref()
+                                .ok_or(ScrollerError)?
+                                .as_slice(),
+                        )?;
+                        write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
+                    })?;
+                    scroller("Gas Limit", |w| {
+                        Ok(write!(
+                            w,
+                            "{}",
+                            o.field_gas_limit.as_ref().ok_or(ScrollerError)?
+                        )?)
+                    })
+                },
+            ),
+        },
+    ),
     field_chain_id: DropInterp,
     field_account_number: DropInterp,
 });
