@@ -76,6 +76,14 @@ describe("Protobufs tests", function() {
           "prompt": "1600000000 nhash",
         },
         {
+          "header": "Fees",
+          "prompt": "1702845210 nhash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "81262",
+        },
+        {
           "header": "Chain ID",
           "prompt": "pio-testnet-1",
         },
@@ -175,6 +183,14 @@ describe("Protobufs tests", function() {
         {
           "header": "Amount",
           "prompt": "1000 nhash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "1373699763700 nhash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "3868754",
         },
         {
           "header": "Chain ID",
