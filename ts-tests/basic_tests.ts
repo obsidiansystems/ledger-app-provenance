@@ -243,6 +243,47 @@ describe("Protobufs tests", function() {
         },
       ])
   );
+
+  it.skip("Can sign an undelegate transaction",
+     // https://explorer.provenance.io/tx/AEDCCAC1DF43537D459DE6E28E62C6211366975ECBD2074C9D44488847E1A4AD/10575218
+    testTransaction("44'/505'/0'",
+      Buffer.from("Cp8BCpwBCiUvY29zbW9zLnN0YWtpbmcudjFiZXRhMS5Nc2dVbmRlbGVnYXRlEnMKKXBiMWNwN2x2dmRoNWs3eThqMDN6cGtrbmt1M2gwNmMzdzlxbmw5Y2wzEjBwYnZhbG9wZXIxY3A3bHZ2ZGg1azd5OGowM3pwa2tua3UzaDA2YzN3OXF1Z2ZnN3QaFAoFbmhhc2gSCzkzMTQ4NzA3NTY1Em0KUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQNGKvLHB9R8a1", "base64").toString("hex"),
+      [
+        {
+          "header": "Undelegate",
+          "prompt": "",
+        },
+        {
+          "header": "Delegator Address",
+          "prompt": "pb1cp7lvvdh5k7y8j03zpkknku3h06c3w9qnl9cl3",
+        },
+        {
+          "header": "Validator Address",
+          "prompt": "pbvaloper1cp7lvvdh5k7y8j03zpkknku3h06c3w9qugfg7t",
+        },
+        {
+          "header": "Amount",
+          "prompt": "93148707565 nhash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "1014532000 nhash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "507266",
+        },
+        {
+          "header": "With PKH",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11,
+        },
+      ])
+  );
 })
 
 describe("get version tests", function() {
