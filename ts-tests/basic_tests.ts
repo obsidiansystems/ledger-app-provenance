@@ -73,11 +73,11 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "1600000000 nhash",
+          "prompt": "1.6 hash",
         },
         {
           "header": "Fees",
-          "prompt": "1702845210 nhash",
+          "prompt": "1.70284521 hash",
         },
         {
           "header": "Gas Limit",
@@ -120,11 +120,11 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "10000000000000 nhash",
+          "prompt": "10000.0 hash",
         },
         {
           "header": "Fees",
-          "prompt": "166777035 nhash",
+          "prompt": "0.166777035 hash",
         },
         {
           "header": "Gas Limit",
@@ -166,7 +166,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "10000000 nhash",
+          "prompt": "0.01 hash",
         },
         {
           "header": "Delegate",
@@ -182,11 +182,11 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "1000 nhash",
+          "prompt": "0.000001 hash",
         },
         {
           "header": "Fees",
-          "prompt": "1373699763700 nhash",
+          "prompt": "1373.6997637 hash",
         },
         {
           "header": "Gas Limit",
@@ -222,11 +222,11 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "49990000000000 nhash",
+          "prompt": "49990.0 hash",
         },
         {
           "header": "Fees",
-          "prompt": "381000000 nhash",
+          "prompt": "0.381 hash",
         },
         {
           "header": "Gas Limit",
@@ -263,11 +263,11 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "93148707565 nhash",
+          "prompt": "93.148707565 hash",
         },
         {
           "header": "Fees",
-          "prompt": "1014532000 nhash",
+          "prompt": "1.014532 hash",
         },
         {
           "header": "Gas Limit",
