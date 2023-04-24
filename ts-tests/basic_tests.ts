@@ -208,24 +208,29 @@ describe("Protobufs tests", function() {
       ])
   );
   it("Can sign a deposit transaction",
+     // https://explorer.provenance.io/tx/BE8AF9CF1207EF595D09C64FDE6BCD4850ED837C0659379CE0FAB5417E4402B7/9501957
     testTransaction("44'/505'/0'",
-      "0a660a640a1e2f636f736d6f732e676f762e763162657461312e4d73674465706f7369741242084b1229747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781a130a056e68617368120a3530303030303030303012560a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a0208011852120210001a00",
+      Buffer.from("CmUKYwoZL2Nvc21vcy5nb3YudjEuTXNnRGVwb3NpdBJGCC8SKXBiMXZqMHcwYXNnamRubGF0M2poMHAzYTRlNGphbXU4cDI2eTIwMDBrGhcKBW5oYXNoEg40OTk5MDAwMDAwMDAwMBJsClAKRgofL2Nvc21vcy5jcnlwdG8uc2VjcDI1NmsxLlB1YktleRIjCiECjRH5YYOCYVTDDV9cgZaE9tul9n87abNghgGfm2oKCFcSBAoCCAEYAhIYChIKBW5oYXNoEgkzODEwMDAwMDAQwJoM", "base64").toString("hex"),
       [
         {
           "header": "Proposal ID",
-          "prompt": "75",
+          "prompt": "47",
         },
         {
           "header": "Depositor Address",
-          "prompt": "tp1g5ugfegkl5gmn049n5a9hgjn3ged0ekp8f2fwx",
+          "prompt": "pb1vj0w0asgjdnlat3jh0p3a4e4jamu8p26y2000k",
         },
         {
           "header": "Amount",
-          "prompt": "5000000000 nhash",
+          "prompt": "49990000000000 nhash",
         },
         {
-          "header": "Chain ID",
-          "prompt": "",
+          "header": "Fees",
+          "prompt": "381000000 nhash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "200000",
         },
         {
           "header": "With PKH",
