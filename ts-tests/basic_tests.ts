@@ -90,6 +90,49 @@ describe("Protobufs tests", function() {
         },
       ])
   );
+  it("Can sign a send transaction (2)",
+     // https://explorer.provenance.io/tx/3877B06AD96A7AF8D7A944D1D7450EBA4836AF7491099E5E81B0F24E59BD9B5A/10597048
+    testTransaction("44'/505'/0'",
+      Buffer.from("CpIBCo8BChwvY29zbW9zLmJhbmsudjFiZXRhMS5Nc2dTZW5kEm8KKXBiMWtxdXZoOW1xa3puNnFrc2xjc3dtNjRhZWZjZ242OXc2cnE4bmY0EilwYjF6c2hlcnIzZWF0Nmd2cTlwdGczbTBuM2RqMzN4ZjJtd2V2azNjYRoXCgVuaGFzaBIOMTAwMDAwMDAwMDAwMDASbQpRCkYKHy9jb3Ntb3MuY3J5cHRvLnNlY3AyNTZrMS5QdWJLZXkSIwohAl6z93YkvBJAso9foCgXIRyOyXPo9Uwt2mDpQg/Lj6c9EgQKAggBGJwDEhgKEgoFbmhhc2gSCTE2Njc3NzAzNRD7qwU=", "base64").toString("hex"),
+
+      [
+        {
+          "header": "Transfer",
+          "prompt": "HASH",
+        },
+        {
+          "header": "From",
+          "prompt": "pb1kquvh9mqkzn6qkslcswm64aefcgn69w6rq8nf4",
+          "paginate": true,
+        },
+        {
+          "header": "To",
+          "prompt": "pb1zsherr3eat6gvq9ptg3m0n3dj33xf2mwevk3ca",
+          "paginate": true,
+        },
+        {
+          "header": "Amount",
+          "prompt": "10000000000000 nhash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "166777035 nhash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "87547",
+        },
+        {
+          "header": "With PKH",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11
+        },
+      ])
+  );
   it.skip("Can sign a delegate transaction",
     testTransaction("44'/505'/0'",
       "0a9c010a99010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512720a29747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781230747076616c6f706572317467713663707536686d7372766b76647538326a39397473787877377171616a6e38343366651a130a056e68617368120a32303030303030303030126d0a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a020801185212190a130a056e68617368120a3630393835363232323510fda6091a406d24f94f67322bdc8b5ab6b418a12ed872e8feed02411570ff62946130e51e4a62fed9ca3d8b3abaa0c0197f314ecf2b845d200ca3c584439f35478ca1dcc1bd",
