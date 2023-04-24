@@ -547,7 +547,7 @@ MessagesInterp {
     Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
     Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
     BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
-    Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
+    Deposit: MsgDeposit = b"/cosmos.gov.v1.MsgDeposit"
 }
 }
 
