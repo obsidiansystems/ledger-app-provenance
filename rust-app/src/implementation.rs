@@ -292,12 +292,12 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
     Action(
         CoinUnorderedInterp {
             field_denom: Buffer::<20>,
-            field_amount: Buffer::<100>,
+            field_amount: Buffer::<64>,
         },
         move |CoinValue {
                   field_denom,
                   field_amount,
-              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
+              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>| {
             // Consider shifting the decimals for nhash to hash here.
             scroller("Amount", |w| {
                 let x =
@@ -376,13 +376,13 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                         field_to_address: Buffer::<120>,
                         field_amount: CoinUnorderedInterp {
                             field_denom: Buffer::<20>,
-                            field_amount: Buffer::<100>,
+                            field_amount: Buffer::<64>,
                         },
                     },
                     |o: MsgSendValue<
                         Option<ArrayVec<u8, 120>>,
                         Option<ArrayVec<u8, 120>>,
-                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
                     >|
                      -> Option<()> {
                         scroller("Transfer", |w| Ok(write!(w, "HASH")?));
@@ -485,14 +485,14 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                 FeeUnorderedInterp {
                     field_amount: CoinUnorderedInterp {
                         field_denom: Buffer::<20>,
-                        field_amount: Buffer::<100>,
+                        field_amount: Buffer::<64>,
                     },
                     field_gas_limit: DefaultInterp,
                     field_payer: DropInterp,
                     field_granter: DropInterp,
                 },
                 |o: FeeValue<
-                    Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                    Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
                     Option<u64>,
                     Option<()>,
                     Option<()>,
