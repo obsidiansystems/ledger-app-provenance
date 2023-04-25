@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "alamgu-async-block"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/alamgu-async-block#14e13f0eea18a290ece866051dd068984d07613c"
+source = "git+https://github.com/alamgu/alamgu-async-block#8d11f1b3d5877c0196269cbf800a875ad9dd36d2"
 dependencies = [
  "arrayvec",
  "ledger-log",
@@ -187,7 +187,7 @@ dependencies = [
 [[package]]
 name = "ledger-parser-combinators"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=async-split-take-2#2dccafbdaab9332cb209c3bb14f5e594aed2c374"
+source = "git+https://github.com/alamgu/ledger-parser-combinators?branch=async-split-take-2#8b76275b157b71094e6d399b0a7a1ce7773c5ef2"
 dependencies = [
  "arrayvec",
  "bstringify",
