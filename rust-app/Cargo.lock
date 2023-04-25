@@ -217,7 +217,7 @@ dependencies = [
 [[package]]
 name = "ledger-proto-gen"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/ledger-proto-gen#0e99e209be0b7485b2cee026030cbb689f85a6d2"
+source = "git+https://github.com/alamgu/ledger-proto-gen#511261c6e1c43cb8bc2489c94d343af7e34ef8da"
 dependencies = [
  "protobuf",
  "protoc-rust",
