@@ -468,9 +468,9 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                 default: RawAnyInterp {
                     field_type_url: Preaction(
                         || {
-                            // if no_unsafe { None } else {
-                            scroller("Unknown", |w| Ok(write!(w, "Message")?))
-                            //}
+                            // scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                            // Always reject unknown messages
+                            None
                         },
                         show_string!(120, "Type URL"),
                     ),
@@ -692,12 +692,7 @@ impl AsyncAPDU for Sign {
 
                 if let Some(sig) = run_fut(trampoline(), || async {
                     let sk = Secp256k1::derive_from_path(&path);
-                    let prompt_fn = || {
-                        let pkh = get_pkh(&compress_public_key(sk.public_key().ok()?)).ok()?;
-                        scroller("With PKH", |w| Ok(write!(w, "{}", pkh)?))?;
-                        final_accept_prompt(&[])
-                    };
-                    if prompt_fn().is_none() {
+                    if final_accept_prompt(&[]).is_none() {
                         reject::<()>().await;
                     }
                     format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)

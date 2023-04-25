@@ -6,6 +6,8 @@
 #![feature(generic_associated_types)]
 #![feature(future_poll_fn)]
 #![feature(type_alias_impl_trait)]
+#![feature(cfg_version)]
+#![cfg_attr(version("1.71"), feature(impl_trait_in_assoc_type))]
 #![cfg_attr(all(target_family = "bolos", test), no_main)]
 #![cfg_attr(target_family = "bolos", feature(custom_test_frameworks))]
 #![reexport_test_harness_main = "test_main"]
