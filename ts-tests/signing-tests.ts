@@ -200,10 +200,10 @@ describe("Protobufs tests", function() {
       ])
   );
 
-  it.skip("Can sign an undelegate transaction",
+  it("Can sign an undelegate transaction",
      // https://explorer.provenance.io/tx/AEDCCAC1DF43537D459DE6E28E62C6211366975ECBD2074C9D44488847E1A4AD/10575218
     testTransaction("44'/505'/0'",
-      Buffer.from("Cp8BCpwBCiUvY29zbW9zLnN0YWtpbmcudjFiZXRhMS5Nc2dVbmRlbGVnYXRlEnMKKXBiMWNwN2x2dmRoNWs3eThqMDN6cGtrbmt1M2gwNmMzdzlxbmw5Y2wzEjBwYnZhbG9wZXIxY3A3bHZ2ZGg1azd5OGowM3pwa2tua3UzaDA2YzN3OXF1Z2ZnN3QaFAoFbmhhc2gSCzkzMTQ4NzA3NTY1Em0KUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQNGKvLHB9R8a1", "base64").toString("hex"),
+      Buffer.from("Cp8BCpwBCiUvY29zbW9zLnN0YWtpbmcudjFiZXRhMS5Nc2dVbmRlbGVnYXRlEnMKKXBiMWNwN2x2dmRoNWs3eThqMDN6cGtrbmt1M2gwNmMzdzlxbmw5Y2wzEjBwYnZhbG9wZXIxY3A3bHZ2ZGg1azd5OGowM3pwa2tua3UzaDA2YzN3OXF1Z2ZnN3QaFAoFbmhhc2gSCzkzMTQ4NzA3NTY1Em0KUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQNGKvLHB9R8a1+lW7noW9sFAFMsHoaDmFK+32GQGpbqCBIECgIIARgWEhkKEwoFbmhhc2gSCjEwMTQ1MzIwMDAQgvse", "base64").toString("hex"),
       [
         {
           "header": "Undelegate",
