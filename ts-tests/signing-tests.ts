@@ -45,11 +45,62 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "1600000000 nhash",
+          "prompt": "1.6 hash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "1.70284521 hash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "81262",
         },
         {
           "header": "Chain ID",
           "prompt": "pio-testnet-1",
+        },
+        {
+          "header": "With PKH",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11
+        },
+      ])
+  );
+  it("Can sign a send transaction (2)",
+     // https://explorer.provenance.io/tx/3877B06AD96A7AF8D7A944D1D7450EBA4836AF7491099E5E81B0F24E59BD9B5A/10597048
+    testTransaction("44'/505'/0'",
+      Buffer.from("CpIBCo8BChwvY29zbW9zLmJhbmsudjFiZXRhMS5Nc2dTZW5kEm8KKXBiMWtxdXZoOW1xa3puNnFrc2xjc3dtNjRhZWZjZ242OXc2cnE4bmY0EilwYjF6c2hlcnIzZWF0Nmd2cTlwdGczbTBuM2RqMzN4ZjJtd2V2azNjYRoXCgVuaGFzaBIOMTAwMDAwMDAwMDAwMDASbQpRCkYKHy9jb3Ntb3MuY3J5cHRvLnNlY3AyNTZrMS5QdWJLZXkSIwohAl6z93YkvBJAso9foCgXIRyOyXPo9Uwt2mDpQg/Lj6c9EgQKAggBGJwDEhgKEgoFbmhhc2gSCTE2Njc3NzAzNRD7qwU=", "base64").toString("hex"),
+
+      [
+        {
+          "header": "Transfer",
+          "prompt": "HASH",
+        },
+        {
+          "header": "From",
+          "prompt": "pb1kquvh9mqkzn6qkslcswm64aefcgn69w6rq8nf4",
+          "paginate": true,
+        },
+        {
+          "header": "To",
+          "prompt": "pb1zsherr3eat6gvq9ptg3m0n3dj33xf2mwevk3ca",
+          "paginate": true,
+        },
+        {
+          "header": "Amount",
+          "prompt": "10000.0 hash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "0.166777035 hash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "87547",
         },
         {
           "header": "With PKH",
@@ -87,7 +138,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "10000000 nhash",
+          "prompt": "0.01 hash",
         },
         {
           "header": "Delegate",
@@ -103,7 +154,15 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "1000 nhash",
+          "prompt": "0.000001 hash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "1373.6997637 hash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "3868754",
         },
         {
           "header": "Chain ID",
@@ -121,24 +180,70 @@ describe("Protobufs tests", function() {
       ])
   );
   it("Can sign a deposit transaction",
+     // https://explorer.provenance.io/tx/BE8AF9CF1207EF595D09C64FDE6BCD4850ED837C0659379CE0FAB5417E4402B7/9501957
     testTransaction("44'/505'/0'",
-      "0a660a640a1e2f636f736d6f732e676f762e763162657461312e4d73674465706f7369741242084b1229747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781a130a056e68617368120a3530303030303030303012560a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a0208011852120210001a00",
+      Buffer.from("CmUKYwoZL2Nvc21vcy5nb3YudjEuTXNnRGVwb3NpdBJGCC8SKXBiMXZqMHcwYXNnamRubGF0M2poMHAzYTRlNGphbXU4cDI2eTIwMDBrGhcKBW5oYXNoEg40OTk5MDAwMDAwMDAwMBJsClAKRgofL2Nvc21vcy5jcnlwdG8uc2VjcDI1NmsxLlB1YktleRIjCiECjRH5YYOCYVTDDV9cgZaE9tul9n87abNghgGfm2oKCFcSBAoCCAEYAhIYChIKBW5oYXNoEgkzODEwMDAwMDAQwJoM", "base64").toString("hex"),
       [
         {
           "header": "Proposal ID",
-          "prompt": "75",
+          "prompt": "47",
         },
         {
           "header": "Depositor Address",
-          "prompt": "tp1g5ugfegkl5gmn049n5a9hgjn3ged0ekp8f2fwx",
+          "prompt": "pb1vj0w0asgjdnlat3jh0p3a4e4jamu8p26y2000k",
         },
         {
           "header": "Amount",
-          "prompt": "5000000000 nhash",
+          "prompt": "49990.0 hash",
         },
         {
-          "header": "Chain ID",
+          "header": "Fees",
+          "prompt": "0.381 hash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "200000",
+        },
+        {
+          "header": "With PKH",
+          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+        },
+        {
+          "text": "Confirm",
+          "x": 43,
+          "y": 11,
+        },
+      ])
+  );
+
+  it.skip("Can sign an undelegate transaction",
+     // https://explorer.provenance.io/tx/AEDCCAC1DF43537D459DE6E28E62C6211366975ECBD2074C9D44488847E1A4AD/10575218
+    testTransaction("44'/505'/0'",
+      Buffer.from("Cp8BCpwBCiUvY29zbW9zLnN0YWtpbmcudjFiZXRhMS5Nc2dVbmRlbGVnYXRlEnMKKXBiMWNwN2x2dmRoNWs3eThqMDN6cGtrbmt1M2gwNmMzdzlxbmw5Y2wzEjBwYnZhbG9wZXIxY3A3bHZ2ZGg1azd5OGowM3pwa2tua3UzaDA2YzN3OXF1Z2ZnN3QaFAoFbmhhc2gSCzkzMTQ4NzA3NTY1Em0KUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQNGKvLHB9R8a1", "base64").toString("hex"),
+      [
+        {
+          "header": "Undelegate",
           "prompt": "",
+        },
+        {
+          "header": "Delegator Address",
+          "prompt": "pb1cp7lvvdh5k7y8j03zpkknku3h06c3w9qnl9cl3",
+        },
+        {
+          "header": "Validator Address",
+          "prompt": "pbvaloper1cp7lvvdh5k7y8j03zpkknku3h06c3w9qugfg7t",
+        },
+        {
+          "header": "Amount",
+          "prompt": "93.148707565 hash",
+        },
+        {
+          "header": "Fees",
+          "prompt": "1.014532 hash",
+        },
+        {
+          "header": "Gas Limit",
+          "prompt": "507266",
         },
         {
           "header": "With PKH",

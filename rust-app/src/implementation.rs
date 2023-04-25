@@ -311,22 +311,109 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
     Action(
         CoinUnorderedInterp {
             field_denom: Buffer::<20>,
-            field_amount: Buffer::<100>,
+            field_amount: Buffer::<64>,
         },
         move |CoinValue {
                   field_denom,
                   field_amount,
-              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>| {
-            // Consider shifting the decimals for nhash to hash here.
-            scroller("Amount", |w| {
-                let x =
-                    core::str::from_utf8(field_amount.as_ref().ok_or(ScrollerError)?.as_slice())?;
-                let y =
-                    core::str::from_utf8(field_denom.as_ref().ok_or(ScrollerError)?.as_slice())?;
-                write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
-            })
+              }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>| {
+            show_amount_in_decimals(true, "Amount", &field_amount?, &field_denom?)
         },
     )
+}
+
+// Handle conversion to decimals, but only if showing nhash
+fn show_amount_in_decimals(
+    only_hash: bool,
+    title: &str,
+    amount: &ArrayVec<u8, 64>,
+    denom: &ArrayVec<u8, 20>,
+) -> Option<()> {
+    if denom.as_slice() == b"nhash" {
+        scroller(title, |w| {
+            let x = get_amount_in_decimals(amount).map_err(|_| ScrollerError)?;
+            write!(w, "{} hash", core::str::from_utf8(&x)?).map_err(|_| ScrollerError)
+        })
+    } else {
+        if only_hash {
+            None
+        } else {
+            scroller(title, |w| {
+                write!(
+                    w,
+                    "{} {}",
+                    core::str::from_utf8(&amount.as_slice())?,
+                    core::str::from_utf8(&denom.as_slice())?
+                )
+                .map_err(|_| ScrollerError)
+            })
+        }
+    }
+}
+
+// "Divides" the amount by 1000000000
+// Converts the input string in the following manner
+// 1 -> 0.000000001
+// 10 -> 0.00000001
+// 11 -> 0.000000011
+// 1000000000 -> 1.0
+// 10000000000 -> 10.0
+// 10010000000 -> 10.01
+// 010010000000 -> 10.01
+fn get_amount_in_decimals(amount: &ArrayVec<u8, 64>) -> Result<ArrayVec<u8, 64>, ()> {
+    let mut found_first_non_zero = false;
+    let mut start_ix = 0;
+    let mut last_non_zero_ix = 0;
+    // check the amount for any invalid chars and get its length
+    for (ix, c) in amount.as_ref().iter().enumerate() {
+        if c < &b'0' || c > &b'9' {
+            return Err(());
+        }
+        if c != &b'0' {
+            last_non_zero_ix = ix;
+        }
+        if !found_first_non_zero {
+            if c == &b'0' {
+                // Highly unlikely to hit this, but skip any leading zeroes
+                continue;
+            }
+            start_ix = ix;
+            found_first_non_zero = true;
+        }
+    }
+
+    let mut dec_value: ArrayVec<u8, 64> = ArrayVec::new();
+    let amt_len = amount.len() - start_ix;
+    let chars_after_decimal = 9;
+    if amt_len > chars_after_decimal {
+        // value is more than 1
+        dec_value
+            .try_extend_from_slice(&amount.as_ref()[start_ix..(amount.len() - chars_after_decimal)])
+            .map_err(|_| ())?;
+        dec_value.try_push(b'.').map_err(|_| ())?;
+        if amount.len() - chars_after_decimal <= last_non_zero_ix {
+            // there is non-zero decimal value
+            dec_value
+                .try_extend_from_slice(
+                    &amount.as_ref()[amount.len() - chars_after_decimal..(last_non_zero_ix + 1)],
+                )
+                .map_err(|_| ())?;
+        } else {
+            // add a zero at the end always "xyz.0"
+            dec_value.try_push(b'0').map_err(|_| ())?;
+        }
+    } else {
+        // value is less than 1
+        dec_value.try_push(b'0').map_err(|_| ())?;
+        dec_value.try_push(b'.').map_err(|_| ())?;
+        for _i in 0..(chars_after_decimal - amt_len) {
+            dec_value.try_push(b'0').map_err(|_| ())?;
+        }
+        dec_value
+            .try_extend_from_slice(&amount.as_ref()[start_ix..(last_non_zero_ix + 1)])
+            .map_err(|_| ())?;
+    }
+    Ok(dec_value)
 }
 
 // Transaction parser; this should prompt the user a lot more than this.
@@ -395,13 +482,13 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                         field_to_address: Buffer::<120>,
                         field_amount: CoinUnorderedInterp {
                             field_denom: Buffer::<20>,
-                            field_amount: Buffer::<100>,
+                            field_amount: Buffer::<64>,
                         },
                     },
                     |o: MsgSendValue<
                         Option<ArrayVec<u8, 120>>,
                         Option<ArrayVec<u8, 120>>,
-                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 100>>>>,
+                        Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
                     >|
                      -> Option<()> {
                         scroller("Transfer", |w| Ok(write!(w, "HASH")?));
@@ -420,27 +507,12 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                             )?;
                             write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
                         });
-                        scroller("Amount", |w| {
-                            let x = core::str::from_utf8(
-                                o.field_amount
-                                    .as_ref()
-                                    .ok_or(ScrollerError)?
-                                    .field_amount
-                                    .as_ref()
-                                    .ok_or(ScrollerError)?
-                                    .as_slice(),
-                            )?;
-                            let y = core::str::from_utf8(
-                                o.field_amount
-                                    .as_ref()
-                                    .ok_or(ScrollerError)?
-                                    .field_denom
-                                    .as_ref()
-                                    .ok_or(ScrollerError)?
-                                    .as_slice(),
-                            )?;
-                            write!(w, "{} {}", x, y).map_err(|_| ScrollerError) // TODO don't map_err
-                        })
+                        show_amount_in_decimals(
+                            true,
+                            "Amount",
+                            o.field_amount.as_ref()?.field_amount.as_ref()?,
+                            o.field_amount.as_ref()?.field_denom.as_ref()?,
+                        )
                     },
                 )),
                 multi_send: TrampolineParse(Preaction(
@@ -495,7 +567,45 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
             field_non_critical_extension_options: DropInterp,
         },
     ),
-    field_auth_info_bytes: DropInterp,
+    field_auth_info_bytes: BytesAsMessage(
+        AuthInfo,
+        AuthInfoUnorderedInterp {
+            field_signer_infos: DropInterp,
+            field_tip: DropInterp,
+            field_fee: Action(
+                FeeUnorderedInterp {
+                    field_amount: CoinUnorderedInterp {
+                        field_denom: Buffer::<20>,
+                        field_amount: Buffer::<64>,
+                    },
+                    field_gas_limit: DefaultInterp,
+                    field_payer: DropInterp,
+                    field_granter: DropInterp,
+                },
+                |o: FeeValue<
+                    Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
+                    Option<u64>,
+                    Option<()>,
+                    Option<()>,
+                >|
+                 -> Option<()> {
+                    show_amount_in_decimals(
+                        true,
+                        "Fees",
+                        o.field_amount.as_ref()?.field_amount.as_ref()?,
+                        o.field_amount.as_ref()?.field_denom.as_ref()?,
+                    )?;
+                    scroller("Gas Limit", |w| {
+                        Ok(write!(
+                            w,
+                            "{}",
+                            o.field_gas_limit.as_ref().ok_or(ScrollerError)?
+                        )?)
+                    })
+                },
+            ),
+        },
+    ),
     field_chain_id: DropInterp,
     field_account_number: DropInterp,
 });
@@ -513,7 +623,7 @@ MessagesInterp {
     Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
     Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
     BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
-    Deposit: MsgDeposit = b"/cosmos.gov.v1beta1.MsgDeposit"
+    Deposit: MsgDeposit = b"/cosmos.gov.v1.MsgDeposit"
 }
 }
 
