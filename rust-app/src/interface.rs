@@ -19,6 +19,7 @@ pub type Transaction = SignDoc;
 #[derive(Debug, TryFromPrimitive)]
 pub enum Ins {
     GetVersion = 0,
+    VerifyAddress = 1,
     GetPubkey = 2,
     Sign = 3,
     GetVersionStr = 0xfe,

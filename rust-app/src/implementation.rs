@@ -154,9 +154,9 @@ where
 pub const BIP32_PREFIX: [u32; 3] = nanos_sdk::ecc::make_bip32_path(b"m/44'/505'/0'");
 
 #[derive(Copy, Clone)]
-pub struct GetAddress; // (pub GetAddressImplT);
+pub struct GetAddress<const PROMPT: bool>; // (pub GetAddressImplT);
 
-impl AsyncAPDU for GetAddress {
+impl<const PROMPT: bool> AsyncAPDU for GetAddress<PROMPT> {
     // const MAX_PARAMS : usize = 1;
     type State<'c> = impl Future<Output = ()>;
 
@@ -182,11 +182,17 @@ impl AsyncAPDU for GetAddress {
                     Some((pubkey, pkh))
                 };
                 if let Some((pubkey, pkh)) = prompt_fn() {
+                    if PROMPT {
+                        scroller("Provide Public Key", |_w| Ok(()));
+                        scroller("Address", |w| Ok(write!(w, "{pkh}")?));
+                        final_accept_prompt(&[]);
+                    }
+
                     error!("Producing Output");
                     let mut rv = ArrayVec::<u8, 128>::new();
                     rv.push(pubkey.len() as u8);
-
                     rv.try_extend_from_slice(&pubkey);
+
                     let mut temp_fmt = ArrayString::<50>::new();
                     write!(temp_fmt, "{}", pkh);
 
@@ -205,7 +211,29 @@ impl AsyncAPDU for GetAddress {
     }
 }
 
-impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress {
+impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress<true> {
+    #[inline(never)]
+    fn init<'a, 'b: 'a>(
+        self,
+        s: &mut core::pin::Pin<&'a mut ParsersState<'a>>,
+        io: HostIO,
+        input: ArrayVec<ByteStream, MAX_PARAMS>,
+    ) -> () {
+        s.set(ParsersState::VerifyAddressState(self.run(io, input)));
+    }
+
+    #[inline(never)]
+    fn poll<'a, 'b>(self, s: &mut core::pin::Pin<&'a mut ParsersState>) -> core::task::Poll<()> {
+        let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
+        let mut ctxd = Context::from_waker(&waker);
+        match s.as_mut().project() {
+            ParsersStateProjection::VerifyAddressState(ref mut s) => s.as_mut().poll(&mut ctxd),
+            _ => panic!("Ooops"),
+        }
+    }
+}
+
+impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress<false> {
     #[inline(never)]
     fn init<'a, 'b: 'a>(
         self,
@@ -215,15 +243,6 @@ impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress {
     ) -> () {
         s.set(ParsersState::GetAddressState(self.run(io, input)));
     }
-
-    /*
-    #[inline(never)]
-    fn get<'a, 'b>(self, s: &'b mut core::pin::Pin<&'a mut ParsersState<'a>>) -> Option<&'b mut core::pin::Pin<&'a mut Self::State<'a>>> {
-        match s.as_mut().project() {
-            ParsersStateProjection::GetAddressState(ref mut s) => Some(s),
-            _ => panic!("Oops"),
-        }
-    }*/
 
     #[inline(never)]
     fn poll<'a, 'b>(self, s: &mut core::pin::Pin<&'a mut ParsersState>) -> core::task::Poll<()> {
@@ -726,9 +745,11 @@ impl<'d> AsyncAPDUStated<ParsersStateCtr> for Sign {
 #[pin_project(project = ParsersStateProjection)]
 pub enum ParsersState<'a> {
     NoState,
-    GetAddressState(#[pin] <GetAddress as AsyncAPDU>::State<'a>), // <GetAddressImplT<'a> as AsyncParser<Bip32Key, ByteStream<'a>>>::State<'a>),
     SignState(#[pin] <Sign as AsyncAPDU>::State<'a>),
     // SignState(#[pin] <SignImplT<'a> as AsyncParser<SignParameters, ByteStream<'a>>>::State<'a>),
+    VerifyAddressState(#[pin] <GetAddress<true> as AsyncAPDU>::State<'a>),
+    GetAddressState(#[pin] <GetAddress<false> as AsyncAPDU>::State<'a>),
+    // <GetAddressImplT<'a> as AsyncParser<Bip32Key, ByteStream<'a>>>::State<'a>),
 }
 
 impl<'a> ParsersState<'a> {
