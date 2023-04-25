@@ -60,10 +60,6 @@ describe("Protobufs tests", function() {
           "prompt": "pio-testnet-1",
         },
         {
-          "header": "With PKH",
-          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11
@@ -101,10 +97,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Gas Limit",
           "prompt": "87547",
-        },
-        {
-          "header": "With PKH",
-          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
@@ -169,10 +161,6 @@ describe("Protobufs tests", function() {
           "prompt": "pio-testnet-1",
         },
         {
-          "header": "With PKH",
-          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11,
@@ -203,10 +191,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Gas Limit",
           "prompt": "200000",
-        },
-        {
-          "header": "With PKH",
-          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
@@ -244,10 +228,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Gas Limit",
           "prompt": "507266",
-        },
-        {
-          "header": "With PKH",
-          "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
         },
         {
           "text": "Confirm",
