@@ -1,7 +1,6 @@
 use std::env;
 use std::path::Path;
 use std::process;
-use tempfile;
 
 fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=script.ld");
@@ -15,7 +14,7 @@ fn main() -> std::io::Result<()> {
 
     // Generate a FileDescriptorSet binary file using buf on the cosmos-sdk repo
     // targeting the type cosmos.tx.v1.beta1.Tx
-    let output = process::Command::new(&"buf")
+    let output = process::Command::new("buf")
         .arg("build")
         .arg(cosmos)
         .arg("--type=cosmos.tx.v1beta1.Tx")
