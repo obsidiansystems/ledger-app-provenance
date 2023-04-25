@@ -468,9 +468,9 @@ const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp 
                 default: RawAnyInterp {
                     field_type_url: Preaction(
                         || {
-                            // if no_unsafe { None } else {
-                            scroller("Unknown", |w| Ok(write!(w, "Message")?))
-                            //}
+                            // scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                            // Always reject unknown messages
+                            None
                         },
                         show_string!(120, "Type URL"),
                     ),
