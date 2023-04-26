@@ -134,23 +134,6 @@ where
     }
 }
 
-struct TryParser<S>(S);
-
-impl<T, S: HasOutput<T>> HasOutput<T> for TryParser<S> {
-    type Output = bool; // Option<S::Output>;
-}
-
-impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
-    LengthDelimitedParser<T, BS> for TryParser<S>
-where
-    S::Output: 'static,
-{
-    type State<'c> = impl Future<Output = Self::Output> + 'c where BS: 'c, S: 'c;
-    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
-        async move { TryFuture(self.0.parse(input, length)).await.is_some() }
-    }
-}
-
 // Need a path of length 5, as make_bip32_path panics with smaller paths
 pub const BIP32_PREFIX: [u32; 3] = nanos_sdk::ecc::make_bip32_path(b"m/44'/505'/0'");
 
@@ -453,9 +436,8 @@ impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimited
 }
 
 const fn txn_messages_parser<const PROMPT: bool>(
-) -> impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
-       + HasOutput<Transaction, Output = bool> {
-    TryParser(SignDocUnorderedInterp {
+) -> impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>> + HasOutput<Transaction> {
+    SignDocUnorderedInterp {
         field_body_bytes: BytesAsMessage(
             TxBody,
             TxBodyUnorderedInterp {
@@ -646,7 +628,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
         ),
         field_chain_id: DropInterp,
         field_account_number: DropInterp,
-    })
+    }
 }
 
 const fn hasher_parser(
@@ -691,7 +673,7 @@ impl AsyncAPDU for Sign {
             let length = usize::from_le_bytes(input[0].read().await);
             trace!("Passed length");
 
-            let mut known_txn = NoinlineFut((|bs: ByteStream| async move {
+            let known_txn = NoinlineFut((|bs: ByteStream| async move {
                 {
                     let mut txn = LengthTrack(bs, 0);
                     TryFuture(txn_messages_parser::<false>().parse(&mut txn, length))
@@ -700,12 +682,27 @@ impl AsyncAPDU for Sign {
                 }
             })(input[0].clone()))
             .await;
-            trace!("Passed txn messages");
 
             if known_txn {
-                let mut txn = LengthTrack(input[0].clone(), 0);
-                txn_messages_parser::<true>().parse(&mut txn, length).await;
-                trace!("Passed txn");
+                NoinlineFut((|bs: ByteStream| async move {
+                    {
+                        let mut txn = LengthTrack(bs, 0);
+                        txn_messages_parser::<true>().parse(&mut txn, length).await;
+                    }
+                })(input[0].clone()))
+                .await;
+            } else if self.settings.get() == 0 {
+                scroller("WARNING", |w| {
+                    Ok(write!(
+                        w,
+                        "Transaction not recognized, enable blind signing to sign unknown transactions"
+                    )?)
+                });
+                reject::<()>().await;
+            } else if scroller("WARNING", |w| Ok(write!(w, "Transaction not recognized")?))
+                .is_none()
+            {
+                reject::<()>().await;
             }
 
             NoinlineFut((|input: ArrayVec<ByteStream, 2>| async move {
@@ -718,7 +715,7 @@ impl AsyncAPDU for Sign {
                 }
 
                 if !known_txn {
-                    if scroller("Blind sign hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
+                    if scroller("Transaction Hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
                         reject::<()>().await;
                     };
                 }
@@ -733,9 +730,15 @@ impl AsyncAPDU for Sign {
 
                 if let Some(sig) = run_fut(trampoline(), || async {
                     let sk = Secp256k1::derive_from_path(&path);
-                    if final_accept_prompt(&[]).is_none() {
-                        reject::<()>().await;
-                    }
+                    let prompt = if known_txn {
+                        if final_accept_prompt(&[]).is_none() {
+                            reject::<()>().await;
+                        }
+                    } else {
+                        if final_accept_prompt(&["Blind Sign Transaction?"]).is_none() {
+                            reject::<()>().await;
+                        }
+                    };
                     format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
                 })
                 .await

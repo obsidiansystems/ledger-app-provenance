@@ -228,4 +228,37 @@ describe("Protobufs tests", function() {
         },
       ])
   );
+
+  it("can blind sign an unknown transaction", async function () {
+    const path = "44'/505'/0'";
+    const txn = Buffer.from("CmUKYwoZL2Nvc21vcy5nb3YudjEuTXNnRGVwb3NpdabcdC8SKXBiMXZqMHcwYXNnamRubGF0M2poMHAzYTRlNGphbXU4cDI2eTIwMDBrGhcKBW5oYXNoEg40OTk5MDAwMDAwMDAwMBJsClAKRgofL2Nvc21vcy5jcnlwdG8uc2VjcDI1NmsxLlB1YktleRIjCiECjRH5YYOCYVTDDV9cgZaE9tul9n87abNghgGfm2oKCFcSBAoCCAEYAhIYChIKBW5oYXNoEgkzODEwMDAwMDAQwJoM", "base64").toString("hex");
+    const prompts =
+       [
+         {
+           "header": "WARNING",
+           "prompt": "Transaction not recognized"
+         },
+         {
+           "header": "Transaction Hash",
+           "prompt": "aN3-o7ulXTJNUOr4oQE32H6hTs6udIBVzFFrInNVzRI"
+         },
+         {
+           "text": "Blind Sign Transaction?",
+           "x": 4,
+           "y": 11,
+         },
+         {
+           "text": "Confirm",
+           "x": 43,
+           "y": 11,
+         }
+       ];
+
+    await toggleBlindSigningSettings();
+    await Axios.delete(BASE_URL + "/events");
+    await testTransaction(path, txn, prompts)();
+    await Axios.delete(BASE_URL + "/events");
+    // reset back to disabled
+    await toggleBlindSigningSettings();
+  });
 })
