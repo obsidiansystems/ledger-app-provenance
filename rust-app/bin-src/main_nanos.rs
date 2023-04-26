@@ -76,7 +76,7 @@ extern "C" fn sample_main() {
         match evt {
             io::Event::Command(ins) => {
                 trace!("Command received");
-                match handle_apdu(comm, host_io, ins, &mut states) {
+                match handle_apdu(comm, host_io, ins, idle_menu.settings, &mut states) {
                     Ok(()) => {
                         trace!("APDU accepted; sending response");
                         comm.borrow_mut().reply_ok();
@@ -127,6 +127,7 @@ fn handle_apdu<'a: 'b, 'b>(
     comm: &RefCell<io::Comm>,
     io: HostIO,
     ins: Ins,
+    settings: Settings,
     state: &'b mut Pin<&'a mut ParsersState<'a>>,
 ) -> Result<(), Reply> {
     let comm_ = io.get_comm();
@@ -153,7 +154,12 @@ fn handle_apdu<'a: 'b, 'b>(
         }
         Ins::Sign => {
             trace!("Handling sign");
-            poll_apdu_handler(state, io, &mut FutureTrampolineRunner, Sign)?
+            poll_apdu_handler(
+                state,
+                io,
+                &mut FutureTrampolineRunner,
+                Sign { settings: settings },
+            )?
         }
         Ins::GetVersionStr => {}
         Ins::Exit => nanos_sdk::exit_app(0),

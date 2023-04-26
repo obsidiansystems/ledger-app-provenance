@@ -6,6 +6,7 @@ pub use crate::proto::cosmos::base::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
 pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
+use crate::settings::Settings;
 use crate::utils::*;
 use arrayvec::{ArrayString, ArrayVec};
 use core::fmt::Write;
@@ -256,7 +257,9 @@ impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress<false> {
 }
 
 #[derive(Copy, Clone)]
-pub struct Sign;
+pub struct Sign {
+    pub settings: Settings,
+}
 
 /*
 const fn show_send_message<BS: 'static + Readable + Clone>() -> impl LengthDelimitedParser<MsgSend, BS> + HasOutput<MsgSend> {
