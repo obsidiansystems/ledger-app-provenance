@@ -276,20 +276,28 @@ const fn show_send_message<BS: 'static + Readable + Clone>() -> impl LengthDelim
 
 // We'd like this to be just a const fn, but the resulting closure rather than function pointer seems to crash the app.
 macro_rules! show_string {
-    {$n: literal, $msg:literal}
+    {$do_prompt: expr, $n: literal, $msg:literal}
     => {
         Action(
             Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
-                scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                if $do_prompt {
+                    scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                } else {
+                    Some(())
+                }
             }
         )
     };
-    {ifnonempty, $n: literal, $msg:literal}
+    {ifnonempty, $do_prompt: expr, $n: literal, $msg:literal}
     => {
         Action(
             Buffer::<$n>, |pkh: ArrayVec<u8, $n>| {
                 if pkh.is_empty() { Some(()) } else {
-                    scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                    if $do_prompt {
+                        scroller($msg, |w| Ok(write!(w, "{}", core::str::from_utf8(pkh.as_slice())?)?))
+                    } else {
+                        Some(())
+                    }
                 }
             }
         )
@@ -309,7 +317,7 @@ macro_rules! show_string {
 const SHOW_SEND_MESSAGE : impl LengthDelimitedParser<MsgSend, dyn Readable + Clone> + HasOutput<MsgSend> =
 */
 
-const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
+const fn show_coin<BS: 'static + Readable + ReadableLength + Clone, const PROMPT: bool>(
 ) -> impl LengthDelimitedParser<Coin, BS> {
     Action(
         CoinUnorderedInterp {
@@ -320,7 +328,11 @@ const fn show_coin<BS: 'static + Readable + ReadableLength + Clone>(
                   field_denom,
                   field_amount,
               }: CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>| {
-            show_amount_in_decimals(true, "Amount", &field_amount?, &field_denom?)
+            if PROMPT {
+                show_amount_in_decimals(true, "Amount", &field_amount?, &field_denom?)
+            } else {
+                Some(())
+            }
         },
     )
 }
@@ -419,27 +431,6 @@ fn get_amount_in_decimals(amount: &ArrayVec<u8, 64>) -> Result<ArrayVec<u8, 64>,
     Ok(dec_value)
 }
 
-// Transaction parser; this should prompt the user a lot more than this.
-type TxnParserType = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
-    + HasOutput<Transaction, Output = bool>;
-const TXN_PARSER: TxnParserType = TryParser(SignDocInterp {
-    field_body_bytes: BytesAsMessage(
-        TxBody,
-        TxBodyInterp {
-            field_messages: DropInterp,
-            field_memo: show_string!(ifnonempty, 128, "Memo"), // DropInterp,
-            field_timeout_height: DropInterp,
-            field_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
-            field_non_critical_extension_options: DropInterp, // Action(DropInterp, |_| { None::<()> }),
-        },
-    ),
-    // We could verify that our signature matters with these, but not part of the defining
-    // what will the transaction _do_.
-    field_auth_info_bytes: DropInterp,
-    field_chain_id: show_string!(20, "Chain ID"),
-    field_account_number: DropInterp,
-});
-
 struct Preaction<S>(fn() -> Option<()>, S);
 
 impl<T, S: HasOutput<T>> HasOutput<T> for Preaction<S> {
@@ -461,157 +452,202 @@ impl<Schema, S: LengthDelimitedParser<Schema, BS>, BS: Readable> LengthDelimited
     }
 }
 
-type TxnMessagesParser = impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
-    + HasOutput<Transaction, Output = bool>;
-const TXN_MESSAGES_PARSER: TxnMessagesParser = TryParser(SignDocUnorderedInterp {
-    field_body_bytes: BytesAsMessage(
-        TxBody,
-        TxBodyUnorderedInterp {
-            field_messages: MessagesInterp {
-                default: RawAnyInterp {
-                    field_type_url: Preaction(
-                        || {
-                            // scroller("Unknown", |w| Ok(write!(w, "Message")?))
-                            // Always reject unknown messages
-                            None
+const fn txn_messages_parser<const PROMPT: bool>(
+) -> impl LengthDelimitedParser<Transaction, LengthTrack<ByteStream>>
+       + HasOutput<Transaction, Output = bool> {
+    TryParser(SignDocUnorderedInterp {
+        field_body_bytes: BytesAsMessage(
+            TxBody,
+            TxBodyUnorderedInterp {
+                field_messages: MessagesInterp {
+                    default: RawAnyInterp {
+                        field_type_url: Preaction(
+                            || {
+                                // scroller("Unknown", |w| Ok(write!(w, "Message")?))
+                                // Always reject unknown messages
+                                None
+                            },
+                            show_string!(PROMPT, 120, "Type URL"),
+                        ),
+                        field_value: DropInterp,
+                    },
+                    send: TrampolineParse(Action(
+                        MsgSendUnorderedInterp {
+                            field_from_address: Buffer::<120>,
+                            field_to_address: Buffer::<120>,
+                            field_amount: CoinUnorderedInterp {
+                                field_denom: Buffer::<20>,
+                                field_amount: Buffer::<64>,
+                            },
                         },
-                        show_string!(120, "Type URL"),
-                    ),
-                    field_value: DropInterp,
+                        |o: MsgSendValue<
+                            Option<ArrayVec<u8, 120>>,
+                            Option<ArrayVec<u8, 120>>,
+                            Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
+                        >|
+                         -> Option<()> {
+                            if PROMPT {
+                                scroller("Transfer", |w| Ok(write!(w, "HASH")?));
+                                scroller_paginated("From", |w| {
+                                    let x = core::str::from_utf8(
+                                        o.field_from_address
+                                            .as_ref()
+                                            .ok_or(ScrollerError)?
+                                            .as_slice(),
+                                    )?;
+                                    write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                                });
+                                scroller_paginated("To", |w| {
+                                    let x = core::str::from_utf8(
+                                        o.field_to_address
+                                            .as_ref()
+                                            .ok_or(ScrollerError)?
+                                            .as_slice(),
+                                    )?;
+                                    write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
+                                });
+                                show_amount_in_decimals(
+                                    true,
+                                    "Amount",
+                                    o.field_amount.as_ref()?.field_amount.as_ref()?,
+                                    o.field_amount.as_ref()?.field_denom.as_ref()?,
+                                )
+                            } else {
+                                Some(())
+                            }
+                        },
+                    )),
+                    multi_send: TrampolineParse(Preaction(
+                        || {
+                            if PROMPT {
+                                scroller("Multi-send", |_| Ok(()))
+                            } else {
+                                Some(())
+                            }
+                        },
+                        MsgMultiSendInterp {
+                            field_inputs: InputInterp {
+                                field_address: show_string!(PROMPT, 120, "From address"),
+                                field_coins: show_coin::<_, PROMPT>(),
+                            },
+                            field_outputs: OutputInterp {
+                                field_address: show_string!(PROMPT, 120, "To address"),
+                                field_coins: show_coin::<_, PROMPT>(),
+                            },
+                        },
+                    )),
+                    delegate: TrampolineParse(Preaction(
+                        || {
+                            if PROMPT {
+                                scroller("Delegate", |_| Ok(()))
+                            } else {
+                                Some(())
+                            }
+                        },
+                        MsgDelegateInterp {
+                            field_amount: show_coin::<_, PROMPT>(),
+                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
+                            field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
+                        },
+                    )),
+                    undelegate: TrampolineParse(Preaction(
+                        || {
+                            if PROMPT {
+                                scroller("Undelegate", |_| Ok(()))
+                            } else {
+                                Some(())
+                            }
+                        },
+                        MsgUndelegateInterp {
+                            field_amount: show_coin::<_, PROMPT>(),
+                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
+                            field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
+                        },
+                    )),
+                    begin_redelegate: TrampolineParse(Preaction(
+                        || {
+                            if PROMPT {
+                                scroller("Redelegate", |_| Ok(()))
+                            } else {
+                                Some(())
+                            }
+                        },
+                        MsgBeginRedelegateInterp {
+                            field_amount: show_coin::<_, PROMPT>(),
+                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
+                            field_validator_src_address: show_string!(
+                                PROMPT,
+                                120,
+                                "From Validator"
+                            ),
+                            field_validator_dst_address: show_string!(PROMPT, 120, "To Validator"),
+                        },
+                    )),
+                    deposit: TrampolineParse(MsgDepositInterp {
+                        field_amount: show_coin::<_, PROMPT>(),
+                        field_depositor: show_string!(PROMPT, 120, "Depositor Address"),
+                        field_proposal_id: Action(DefaultInterp, |value: u64| {
+                            if PROMPT {
+                                scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
+                            } else {
+                                Some(())
+                            }
+                        }),
+                    }),
                 },
-                send: TrampolineParse(Action(
-                    MsgSendUnorderedInterp {
-                        field_from_address: Buffer::<120>,
-                        field_to_address: Buffer::<120>,
+                field_memo: DropInterp,
+                field_timeout_height: DropInterp,
+                field_extension_options: DropInterp,
+                field_non_critical_extension_options: DropInterp,
+            },
+        ),
+        field_auth_info_bytes: BytesAsMessage(
+            AuthInfo,
+            AuthInfoUnorderedInterp {
+                field_signer_infos: DropInterp,
+                field_tip: DropInterp,
+                field_fee: Action(
+                    FeeUnorderedInterp {
                         field_amount: CoinUnorderedInterp {
                             field_denom: Buffer::<20>,
                             field_amount: Buffer::<64>,
                         },
+                        field_gas_limit: DefaultInterp,
+                        field_payer: DropInterp,
+                        field_granter: DropInterp,
                     },
-                    |o: MsgSendValue<
-                        Option<ArrayVec<u8, 120>>,
-                        Option<ArrayVec<u8, 120>>,
+                    |o: FeeValue<
                         Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
+                        Option<u64>,
+                        Option<()>,
+                        Option<()>,
                     >|
                      -> Option<()> {
-                        scroller("Transfer", |w| Ok(write!(w, "HASH")?));
-                        scroller_paginated("From", |w| {
-                            let x = core::str::from_utf8(
-                                o.field_from_address
-                                    .as_ref()
-                                    .ok_or(ScrollerError)?
-                                    .as_slice(),
+                        if PROMPT {
+                            show_amount_in_decimals(
+                                true,
+                                "Fees",
+                                o.field_amount.as_ref()?.field_amount.as_ref()?,
+                                o.field_amount.as_ref()?.field_denom.as_ref()?,
                             )?;
-                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
-                        });
-                        scroller_paginated("To", |w| {
-                            let x = core::str::from_utf8(
-                                o.field_to_address.as_ref().ok_or(ScrollerError)?.as_slice(),
-                            )?;
-                            write!(w, "{x}").map_err(|_| ScrollerError) // TODO don't map_err
-                        });
-                        show_amount_in_decimals(
-                            true,
-                            "Amount",
-                            o.field_amount.as_ref()?.field_amount.as_ref()?,
-                            o.field_amount.as_ref()?.field_denom.as_ref()?,
-                        )
+                            scroller("Gas Limit", |w| {
+                                Ok(write!(
+                                    w,
+                                    "{}",
+                                    o.field_gas_limit.as_ref().ok_or(ScrollerError)?
+                                )?)
+                            })
+                        } else {
+                            Some(())
+                        }
                     },
-                )),
-                multi_send: TrampolineParse(Preaction(
-                    || scroller("Multi-send", |_| Ok(())),
-                    MsgMultiSendInterp {
-                        field_inputs: InputInterp {
-                            field_address: show_string!(120, "From address"),
-                            field_coins: show_coin(),
-                        },
-                        field_outputs: OutputInterp {
-                            field_address: show_string!(120, "To address"),
-                            field_coins: show_coin(),
-                        },
-                    },
-                )),
-                delegate: TrampolineParse(Preaction(
-                    || scroller("Delegate", |_| Ok(())),
-                    MsgDelegateInterp {
-                        field_amount: show_coin(),
-                        field_delegator_address: show_string!(120, "Delegator Address"),
-                        field_validator_address: show_string!(120, "Validator Address"),
-                    },
-                )),
-                undelegate: TrampolineParse(Preaction(
-                    || scroller("Undelegate", |_| Ok(())),
-                    MsgUndelegateInterp {
-                        field_amount: show_coin(),
-                        field_delegator_address: show_string!(120, "Delegator Address"),
-                        field_validator_address: show_string!(120, "Validator Address"),
-                    },
-                )),
-                begin_redelegate: TrampolineParse(Preaction(
-                    || scroller("Redelegate", |_| Ok(())),
-                    MsgBeginRedelegateInterp {
-                        field_amount: show_coin(),
-                        field_delegator_address: show_string!(120, "Delegator Address"),
-                        field_validator_src_address: show_string!(120, "From Validator"),
-                        field_validator_dst_address: show_string!(120, "To Validator"),
-                    },
-                )),
-                deposit: TrampolineParse(MsgDepositInterp {
-                    field_amount: show_coin(),
-                    field_depositor: show_string!(120, "Depositor Address"),
-                    field_proposal_id: Action(DefaultInterp, |value: u64| {
-                        scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
-                    }),
-                }),
+                ),
             },
-            field_memo: DropInterp,
-            field_timeout_height: DropInterp,
-            field_extension_options: DropInterp,
-            field_non_critical_extension_options: DropInterp,
-        },
-    ),
-    field_auth_info_bytes: BytesAsMessage(
-        AuthInfo,
-        AuthInfoUnorderedInterp {
-            field_signer_infos: DropInterp,
-            field_tip: DropInterp,
-            field_fee: Action(
-                FeeUnorderedInterp {
-                    field_amount: CoinUnorderedInterp {
-                        field_denom: Buffer::<20>,
-                        field_amount: Buffer::<64>,
-                    },
-                    field_gas_limit: DefaultInterp,
-                    field_payer: DropInterp,
-                    field_granter: DropInterp,
-                },
-                |o: FeeValue<
-                    Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
-                    Option<u64>,
-                    Option<()>,
-                    Option<()>,
-                >|
-                 -> Option<()> {
-                    show_amount_in_decimals(
-                        true,
-                        "Fees",
-                        o.field_amount.as_ref()?.field_amount.as_ref()?,
-                        o.field_amount.as_ref()?.field_denom.as_ref()?,
-                    )?;
-                    scroller("Gas Limit", |w| {
-                        Ok(write!(
-                            w,
-                            "{}",
-                            o.field_gas_limit.as_ref().ok_or(ScrollerError)?
-                        )?)
-                    })
-                },
-            ),
-        },
-    ),
-    field_chain_id: DropInterp,
-    field_account_number: DropInterp,
-});
+        ),
+        field_chain_id: DropInterp,
+        field_account_number: DropInterp,
+    })
+}
 
 const fn hasher_parser(
 ) -> impl LengthDelimitedParser<Bytes, ByteStream> + HasOutput<Bytes, Output = (SHA256, Option<()>)>
@@ -658,7 +694,9 @@ impl AsyncAPDU for Sign {
             let mut known_txn = NoinlineFut((|bs: ByteStream| async move {
                 {
                     let mut txn = LengthTrack(bs, 0);
-                    TXN_MESSAGES_PARSER.parse(&mut txn, length).await
+                    TryFuture(txn_messages_parser::<false>().parse(&mut txn, length))
+                        .await
+                        .is_some()
                 }
             })(input[0].clone()))
             .await;
@@ -666,7 +704,7 @@ impl AsyncAPDU for Sign {
 
             if known_txn {
                 let mut txn = LengthTrack(input[0].clone(), 0);
-                known_txn = TrampolineParse(TXN_PARSER).parse(&mut txn, length).await;
+                txn_messages_parser::<true>().parse(&mut txn, length).await;
                 trace!("Passed txn");
             }
 

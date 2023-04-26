@@ -56,10 +56,6 @@ describe("Protobufs tests", function() {
           "prompt": "81262",
         },
         {
-          "header": "Chain ID",
-          "prompt": "pio-testnet-1",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11
@@ -155,10 +151,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Gas Limit",
           "prompt": "3868754",
-        },
-        {
-          "header": "Chain ID",
-          "prompt": "pio-testnet-1",
         },
         {
           "text": "Confirm",
