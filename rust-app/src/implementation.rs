@@ -257,22 +257,22 @@ const fn txn_messages_parser<const PROMPT: bool>(
                                 // Always reject unknown messages
                                 None
                             },
-                            show_string!(PROMPT, 120, "Type URL"),
+                            show_string!(PROMPT, 50, "Type URL"),
                         ),
                         field_value: DropInterp,
                     },
                     send: (Action(
                         MsgSendUnorderedInterp {
-                            field_from_address: Buffer::<120>,
-                            field_to_address: Buffer::<120>,
+                            field_from_address: Buffer::<50>,
+                            field_to_address: Buffer::<50>,
                             field_amount: CoinUnorderedInterp {
                                 field_denom: Buffer::<20>,
                                 field_amount: Buffer::<64>,
                             },
                         },
                         |o: MsgSendValue<
-                            Option<ArrayVec<u8, 120>>,
-                            Option<ArrayVec<u8, 120>>,
+                            Option<ArrayVec<u8, 50>>,
+                            Option<ArrayVec<u8, 50>>,
                             Option<CoinValue<Option<ArrayVec<u8, 20>>, Option<ArrayVec<u8, 64>>>>,
                         >|
                          -> Option<()> {
@@ -317,11 +317,11 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         },
                         MsgMultiSendInterp {
                             field_inputs: InputInterp {
-                                field_address: show_string!(PROMPT, 120, "From address"),
+                                field_address: show_string!(PROMPT, 50, "From address"),
                                 field_coins: show_coin::<_, PROMPT>(),
                             },
                             field_outputs: OutputInterp {
-                                field_address: show_string!(PROMPT, 120, "To address"),
+                                field_address: show_string!(PROMPT, 50, "To address"),
                                 field_coins: show_coin::<_, PROMPT>(),
                             },
                         },
@@ -336,8 +336,8 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         },
                         MsgDelegateInterp {
                             field_amount: show_coin::<_, PROMPT>(),
-                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
-                            field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
+                            field_delegator_address: show_string!(PROMPT, 50, "Delegator Address"),
+                            field_validator_address: show_string!(PROMPT, 50, "Validator Address"),
                         },
                     )),
                     undelegate: (Preaction(
@@ -350,8 +350,8 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         },
                         MsgUndelegateInterp {
                             field_amount: show_coin::<_, PROMPT>(),
-                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
-                            field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
+                            field_delegator_address: show_string!(PROMPT, 50, "Delegator Address"),
+                            field_validator_address: show_string!(PROMPT, 50, "Validator Address"),
                         },
                     )),
                     begin_redelegate: (Preaction(
@@ -364,18 +364,14 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         },
                         MsgBeginRedelegateInterp {
                             field_amount: show_coin::<_, PROMPT>(),
-                            field_delegator_address: show_string!(PROMPT, 120, "Delegator Address"),
-                            field_validator_src_address: show_string!(
-                                PROMPT,
-                                120,
-                                "From Validator"
-                            ),
-                            field_validator_dst_address: show_string!(PROMPT, 120, "To Validator"),
+                            field_delegator_address: show_string!(PROMPT, 50, "Delegator Address"),
+                            field_validator_src_address: show_string!(PROMPT, 50, "From Validator"),
+                            field_validator_dst_address: show_string!(PROMPT, 50, "To Validator"),
                         },
                     )),
                     deposit: (MsgDepositInterp {
                         field_amount: show_coin::<_, PROMPT>(),
-                        field_depositor: show_string!(PROMPT, 120, "Depositor Address"),
+                        field_depositor: show_string!(PROMPT, 50, "Depositor Address"),
                         field_proposal_id: Action(DefaultInterp, |value: u64| {
                             if PROMPT {
                                 scroller("Proposal ID", |w| Ok(write!(w, "{}", value)?))
