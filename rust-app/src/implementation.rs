@@ -1,261 +1,82 @@
-// use crate::crypto_helpers::{detecdsa_sign, get_pkh, get_private_key, get_pubkey, Hasher};
-use crate::crypto_helpers::{compress_public_key, format_signature, get_pkh, get_pubkey};
+use crate::crypto_helpers::{format_signature, get_pkh, get_pubkey};
 use crate::interface::*;
+use crate::settings::*;
+use crate::utils::*;
+
 pub use crate::proto::cosmos::bank::v1beta1::*;
 pub use crate::proto::cosmos::base::v1beta1::*;
 pub use crate::proto::cosmos::gov::v1beta1::*;
 pub use crate::proto::cosmos::staking::v1beta1::*;
 pub use crate::proto::cosmos::tx::v1beta1::*;
-use crate::settings::Settings;
-use crate::utils::*;
+
+use alamgu_async_block::*;
 use arrayvec::{ArrayString, ArrayVec};
 use core::fmt::Write;
-use core::future::Future;
-use core::pin::Pin;
+
+use ledger_crypto_helpers::hasher::{Base64Hash, Hasher, SHA256};
+use ledger_log::trace;
 use ledger_parser_combinators::any_of;
 use ledger_parser_combinators::async_parser::*;
-use ledger_parser_combinators::interp::{
-    Action, Buffer, DefaultInterp, DropInterp, ObserveBytes, SubInterp,
-};
+use ledger_parser_combinators::interp::*;
 use ledger_parser_combinators::protobufs::async_parser::*;
 use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
-use nanos_sdk::ecc::*;
-use pin_project::pin_project;
-
-use alamgu_async_block::*;
-use core::cell::RefCell;
-use core::task::*;
-use ledger_crypto_helpers::hasher::{Base64Hash, Hasher, SHA256};
-use ledger_log::*;
 use ledger_prompts_ui::{final_accept_prompt, ScrollerError};
 
-pub static mut ASYNC_TRAMPOLINE: Option<RefCell<FutureTrampoline>> = None;
+use core::future::Future;
 
-fn trampoline() -> &'static RefCell<FutureTrampoline> {
-    unsafe {
-        match ASYNC_TRAMPOLINE {
-            Some(ref t) => t,
-            None => panic!(),
-        }
-    }
-}
+use nanos_sdk::ecc::*;
 
-pub struct FutureTrampoline {
-    pub fut: Option<Pin<&'static mut (dyn Future<Output = ()> + 'static)>>,
-}
-pub struct FutureTrampolineRunner;
-
-pub fn run_fut<'a, A: 'static, F: 'a + Future<Output = A>, FF: 'a + FnOnce() -> F>(
-    ft: &'static RefCell<FutureTrampoline>,
-    fut: FF,
-) -> impl Future<Output = A> + 'a {
-    async move {
-        let mut receiver = None;
-        let rcv_ptr: *mut Option<A> = &mut receiver;
-        let mut computation = async {
-            unsafe {
-                *rcv_ptr = Some(fut().await);
-            }
-        };
-        let dfut: Pin<&mut (dyn Future<Output = ()> + '_)> =
-            unsafe { Pin::new_unchecked(&mut computation) };
-        let mut computation_unbound: Pin<&mut (dyn Future<Output = ()> + 'static)> =
-            unsafe { core::mem::transmute(dfut) };
-
-        error!("Waiting for future in run_fut");
-        core::future::poll_fn(|_| {
-            error!("run_fut poll_fn");
-            match core::mem::take(&mut receiver) {
-                Some(r) => {
-                    error!("run_fut completing");
-                    Poll::Ready(r)
-                }
-                None => match ft.try_borrow_mut() {
-                    Ok(ref mut ft_mut) => match ft_mut.fut {
-                        Some(_) => Poll::Pending,
-                        None => {
-                            ft_mut.fut =
-                                Some(unsafe { core::mem::transmute(computation_unbound.as_mut()) });
-                            Poll::Pending
-                        }
-                    },
-                    Err(_) => Poll::Pending,
-                },
-            }
-        })
-        .await
-    }
-}
-
-impl AsyncTrampoline for FutureTrampolineRunner {
-    fn handle_command(&mut self) -> AsyncTrampolineResult {
-        error!("Running trampolines");
-        let mut the_fut = match trampoline().try_borrow_mut() {
-            Ok(mut futref) => match &mut *futref {
-                FutureTrampoline {
-                    fut: ref mut pinned,
-                } => core::mem::take(pinned),
-            },
-            Err(_) => {
-                error!("Case 2");
-                panic!("Nope");
-            }
-        };
-        error!("Something is pending");
-        match the_fut {
-            Some(ref mut pinned) => {
-                let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
-                let mut ctxd = Context::from_waker(&waker);
-                match pinned.as_mut().poll(&mut ctxd) {
-                    Poll::Pending => AsyncTrampolineResult::Pending,
-                    Poll::Ready(()) => AsyncTrampolineResult::Resolved,
-                }
-            }
-            None => AsyncTrampolineResult::NothingPending,
-        }
-    }
-}
-
-struct TrampolineParse<S>(S);
-
-impl<T, S: HasOutput<T>> HasOutput<T> for TrampolineParse<S> {
-    type Output = S::Output;
-}
-
-impl<T: 'static, BS: Readable + ReadableLength, S: LengthDelimitedParser<T, BS>>
-    LengthDelimitedParser<T, BS> for TrampolineParse<S>
-where
-    S::Output: 'static + Clone,
-{
-    type State<'c> = impl Future<Output = Self::Output> + 'c where BS: 'c, S: 'c;
-    fn parse<'a: 'c, 'b: 'c, 'c>(&'b self, input: &'a mut BS, length: usize) -> Self::State<'c> {
-        run_fut(trampoline(), move || self.0.parse(input, length))
-    }
-}
+pub type BipParserImplT =
+impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output = ArrayVec<u32, 10>>;
+pub const BIP_PATH_PARSER: BipParserImplT = SubInterp(DefaultInterp);
 
 // Need a path of length 5, as make_bip32_path panics with smaller paths
 pub const BIP32_PREFIX: [u32; 3] = nanos_sdk::ecc::make_bip32_path(b"m/44'/505'/0'");
 
-#[derive(Copy, Clone)]
-pub struct GetAddress<const PROMPT: bool>; // (pub GetAddressImplT);
+pub async fn get_address_apdu(io: HostIO, prompt: bool) {
+    let input = match io.get_params::<1>() {
+        Some(v) => v,
+        None => reject().await,
+    };
 
-impl<const PROMPT: bool> AsyncAPDU for GetAddress<PROMPT> {
-    // const MAX_PARAMS : usize = 1;
-    type State<'c> = impl Future<Output = ()>;
+    let path = BIP_PATH_PARSER.parse(&mut input[0].clone()).await;
 
-    fn run<'c>(self, io: HostIO, input: ArrayVec<ByteStream, MAX_PARAMS>) -> Self::State<'c> {
-        async move {
-            error!("Doing getAddress");
+    if !path.starts_with(&BIP32_PREFIX[0..2]) {
+        reject::<()>().await;
+    }
 
-            let path = BIP_PATH_PARSER.parse(&mut input[0].clone()).await;
+    let prompt_fn = || {
+        let pubkey = get_pubkey(&path).ok()?; // Secp256k1::derive_from_path(&path).public_key().ok()?;
+        let pkh = get_pkh(&pubkey).ok()?;
+        Some((pubkey, pkh))
+    };
 
-            error!("Got path");
-
-            if !path.starts_with(&BIP32_PREFIX[0..2]) {
-                reject::<()>().await;
-            }
-
-            error!("Accept path prefix");
-
-            let _sig = {
-                error!("Handling getAddress trampoline call");
-                let prompt_fn = || {
-                    let pubkey = get_pubkey(&path).ok()?; // Secp256k1::derive_from_path(&path).public_key().ok()?;
-                    let pkh = get_pkh(&pubkey).ok()?;
-                    Some((pubkey, pkh))
-                };
-                if let Some((pubkey, pkh)) = prompt_fn() {
-                    if PROMPT {
-                        scroller("Provide Public Key", |_w| Ok(()));
-                        scroller("Address", |w| Ok(write!(w, "{pkh}")?));
-                        final_accept_prompt(&[]);
-                    }
-
-                    error!("Producing Output");
-                    let mut rv = ArrayVec::<u8, 128>::new();
-                    rv.push(pubkey.len() as u8);
-                    rv.try_extend_from_slice(&pubkey);
-
-                    let mut temp_fmt = ArrayString::<50>::new();
-                    write!(temp_fmt, "{}", pkh);
-
-                    // We statically know the lengths of
-                    // these slices and so that these will
-                    // succeed.
-                    let _ = rv.try_push(temp_fmt.as_bytes().len() as u8);
-                    let _ = rv.try_extend_from_slice(temp_fmt.as_bytes());
-
-                    io.result_final(&rv).await;
-                } else {
-                    reject::<()>().await;
-                }
-            };
+    if let Some((pubkey, pkh)) = prompt_fn() {
+        if prompt {
+            scroller("Provide Public Key", |_w| Ok(()));
+            scroller("Address", |w| Ok(write!(w, "{pkh}")?));
+            final_accept_prompt(&[]);
         }
+
+        let mut rv = ArrayVec::<u8, 128>::new();
+        rv.push(pubkey.len() as u8);
+        rv.try_extend_from_slice(&pubkey);
+
+        let mut temp_fmt = ArrayString::<50>::new();
+        write!(temp_fmt, "{}", pkh);
+
+        // We statically know the lengths of
+        // these slices and so that these will
+        // succeed.
+        let _ = rv.try_push(temp_fmt.as_bytes().len() as u8);
+        let _ = rv.try_extend_from_slice(temp_fmt.as_bytes());
+
+        io.result_final(&rv).await;
+    } else {
+        reject::<()>().await;
     }
 }
-
-impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress<true> {
-    #[inline(never)]
-    fn init<'a, 'b: 'a>(
-        self,
-        s: &mut core::pin::Pin<&'a mut ParsersState<'a>>,
-        io: HostIO,
-        input: ArrayVec<ByteStream, MAX_PARAMS>,
-    ) -> () {
-        s.set(ParsersState::VerifyAddressState(self.run(io, input)));
-    }
-
-    #[inline(never)]
-    fn poll<'a, 'b>(self, s: &mut core::pin::Pin<&'a mut ParsersState>) -> core::task::Poll<()> {
-        let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
-        let mut ctxd = Context::from_waker(&waker);
-        match s.as_mut().project() {
-            ParsersStateProjection::VerifyAddressState(ref mut s) => s.as_mut().poll(&mut ctxd),
-            _ => panic!("Ooops"),
-        }
-    }
-}
-
-impl<'d> AsyncAPDUStated<ParsersStateCtr> for GetAddress<false> {
-    #[inline(never)]
-    fn init<'a, 'b: 'a>(
-        self,
-        s: &mut core::pin::Pin<&'a mut ParsersState<'a>>,
-        io: HostIO,
-        input: ArrayVec<ByteStream, MAX_PARAMS>,
-    ) -> () {
-        s.set(ParsersState::GetAddressState(self.run(io, input)));
-    }
-
-    #[inline(never)]
-    fn poll<'a, 'b>(self, s: &mut core::pin::Pin<&'a mut ParsersState>) -> core::task::Poll<()> {
-        let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
-        let mut ctxd = Context::from_waker(&waker);
-        match s.as_mut().project() {
-            ParsersStateProjection::GetAddressState(ref mut s) => s.as_mut().poll(&mut ctxd),
-            _ => panic!("Ooops"),
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-pub struct Sign {
-    pub settings: Settings,
-}
-
-/*
-const fn show_send_message<BS: 'static + Readable + Clone>() -> impl LengthDelimitedParser<MsgSend, BS> + HasOutput<MsgSend> {
-    MsgSendInterp {
-        field_from_address: DropInterp, //show_address("From address"),
-        field_to_address: DropInterp, //show_address("To address"),
-        field_amount: CoinInterp {
-            field_denom: DropInterp, // Buffer::<20>,
-            field_amount: DropInterp, // Buffer::<100>
-        }
-    }
-}
-*/
 
 // We'd like this to be just a const fn, but the resulting closure rather than function pointer seems to crash the app.
 macro_rules! show_string {
@@ -286,19 +107,6 @@ macro_rules! show_string {
         )
     }
 }
-
-/*const fn show_address<F: Fn(ArrayVec<u8, 120>)->Option<()>>(msg: &'static str) -> Action<Buffer<120>, F> { // impl LengthDelimitedParser<schema::String, BS> {
-    // Buffer::<120>
-    Action(
-        Buffer::<120>, move |pkh| {
-                        scroller(msg, |w| Ok(write!(w, "{:?}", pkh)?))
-        }
-    )
-}*/
-
-/*type SMBS = impl Readable + Clone;
-const SHOW_SEND_MESSAGE : impl LengthDelimitedParser<MsgSend, dyn Readable + Clone> + HasOutput<MsgSend> =
-*/
 
 const fn show_coin<BS: 'static + Readable + ReadableLength + Clone, const PROMPT: bool>(
 ) -> impl LengthDelimitedParser<Coin, BS> {
@@ -453,7 +261,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         ),
                         field_value: DropInterp,
                     },
-                    send: TrampolineParse(Action(
+                    send: (Action(
                         MsgSendUnorderedInterp {
                             field_from_address: Buffer::<120>,
                             field_to_address: Buffer::<120>,
@@ -499,7 +307,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             }
                         },
                     )),
-                    multi_send: TrampolineParse(Preaction(
+                    multi_send: (Preaction(
                         || {
                             if PROMPT {
                                 scroller("Multi-send", |_| Ok(()))
@@ -518,7 +326,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             },
                         },
                     )),
-                    delegate: TrampolineParse(Preaction(
+                    delegate: (Preaction(
                         || {
                             if PROMPT {
                                 scroller("Delegate", |_| Ok(()))
@@ -532,7 +340,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
                         },
                     )),
-                    undelegate: TrampolineParse(Preaction(
+                    undelegate: (Preaction(
                         || {
                             if PROMPT {
                                 scroller("Undelegate", |_| Ok(()))
@@ -546,7 +354,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             field_validator_address: show_string!(PROMPT, 120, "Validator Address"),
                         },
                     )),
-                    begin_redelegate: TrampolineParse(Preaction(
+                    begin_redelegate: (Preaction(
                         || {
                             if PROMPT {
                                 scroller("Redelegate", |_| Ok(()))
@@ -565,7 +373,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             field_validator_dst_address: show_string!(PROMPT, 120, "To Validator"),
                         },
                     )),
-                    deposit: TrampolineParse(MsgDepositInterp {
+                    deposit: (MsgDepositInterp {
                         field_amount: show_coin::<_, PROMPT>(),
                         field_depositor: show_string!(PROMPT, 120, "Depositor Address"),
                         field_proposal_id: Action(DefaultInterp, |value: u64| {
@@ -648,172 +456,129 @@ MessagesInterp {
 }
 }
 
-type BipPathParserType =
-    impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output = ArrayVec<u32, 10>>;
-const BIP_PATH_PARSER: BipPathParserType =
-    Action(SubInterp(DefaultInterp), |path: ArrayVec<u32, 10>| {
-        if path.len() < 2 || path[0] != 0x8000002c || path[1] != 0x800001f9 {
-            None
-        } else {
-            Some(path)
+pub async fn sign_apdu(io: HostIO, settings: Settings) {
+    let mut input = match io.get_params::<2>() {
+        Some(v) => v,
+        None => reject().await,
+    };
+
+    let length = usize::from_le_bytes(input[0].read().await);
+
+    let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
+
+    if !path.starts_with(&BIP32_PREFIX[0..2]) {
+        reject::<()>().await;
+    }
+
+    let known_txn = NoinlineFut((|bs: ByteStream| async move {
+        {
+            let mut txn = LengthTrack(bs, 0);
+            TryFuture(txn_messages_parser::<false>().parse(&mut txn, length))
+                .await
+                .is_some()
         }
-    });
+    })(input[0].clone()))
+        .await;
 
-// #[rustc_layout(debug)]
-// type Q<'c> = <Sign as AsyncAPDU>::State<'c>;
-//
-
-impl AsyncAPDU for Sign {
-    // const MAX_PARAMS : usize = 2;
-
-    type State<'c> = impl Future<Output = ()>;
-
-    fn run<'c>(self, io: HostIO, mut input: ArrayVec<ByteStream, MAX_PARAMS>) -> Self::State<'c> {
-        async move {
-            let length = usize::from_le_bytes(input[0].read().await);
-            trace!("Passed length");
-
-            let known_txn = NoinlineFut((|bs: ByteStream| async move {
-                {
-                    let mut txn = LengthTrack(bs, 0);
-                    TryFuture(txn_messages_parser::<false>().parse(&mut txn, length))
-                        .await
-                        .is_some()
-                }
-            })(input[0].clone()))
-            .await;
-
-            if known_txn {
-                NoinlineFut((|bs: ByteStream| async move {
-                    {
-                        let mut txn = LengthTrack(bs, 0);
-                        txn_messages_parser::<true>().parse(&mut txn, length).await;
-                    }
-                })(input[0].clone()))
-                .await;
-            } else if self.settings.get() == 0 {
-                scroller("WARNING", |w| {
-                    Ok(write!(
-                        w,
-                        "Transaction not recognized, enable blind signing to sign unknown transactions"
-                    )?)
-                });
-                reject::<()>().await;
-            } else if scroller("WARNING", |w| Ok(write!(w, "Transaction not recognized")?))
-                .is_none()
+    if known_txn {
+        NoinlineFut((|bs: ByteStream| async move {
             {
+                let mut txn = LengthTrack(bs, 0);
+                txn_messages_parser::<true>().parse(&mut txn, length).await;
+            }
+        })(input[0].clone()))
+            .await;
+    } else if settings.get() == 0 {
+        scroller("WARNING", |w| {
+            Ok(write!(
+                w,
+                "Transaction not recognized, enable blind signing to sign unknown transactions"
+            )?)
+        });
+        reject::<()>().await;
+    } else if scroller("WARNING", |w| Ok(write!(w, "Transaction not recognized")?))
+        .is_none()
+    {
+        reject::<()>().await;
+    }
+
+    NoinlineFut(async move {
+        let hash: Base64Hash<32>;
+
+        {
+            let mut txn = input[0].clone();
+            hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
+            trace!("Hashed txn");
+        }
+
+        if !known_txn {
+            if scroller("Transaction Hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
+                reject::<()>().await;
+            };
+        }
+
+        let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
+
+        if !path.starts_with(&BIP32_PREFIX[0..2]) {
+            reject::<()>().await;
+        }
+
+        if known_txn {
+            if final_accept_prompt(&[]).is_none() {
                 reject::<()>().await;
             }
+        } else {
+            if final_accept_prompt(&["Blind Sign Transaction?"]).is_none() {
+                reject::<()>().await;
+            }
+        }
 
-            NoinlineFut((|input: ArrayVec<ByteStream, 2>| async move {
-                let hash: Base64Hash<32>;
+        let sk = Secp256k1::derive_from_path(&path);
+        if let Some(v) = sk.deterministic_sign(&hash.0[..]).ok() {
+            if let Some(sig) = {
+                format_signature(&v)
+            }
+            {
+                io.result_final(&sig).await;
+            } else {
+                reject::<()>().await;
+            }
+        } else {
+            reject::<()>().await;
+        }
+    })
+        .await;
+}
 
-                {
-                    let mut txn = input[0].clone();
-                    hash = hasher_parser().parse(&mut txn, length).await.0.finalize();
-                    trace!("Hashed txn");
-                }
+pub type APDUsFuture = impl Future<Output = ()>;
 
-                if !known_txn {
-                    if scroller("Transaction Hash", |w| Ok(write!(w, "{}", hash)?)).is_none() {
-                        reject::<()>().await;
-                    };
-                }
-
-                let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
-
-                if !path.starts_with(&BIP32_PREFIX[0..2]) {
-                    reject::<()>().await;
-                }
-
-                trace!("Accept path prefix");
-
-                if let Some(sig) = run_fut(trampoline(), || async {
-                    let sk = Secp256k1::derive_from_path(&path);
-                    let prompt = if known_txn {
-                        if final_accept_prompt(&[]).is_none() {
-                            reject::<()>().await;
-                        }
-                    } else {
-                        if final_accept_prompt(&["Blind Sign Transaction?"]).is_none() {
-                            reject::<()>().await;
-                        }
-                    };
-                    format_signature(&sk.deterministic_sign(&hash.0[..]).ok()?)
-                })
-                .await
-                {
-                    io.result_final(&sig).await;
-                } else {
-                    reject::<()>().await;
-                }
-            })(input))
-            .await
+#[inline(never)]
+pub fn handle_apdu_async(io: HostIO, ins: Ins, settings: Settings) -> APDUsFuture {
+    trace!("Constructing future");
+    async move {
+        trace!("Dispatching");
+        match ins {
+            Ins::GetVersion => {
+                const APP_NAME: &str = "Provenance";
+                let mut rv = ArrayVec::<u8, 220>::new();
+                let _ = rv.try_push(env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap());
+                let _ = rv.try_push(env!("CARGO_PKG_VERSION_MINOR").parse().unwrap());
+                let _ = rv.try_push(env!("CARGO_PKG_VERSION_PATCH").parse().unwrap());
+                let _ = rv.try_extend_from_slice(APP_NAME.as_bytes());
+                io.result_final(&rv).await;
+            }
+            Ins::VerifyAddress => {
+                NoinlineFut(get_address_apdu(io, true)).await;
+            }
+            Ins::GetPubkey => {
+                NoinlineFut(get_address_apdu(io, false)).await;
+            }
+            Ins::Sign => {
+                trace!("Handling sign");
+                NoinlineFut(sign_apdu(io, settings)).await;
+            }
+            Ins::GetVersionStr => {}
+            Ins::Exit => nanos_sdk::exit_app(0),
         }
     }
-}
-
-impl<'d> AsyncAPDUStated<ParsersStateCtr> for Sign {
-    #[inline(never)]
-    fn init<'a, 'b: 'a>(
-        self,
-        s: &mut core::pin::Pin<&'a mut ParsersState<'a>>,
-        io: HostIO,
-        input: ArrayVec<ByteStream, MAX_PARAMS>,
-    ) -> () {
-        s.set(ParsersState::SignState(self.run(io, input)));
-    }
-
-    #[inline(never)]
-    fn poll<'a>(self, s: &mut core::pin::Pin<&'a mut ParsersState>) -> core::task::Poll<()> {
-        let waker = unsafe { Waker::from_raw(RawWaker::new(&(), &RAW_WAKER_VTABLE)) };
-        let mut ctxd = Context::from_waker(&waker);
-        match s.as_mut().project() {
-            ParsersStateProjection::SignState(ref mut s) => s.as_mut().poll(&mut ctxd),
-            _ => panic!("Ooops"),
-        }
-    }
-}
-
-// The global parser state enum; any parser above that'll be used as the implementation for an APDU
-// must have a field here.
-
-// type GetAddressStateType = impl Future;
-// type SignStateType = impl Future<Output = ()>;
-
-#[pin_project(project = ParsersStateProjection)]
-pub enum ParsersState<'a> {
-    NoState,
-    SignState(#[pin] <Sign as AsyncAPDU>::State<'a>),
-    // SignState(#[pin] <SignImplT<'a> as AsyncParser<SignParameters, ByteStream<'a>>>::State<'a>),
-    VerifyAddressState(#[pin] <GetAddress<true> as AsyncAPDU>::State<'a>),
-    GetAddressState(#[pin] <GetAddress<false> as AsyncAPDU>::State<'a>),
-    // <GetAddressImplT<'a> as AsyncParser<Bip32Key, ByteStream<'a>>>::State<'a>),
-}
-
-impl<'a> ParsersState<'a> {
-    pub fn is_no_state(&self) -> bool {
-        match self {
-            ParsersState::NoState => true,
-            _ => false,
-        }
-    }
-}
-
-impl<'a> Default for ParsersState<'a> {
-    fn default() -> Self {
-        ParsersState::NoState
-    }
-}
-
-pub fn reset_parsers_state(state: &mut Pin<&mut ParsersState>) {
-    state.set(ParsersState::default());
-}
-
-// we need to pass a type constructor for ParsersState to various places, so that we can give it
-// the right lifetime; this is a bit convoluted, but works.
-
-pub struct ParsersStateCtr;
-impl StateHolderCtr for ParsersStateCtr {
-    type StateCtr<'a> = ParsersState<'a>;
 }
