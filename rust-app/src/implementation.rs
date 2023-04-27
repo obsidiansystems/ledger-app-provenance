@@ -28,7 +28,7 @@ use core::future::Future;
 use nanos_sdk::ecc::*;
 
 pub type BipParserImplT =
-impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output = ArrayVec<u32, 10>>;
+    impl AsyncParser<Bip32Key, ByteStream> + HasOutput<Bip32Key, Output = ArrayVec<u32, 10>>;
 pub const BIP_PATH_PARSER: BipParserImplT = SubInterp(DefaultInterp);
 
 // Need a path of length 5, as make_bip32_path panics with smaller paths
@@ -469,7 +469,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
             BIP_PATH_PARSER.parse(&mut bs).await
         }
     })(input[1].clone()))
-        .await;
+    .await;
 
     if !path.starts_with(&BIP32_PREFIX[0..2]) {
         reject::<()>().await;
@@ -483,7 +483,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
                 .is_some()
         }
     })(input[0].clone()))
-        .await;
+    .await;
 
     if known_txn {
         NoinlineFut((|bs: ByteStream| async move {
@@ -492,7 +492,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
                 txn_messages_parser::<true>().parse(&mut txn, length).await;
             }
         })(input[0].clone()))
-            .await;
+        .await;
     } else if settings.get() == 0 {
         scroller("WARNING", |w| {
             Ok(write!(
@@ -501,9 +501,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
             )?)
         });
         reject::<()>().await;
-    } else if scroller("WARNING", |w| Ok(write!(w, "Transaction not recognized")?))
-        .is_none()
-    {
+    } else if scroller("WARNING", |w| Ok(write!(w, "Transaction not recognized")?)).is_none() {
         reject::<()>().await;
     }
 
@@ -540,10 +538,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
 
         let sk = Secp256k1::derive_from_path(&path);
         if let Some(v) = sk.deterministic_sign(&hash.0[..]).ok() {
-            if let Some(sig) = {
-                format_signature(&v)
-            }
-            {
+            if let Some(sig) = { format_signature(&v) } {
                 io.result_final(&sig).await;
             } else {
                 reject::<()>().await;
@@ -552,7 +547,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
             reject::<()>().await;
         }
     })
-        .await;
+    .await;
 }
 
 pub type APDUsFuture = impl Future<Output = ()>;
