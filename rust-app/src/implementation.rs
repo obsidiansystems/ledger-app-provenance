@@ -464,7 +464,12 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
 
     let length = usize::from_le_bytes(input[0].read().await);
 
-    let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
+    let path = NoinlineFut((|mut bs: ByteStream| async move {
+        {
+            BIP_PATH_PARSER.parse(&mut bs).await
+        }
+    })(input[1].clone()))
+        .await;
 
     if !path.starts_with(&BIP32_PREFIX[0..2]) {
         reject::<()>().await;
