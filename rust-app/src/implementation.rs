@@ -516,12 +516,6 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
             };
         }
 
-        let path = BIP_PATH_PARSER.parse(&mut input[1].clone()).await;
-
-        if !path.starts_with(&BIP32_PREFIX[0..2]) {
-            reject::<()>().await;
-        }
-
         if known_txn {
             if final_accept_prompt(&[]).is_none() {
                 reject::<()>().await;
