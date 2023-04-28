@@ -56,10 +56,6 @@ describe("Protobufs tests", function() {
           "prompt": "81262",
         },
         {
-          "header": "Chain ID",
-          "prompt": "pio-testnet-1",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11
@@ -105,6 +101,15 @@ describe("Protobufs tests", function() {
         },
       ])
   );
+  it("Rejects signing a non HASH asset transfer tx", async function () {
+    // https://explorer.provenance.io/tx/7720A0929A25167C79D1C6C01DDF635928E11E644907EC8DAB430CBEE35C579E/10631279
+    let path = "44'/505'/0'";
+    let txn = Buffer.from("CsABCpIBChwvY29zbW9zLmJhbmsudjFiZXRhMS5Nc2dTZW5kEnIKKXBiMWdzOW04NGt5dzdqZDJoYTAzOTN2OGRndTlwbWtxbDk1YWZ2cWUzEilwYjEycW5xcnF0NnRmcG5sOTU5aDJldmFhZW1rMjRzcWxzeW1jMGs5NRoaCg5jaG9tZXBvaW50b21uaRIIMjgwMDAwMDASJGNmYTA1MDZjLWQxZGQtNGU3OC1iYmJkLWExMTdlZmQ5NmM1Mxiq8YgFEm0KUQpGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQKzIkxdhqZEJKkdfw7fHW9nUbzJzM+pSMP8pg/XrClfAxIECgIIARjKAhIYChIKBW5oYXNoEgk4Mzg3MjM4NzUQ968F", "base64").toString("hex");
+
+    await sendCommandExpectFail(async (client : Provenance) => {
+      await client.signTransaction(path, txn);
+    });
+  });
   it.skip("Can sign a delegate transaction",
     testTransaction("44'/505'/0'",
       "0a9c010a99010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512720a29747031673575676665676b6c35676d6e3034396e35613968676a6e3367656430656b703866326677781230747076616c6f706572317467713663707536686d7372766b76647538326a39397473787877377171616a6e38343366651a130a056e68617368120a32303030303030303030126d0a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a2102da92ecc44eef3299e00cdf8f4768d5b606bf8242ff5277e6f07aadd935257a3712040a020801185212190a130a056e68617368120a3630393835363232323510fda6091a406d24f94f67322bdc8b5ab6b418a12ed872e8feed02411570ff62946130e51e4a62fed9ca3d8b3abaa0c0197f314ecf2b845d200ca3c584439f35478ca1dcc1bd",
@@ -155,10 +160,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Gas Limit",
           "prompt": "3868754",
-        },
-        {
-          "header": "Chain ID",
-          "prompt": "pio-testnet-1",
         },
         {
           "text": "Confirm",
@@ -236,4 +237,37 @@ describe("Protobufs tests", function() {
         },
       ])
   );
+
+  it("can blind sign an unknown transaction", async function () {
+    const path = "44'/505'/0'";
+    const txn = Buffer.from("CmUKYwoZL2Nvc21vcy5nb3YudjEuTXNnRGVwb3NpdabcdC8SKXBiMXZqMHcwYXNnamRubGF0M2poMHAzYTRlNGphbXU4cDI2eTIwMDBrGhcKBW5oYXNoEg40OTk5MDAwMDAwMDAwMBJsClAKRgofL2Nvc21vcy5jcnlwdG8uc2VjcDI1NmsxLlB1YktleRIjCiECjRH5YYOCYVTDDV9cgZaE9tul9n87abNghgGfm2oKCFcSBAoCCAEYAhIYChIKBW5oYXNoEgkzODEwMDAwMDAQwJoM", "base64").toString("hex");
+    const prompts =
+       [
+         {
+           "header": "WARNING",
+           "prompt": "Transaction not recognized"
+         },
+         {
+           "header": "Transaction Hash",
+           "prompt": "aN3-o7ulXTJNUOr4oQE32H6hTs6udIBVzFFrInNVzRI"
+         },
+         {
+           "text": "Blind Sign Transaction?",
+           "x": 4,
+           "y": 11,
+         },
+         {
+           "text": "Confirm",
+           "x": 43,
+           "y": 11,
+         }
+       ];
+
+    await toggleBlindSigningSettings();
+    await Axios.delete(BASE_URL + "/events");
+    await testTransaction(path, txn, prompts)();
+    await Axios.delete(BASE_URL + "/events");
+    // reset back to disabled
+    await toggleBlindSigningSettings();
+  });
 })
