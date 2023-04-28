@@ -307,25 +307,6 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             }
                         },
                     )),
-                    multi_send: (Preaction(
-                        || {
-                            if PROMPT {
-                                scroller("Multi-send", |_| Ok(()))
-                            } else {
-                                Some(())
-                            }
-                        },
-                        MsgMultiSendInterp {
-                            field_inputs: InputInterp {
-                                field_address: show_string!(PROMPT, 50, "From address"),
-                                field_coins: show_coin::<_, PROMPT>(),
-                            },
-                            field_outputs: OutputInterp {
-                                field_address: show_string!(PROMPT, 50, "To address"),
-                                field_coins: show_coin::<_, PROMPT>(),
-                            },
-                        },
-                    )),
                     delegate: (Preaction(
                         || {
                             if PROMPT {
@@ -352,21 +333,6 @@ const fn txn_messages_parser<const PROMPT: bool>(
                             field_amount: show_coin::<_, PROMPT>(),
                             field_delegator_address: show_string!(PROMPT, 50, "Delegator Address"),
                             field_validator_address: show_string!(PROMPT, 50, "Validator Address"),
-                        },
-                    )),
-                    begin_redelegate: (Preaction(
-                        || {
-                            if PROMPT {
-                                scroller("Redelegate", |_| Ok(()))
-                            } else {
-                                Some(())
-                            }
-                        },
-                        MsgBeginRedelegateInterp {
-                            field_amount: show_coin::<_, PROMPT>(),
-                            field_delegator_address: show_string!(PROMPT, 50, "Delegator Address"),
-                            field_validator_src_address: show_string!(PROMPT, 50, "From Validator"),
-                            field_validator_dst_address: show_string!(PROMPT, 50, "To Validator"),
                         },
                     )),
                     deposit: (MsgDepositInterp {
@@ -444,10 +410,8 @@ const fn hasher_parser(
 any_of! {
 MessagesInterp {
     Send: MsgSend = b"/cosmos.bank.v1beta1.MsgSend",
-    MultiSend: MsgMultiSend = b"/cosmos.bank.v1beta1.MsgMultiSend",
     Delegate: MsgDelegate = b"/cosmos.staking.v1beta1.MsgDelegate",
     Undelegate: MsgUndelegate = b"/cosmos.staking.v1beta1.MsgUndelegate",
-    BeginRedelegate: MsgBeginRedelegate = b"/cosmos.staking.v1beta1.MsgBeginRedelegate",
     Deposit: MsgDeposit = b"/cosmos.gov.v1.MsgDeposit"
 }
 }
