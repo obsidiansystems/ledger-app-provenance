@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "alamgu-async-block"
 version = "0.1.0"
-source = "git+https://github.com/alamgu/alamgu-async-block#8d11f1b3d5877c0196269cbf800a875ad9dd36d2"
+source = "git+https://github.com/alamgu/alamgu-async-block?branch=prompt-queueing#baa2b9908f86f3997f7d0fc0d673d919e645f18c"
 dependencies = [
  "arrayvec",
  "ledger-log",

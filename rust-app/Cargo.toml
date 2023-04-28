@@ -33,7 +33,7 @@ pending_review_screen = ["nanos_sdk/pending_review_screen"]
 nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
 nanos_ui = { git = "https://github.com/LedgerHQ/ledger-nanos-ui.git" }
 ledger-prompts-ui = { git = "https://github.com/alamgu/ledger-prompts-ui" }
-alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block" }
+alamgu-async-block = { git = "https://github.com/alamgu/alamgu-async-block", branch = "prompt-queueing" }
 
 [target.'cfg(target_family = "bolos")'.dev-dependencies.nanos_sdk]
 git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git"

@@ -4,7 +4,11 @@
 #[cfg(not(target_family = "bolos"))]
 fn main() {}
 
-#[cfg(target_family = "bolos")]
-mod main_nanos;
-#[cfg(target_family = "bolos")]
-pub use main_nanos::*;
+use provenance::main_nanos::*;
+
+nanos_sdk::set_panic!(nanos_sdk::exiting_panic);
+
+#[no_mangle]
+extern "C" fn sample_main() {
+    app_main()
+}
