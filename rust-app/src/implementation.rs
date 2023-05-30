@@ -23,6 +23,7 @@ use ledger_parser_combinators::protobufs::schema::Bytes;
 use ledger_parser_combinators::protobufs::schema::ProtobufWireFormat;
 use ledger_prompts_ui::{final_accept_prompt, ScrollerError};
 
+use core::convert::TryFrom;
 use core::future::Future;
 
 use nanos_sdk::ecc::*;
@@ -60,17 +61,21 @@ pub async fn get_address_apdu(io: HostIO, prompt: bool) {
         }
 
         let mut rv = ArrayVec::<u8, 128>::new();
-        rv.push(pubkey.len() as u8);
-        rv.try_extend_from_slice(&pubkey);
+        let mut add_to_rv_fn = || -> Option<()> {
+            rv.try_push(u8::try_from(pubkey.len()).ok()?).ok()?;
+            rv.try_extend_from_slice(&pubkey).ok()?;
 
-        let mut temp_fmt = ArrayString::<50>::new();
-        write!(temp_fmt, "{}", pkh);
+            let mut temp_fmt = ArrayString::<50>::new();
+            write!(temp_fmt, "{}", pkh).ok()?;
 
-        // We statically know the lengths of
-        // these slices and so that these will
-        // succeed.
-        let _ = rv.try_push(temp_fmt.as_bytes().len() as u8);
-        let _ = rv.try_extend_from_slice(temp_fmt.as_bytes());
+            rv.try_push(u8::try_from(temp_fmt.as_bytes().len()).ok()?)
+                .ok()?;
+            rv.try_extend_from_slice(temp_fmt.as_bytes()).ok()
+        };
+
+        if add_to_rv_fn().is_none() {
+            reject::<()>().await;
+        };
 
         io.result_final(&rv).await;
     } else {
