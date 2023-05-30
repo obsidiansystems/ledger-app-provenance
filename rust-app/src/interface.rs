@@ -2,7 +2,7 @@ use core::convert::TryFrom;
 use ledger_parser_combinators::core_parsers::*;
 // use ledger_parser_combinators::protobufs::schema::*;
 use ledger_parser_combinators::endianness::*;
-use nanos_sdk::io::ApduMeta;
+use nanos_sdk::io::ApduHeader;
 use num_enum::TryFromPrimitive;
 
 pub use crate::proto::cosmos::bank::v1beta1::MsgSend;
@@ -26,11 +26,11 @@ pub enum Ins {
     Exit = 0xff,
 }
 
-impl TryFrom<ApduMeta> for Ins {
+impl TryFrom<ApduHeader> for Ins {
     type Error = ();
-    fn try_from(m: ApduMeta) -> Result<Ins, Self::Error> {
+    fn try_from(m: ApduHeader) -> Result<Ins, Self::Error> {
         match m {
-            ApduMeta {
+            ApduHeader {
                 cla: 0,
                 ins,
                 p1: 0,

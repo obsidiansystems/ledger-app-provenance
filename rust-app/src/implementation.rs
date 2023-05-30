@@ -55,7 +55,7 @@ pub async fn get_address_apdu(io: HostIO, prompt: bool) {
     if let Some((pubkey, pkh)) = prompt_fn() {
         if prompt {
             scroller("Provide Public Key", |_w| Ok(()));
-            scroller("Address", |w| Ok(write!(w, "{pkh}")?));
+            scroller_paginated("Address", |w| Ok(write!(w, "{pkh}")?));
             final_accept_prompt(&[]);
         }
 

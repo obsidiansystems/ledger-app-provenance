@@ -113,10 +113,10 @@ Sign a Transaction in JSON format encoded in hexadecimal string (utf8), using th
 
 ##### Parameter 1
 
-| Length    | Name              | Description                         |
-|-----------|-------------------|-------------------------------------|
-| `4`       | `tx_size`         | Size of transaction                 |
-| `tx_size` | `tx`              | Transaction in hexadecimal string   |
+| Length    | Name      | Description         |
+|-----------|-----------|---------------------|
+| `4`       | `tx_size` | Size of transaction |
+| `tx_size` | `tx`      | Transaction         |
 
 ##### Parameter 2
 
@@ -134,24 +134,6 @@ Sign a Transaction in JSON format encoded in hexadecimal string (utf8), using th
 |--------------|-----------------|
 | `<variable>` | Signature bytes |
 
-##### GET_VERSION_STR
-
-Returns the name of the app currently running on the Ledger, including its version, like 'Provenance 7.8.9'
-
-#### Encoding
-
-**Command**
-
-| *CLA* | *INS* |
-|-------|-------|
-| 00    | FF    |
-
-**Output data**
-
-| Length       | Description               |
-|--------------|---------------------------|
-| `<variable>` | Name of the app + version |
-
 ## Status Words
 
 | SW     | SW name                       | Description                                                |
@@ -160,4 +142,5 @@ Returns the name of the app currently running on the Ledger, including its versi
 | 0x6982 | `SW_NOTHING_RECEIVED`         | No input was received by the app                           |
 | 0x6D00 | `SW_ERROR`                    | Error has occured due to bad input or user rejectected     |
 | 0x6E00 | `SW_CLA_OR_INS_NOT_SUPPORTED` | No command exists for the `CLA` and `INS`                  |
+| 0x6E01 | `SW_BAD_LEN`                  | Length mismatch in inputs                                  |
 | 0x9000 | `SW_OK`                       | Success, or continue if more input from client is expected |

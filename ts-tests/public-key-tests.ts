@@ -46,11 +46,12 @@ describe('public key tests', () => {
       {
         "header": "Address",
         "prompt": "pb1lem544f29gucu09698cyz6z2y043j0wclrjgwd",
+        "paginate": true,
       },
       {
         "text": "Confirm",
-        "x": "<patched>",
-        "y": "<patched>",
+        "x": 43,
+        "y": 11,
       },
     ]);
   });
