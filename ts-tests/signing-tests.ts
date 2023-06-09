@@ -52,6 +52,11 @@ describe("Protobufs tests", function() {
           "prompt": "HASH 1.70284521",
         },
         {
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
+        },
+        {
           "text": "Confirm",
           "x": 43,
           "y": 11
@@ -85,6 +90,11 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 0.166777035",
+        },
+        {
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -150,6 +160,11 @@ describe("Protobufs tests", function() {
           "prompt": "HASH 1373.6997637",
         },
         {
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
+        },
+        {
           "text": "Confirm",
           "x": 43,
           "y": 11,
@@ -176,6 +191,11 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 0.381",
+        },
+        {
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -209,6 +229,11 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 1.014532",
+        },
+        {
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",

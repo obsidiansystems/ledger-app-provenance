@@ -486,7 +486,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
         }
 
         if known_txn {
-            if final_accept_prompt(&[]).is_none() {
+            if final_accept_prompt(&["Sign Transaction?"]).is_none() {
                 reject::<()>().await;
             }
         } else {
