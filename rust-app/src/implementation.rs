@@ -386,14 +386,14 @@ const fn txn_messages_parser<const PROMPT: bool>(
                                 "Fee",
                                 o.field_amount.as_ref()?.field_amount.as_ref()?,
                                 o.field_amount.as_ref()?.field_denom.as_ref()?,
-                            )?;
-                            scroller("Gas Limit", |w| {
-                                Ok(write!(
-                                    w,
-                                    "{}",
-                                    o.field_gas_limit.as_ref().ok_or(ScrollerError)?
-                                )?)
-                            })
+                            )
+                            // scroller("Gas Limit", |w| {
+                            //     Ok(write!(
+                            //         w,
+                            //         "{}",
+                            //         o.field_gas_limit.as_ref().ok_or(ScrollerError)?
+                            //     )?)
+                            // })
                         } else {
                             Some(())
                         }

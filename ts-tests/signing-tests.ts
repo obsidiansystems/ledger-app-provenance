@@ -52,10 +52,6 @@ describe("Protobufs tests", function() {
           "prompt": "HASH 1.70284521",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "81262",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11
@@ -89,10 +85,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 0.166777035",
-        },
-        {
-          "header": "Gas Limit",
-          "prompt": "87547",
         },
         {
           "text": "Confirm",
@@ -158,10 +150,6 @@ describe("Protobufs tests", function() {
           "prompt": "HASH 1373.6997637",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "3868754",
-        },
-        {
           "text": "Confirm",
           "x": 43,
           "y": 11,
@@ -188,10 +176,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 0.381",
-        },
-        {
-          "header": "Gas Limit",
-          "prompt": "200000",
         },
         {
           "text": "Confirm",
@@ -225,10 +209,6 @@ describe("Protobufs tests", function() {
         {
           "header": "Fee",
           "prompt": "HASH 1.014532",
-        },
-        {
-          "header": "Gas Limit",
-          "prompt": "507266",
         },
         {
           "text": "Confirm",
