@@ -143,7 +143,7 @@ fn show_amount_in_decimals(
     if denom.as_slice() == b"nhash" {
         scroller(title, |w| {
             let x = get_amount_in_decimals(amount).map_err(|_| ScrollerError)?;
-            write!(w, "{} hash", core::str::from_utf8(&x)?).map_err(|_| ScrollerError)
+            write!(w, "HASH {}", core::str::from_utf8(&x)?).map_err(|_| ScrollerError)
         })
     } else {
         if only_hash {
@@ -383,7 +383,7 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         if PROMPT {
                             show_amount_in_decimals(
                                 true,
-                                "Fees",
+                                "Fee",
                                 o.field_amount.as_ref()?.field_amount.as_ref()?,
                                 o.field_amount.as_ref()?.field_denom.as_ref()?,
                             )?;
