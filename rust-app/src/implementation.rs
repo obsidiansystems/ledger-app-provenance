@@ -143,7 +143,7 @@ fn show_amount_in_decimals(
     if denom.as_slice() == b"nhash" {
         scroller(title, |w| {
             let x = get_amount_in_decimals(amount).map_err(|_| ScrollerError)?;
-            write!(w, "{} hash", core::str::from_utf8(&x)?).map_err(|_| ScrollerError)
+            write!(w, "HASH {}", core::str::from_utf8(&x)?).map_err(|_| ScrollerError)
         })
     } else {
         if only_hash {
@@ -383,17 +383,17 @@ const fn txn_messages_parser<const PROMPT: bool>(
                         if PROMPT {
                             show_amount_in_decimals(
                                 true,
-                                "Fees",
+                                "Fee",
                                 o.field_amount.as_ref()?.field_amount.as_ref()?,
                                 o.field_amount.as_ref()?.field_denom.as_ref()?,
-                            )?;
-                            scroller("Gas Limit", |w| {
-                                Ok(write!(
-                                    w,
-                                    "{}",
-                                    o.field_gas_limit.as_ref().ok_or(ScrollerError)?
-                                )?)
-                            })
+                            )
+                            // scroller("Gas Limit", |w| {
+                            //     Ok(write!(
+                            //         w,
+                            //         "{}",
+                            //         o.field_gas_limit.as_ref().ok_or(ScrollerError)?
+                            //     )?)
+                            // })
                         } else {
                             Some(())
                         }
@@ -486,7 +486,7 @@ pub async fn sign_apdu(io: HostIO, settings: Settings) {
         }
 
         if known_txn {
-            if final_accept_prompt(&[]).is_none() {
+            if final_accept_prompt(&["Sign Transaction?"]).is_none() {
                 reject::<()>().await;
             }
         } else {

@@ -45,15 +45,16 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "1.6 hash",
+          "prompt": "HASH 1.6",
         },
         {
-          "header": "Fees",
-          "prompt": "1.70284521 hash",
+          "header": "Fee",
+          "prompt": "HASH 1.70284521",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "81262",
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -84,15 +85,16 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "10000.0 hash",
+          "prompt": "HASH 10000.0",
         },
         {
-          "header": "Fees",
-          "prompt": "0.166777035 hash",
+          "header": "Fee",
+          "prompt": "HASH 0.166777035",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "87547",
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -135,7 +137,7 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "0.01 hash",
+          "prompt": "HASH 0.01",
         },
         {
           "header": "Delegate",
@@ -151,15 +153,16 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "0.000001 hash",
+          "prompt": "HASH 0.000001",
         },
         {
-          "header": "Fees",
-          "prompt": "1373.6997637 hash",
+          "header": "Fee",
+          "prompt": "HASH 1373.6997637",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "3868754",
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -183,15 +186,16 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "49990.0 hash",
+          "prompt": "HASH 49990.0",
         },
         {
-          "header": "Fees",
-          "prompt": "0.381 hash",
+          "header": "Fee",
+          "prompt": "HASH 0.381",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "200000",
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
@@ -220,15 +224,16 @@ describe("Protobufs tests", function() {
         },
         {
           "header": "Amount",
-          "prompt": "93.148707565 hash",
+          "prompt": "HASH 93.148707565",
         },
         {
-          "header": "Fees",
-          "prompt": "1.014532 hash",
+          "header": "Fee",
+          "prompt": "HASH 1.014532",
         },
         {
-          "header": "Gas Limit",
-          "prompt": "507266",
+          "text": "Sign Transaction?",
+          "x": 19,
+          "y": 11
         },
         {
           "text": "Confirm",
