@@ -1,9 +1,14 @@
 #[allow(unused_imports)]
-use ledger_parser_combinators::{define_message, define_enum, interp_parser::DefaultInterp, async_parser::{HasOutput, AsyncParser, Readable, LengthDelimitedParser, reject,reject_on}, protobufs::{schema::*, async_parser::*}};
+use core::future::Future;
 #[allow(unused_imports)]
 use ledger_log::*;
 #[allow(unused_imports)]
-use core::future::Future;
+use ledger_parser_combinators::{
+    async_parser::{reject, reject_on, AsyncParser, HasOutput, LengthDelimitedParser, Readable},
+    define_enum, define_message,
+    interp_parser::DefaultInterp,
+    protobufs::{async_parser::*, schema::*},
+};
 
 define_message! { @impl
     Input {
@@ -33,4 +38,3 @@ define_message! { @impl
         , outputs : (LengthDelimitedParser, super::super::super::cosmos::bank::v1beta1::Output, true) = 2
     }
 }
-
