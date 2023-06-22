@@ -21,9 +21,7 @@
 #[macro_use]
 extern crate num_derive;
 
-mod proto {
-    include!(concat!(env!("OUT_DIR"), "/proto/mod.rs"));
-}
+mod proto;
 
 pub use ledger_log::*;
 
