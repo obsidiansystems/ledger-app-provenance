@@ -28,6 +28,7 @@ default = [ ]
 speculos = [ "nanos_sdk/speculos", "ledger-log/speculos", "ledger-log/log_error", "ledger-parser-combinators/logging" ]
 extra_debug = ["ledger-log/log_trace"]
 pending_review_screen = ["nanos_sdk/pending_review_screen"]
+rebuild_proto = ["dep:ledger-proto-gen", "dep:tempfile"]
 
 [target.'cfg(target_family = "bolos")'.dependencies]
 nanos_sdk = { git = "https://github.com/LedgerHQ/ledger-nanos-sdk.git" }
@@ -43,8 +44,8 @@ features = [ "speculos" ]
 testmacro = { git = "https://github.com/yhql/testmacro" }
 
 [build-dependencies]
-ledger-proto-gen = { git = "https://github.com/alamgu/ledger-proto-gen" }
-tempfile = "3.2.0"
+ledger-proto-gen = { git = "https://github.com/alamgu/ledger-proto-gen", optional = true }
+tempfile = { version = "3.2.0", optional = true }
 
 [[bin]]
 name = "provenance"

@@ -1,16 +1,12 @@
-use std::env;
-use std::path::Path;
-use std::process;
-
 fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=script.ld");
 
-    // To regenerate "proto" files, set REBUILD_PROTO, then run the build. After
-    // the build completes, copy the generated files from the out dir, which is
-    // typically "target/nanos/.../build/provenance-.../out/proto"
-    let do_proto_rebuild = env::var("REBUILD_PROTO");
+    #[cfg(feature = "rebuild_proto")]
+    {
+        use std::env;
+        use std::path::Path;
+        use std::process;
 
-    if do_proto_rebuild.is_ok() {
         // Cosmos repo path
         let cosmos = env::var("COSMOS_SDK").unwrap();
 
