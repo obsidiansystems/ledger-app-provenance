@@ -153,7 +153,7 @@ impl Menu for IdleMenuWithSettings {
                 },
             ),
             Exit => (
-                MenuLabelTop::Icon(&DASHBOARD_ICON),
+                MenuLabelTop::Icon(&ledger_prompts_ui::DASHBOARD_ICON),
                 MenuLabelBottom {
                     text: "Quit",
                     bold: true,
